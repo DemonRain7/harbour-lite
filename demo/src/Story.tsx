@@ -1,7 +1,7 @@
 import type {CSSProperties, ReactNode} from 'react';
-import {AbsoluteFill, CanvasImage, Easing, Interactive, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
+import {AbsoluteFill, CanvasImage, Easing, Interactive, interpolate, interpolateColors, Sequence, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {TransitionSeries, linearTiming, type TransitionPresentationComponentProps} from '@remotion/transitions';
-import {Audio} from '@remotion/media';
+import {Audio, Video} from '@remotion/media';
 import '@fontsource/noto-sans-sc/400.css';
 import '@fontsource/noto-sans-sc/500.css';
 import '@fontsource/noto-sans-sc/700.css';
@@ -10,8 +10,9 @@ import './global.css';
 
 // 「放映室 · Champagne」主题配色：与公开版 web/themes.css 的 premium-champagne 一致。
 // 片中所有界面都是公开版实机截图 + 演示数据（demo/public/story/）；配乐与音效是 scripts/make-score.mjs 本地合成的音轨，无远程资源。
-// 剪辑踩在 120 BPM 的拍子上：每次换场，灯塔光束扫过画面中线的一刻（场景起点 + 0.25 秒）正好是一拍，
-// 场内的入场时刻也尽量落在八分音符（0.25 秒的整数倍）上。改了这里的时长或延迟，要同步 make-score.mjs。
+// 剪辑踩在 100 BPM 的拍子上。场景里的时长和入场时刻都按「拍格秒」来写：一拍 = 0.5 拍格秒，乘以 TEMPO 才是成片里的真实秒数。
+// 每次换场，灯塔光束扫过画面中线的一刻（场景起点 + 0.25 拍格秒）正好是一拍，场内的入场时刻也尽量落在八分音符（0.25 拍格秒的整数倍）上。
+// 改了这里的时长或延迟，要同步 make-score.mjs。
 const c = {
   bg: '#070606', bg2: '#0D0B09', panel: '#100F0D', elev: '#1C1915',
   fg: '#F3EEE3', dim: '#ABA495', faint: '#6F6A5E',
@@ -25,8 +26,9 @@ const SHOT = {w: 2880, h: 1800};
 const shotSrc = (name: string) => staticFile(`story/${name}.jpg`);
 const hand = '"Harbour Hand", cursive';
 
+export const TEMPO = 1.2; // 一拍格秒在成片里的真实秒数：120 / 100 BPM
 export const STORY_BEAT = 0.5;
-const useSeconds = () => { const frame = useCurrentFrame(); const {fps} = useVideoConfig(); return frame / fps; };
+const useSeconds = () => { const frame = useCurrentFrame(); const {fps} = useVideoConfig(); return frame / fps / TEMPO; };
 
 // 一次性入场：透明度 + 短距离上浮；delay / dur 以秒计。
 const Rise = ({children, delay = 0, dur = 0.7, y = 26, style}: {children: ReactNode; delay?: number; dur?: number; y?: number; style?: CSSProperties}) => {
@@ -272,7 +274,108 @@ export const StoryDaily = () => (
   </Stage>
 );
 
-/* ── 05 用量：每一次调用都有账可查 ────────────────────────────── */
+/* ── 05 音乐：内置 Folia，边听边聊 ───────────────────────────── */
+// 音乐页（嵌入模式）的舞台是 Folia 自己的画布，静态截图里是空的；这里把 Folia 可视化的逐帧录屏贴回舞台原位。
+// 录屏由公开版自带的 vendor/folia 渲染原创演示歌词，按真实时间播放，不随拍速伸缩。
+const MUSIC_CROP = {x: 32, y: 140, w: 2816, h: 1640};
+const MUSIC_STAGE = {x: 0, y: 100, w: 2816, h: 1432}; // 舞台在裁切框里的位置（原图像素）
+const MUSIC_W = 1040;
+const MUSIC_MODES = ['Monet', 'Sonnet', 'Tempera', 'Partita'];
+export const MUSIC_CUT = [1.75, 2.75, 3.75]; // 切换可视化的时刻，后两次相隔一个二分音符
+export const MUSIC_POP = 4.25; // 聊天页的「音乐陪伴」小窗浮上来
+const MUSIC_SECONDS = 6.5; // 扣掉转场重叠后是 12 拍（三小节），后面的换场仍落在强拍上
+const POP_CROP = {x: 136, y: 1146, w: 684, h: 466};
+
+const ModeChip = ({children, on = 0}: {children: ReactNode; on?: number}) => (
+  <span style={{display: 'inline-flex', alignItems: 'center', height: 46, padding: '0 18px', borderRadius: 23, fontSize: 22, letterSpacing: '0.04em',
+    border: `1px solid ${interpolateColors(on, [0, 1], [c.border, c.gold])}`, background: `rgba(226,194,133,${0.05 + 0.12 * on})`,
+    color: interpolateColors(on, [0, 1], [c.dim, c.gold]), boxShadow: `0 0 ${26 * on}px rgba(226,194,133,${0.32 * on})`}}>{children}</span>
+);
+
+export const StoryMusic = () => {
+  const t = useSeconds(), {fps} = useVideoConfig();
+  const at = (s: number) => Math.round(s * TEMPO * fps);
+  const bounds = [0, ...MUSIC_CUT, MUSIC_SECONDS];
+  const k = MUSIC_W / MUSIC_CROP.w;
+  const turn = (s: number) => interpolate(t, [s - 0.04, s + 0.12], [0, 1], clamp);
+  const lit = (i: number) => (i ? turn(bounds[i]) : 1) - (i < MUSIC_CUT.length ? turn(bounds[i + 1]) : 0);
+  // 每次切换可视化，舞台亮一下。
+  const flash = MUSIC_CUT.reduce((sum, cut) => sum + (t >= cut ? Math.exp(-(t - cut) / 0.07) : 0), 0);
+  return <Stage glow="68% 46%">
+    <div style={{position: 'absolute', left: 140, top: 236, width: 560}}>
+      <Kicker index="05" delay={0.1}>MUSIC · FOLIA</Kicker>
+      <Interactive.Div name="主标题" style={{marginTop: 30, fontSize: 104, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.16}}>
+        <Chars text={'听着歌，\n慢慢聊'} delay={0.18} />
+      </Interactive.Div>
+      <Rise delay={0.55}><div style={{marginTop: 30, fontSize: 34, lineHeight: 1.5}}>逐字歌词、多种可视化，<br />聊天时也能随手切歌。</div></Rise>
+      <Rise delay={0.7}><div style={{marginTop: 14, fontSize: 25, lineHeight: 1.5, color: c.dim}}>Folia is built in: word-by-word lyrics and<br />visualizers, with controls right in chat.</div></Rise>
+      <div style={{marginTop: 36, display: 'flex', gap: 10}}>
+        {MUSIC_MODES.map((mode, i) => <Rise key={mode} delay={0.95 + i * 0.08} y={14} dur={0.5}><ModeChip on={lit(i)}>{mode}</ModeChip></Rise>)}
+      </div>
+    </div>
+    <Rise delay={0.2} y={40} style={{position: 'absolute', left: 740, top: 236, perspective: 2200}}>
+      <div style={{transformOrigin: '0% 50%',
+        transform: `rotateY(${interpolate(t, [0.2, 1.8, MUSIC_SECONDS], [-16, -6, -3], ease)}deg) scale(${interpolate(t, [0, MUSIC_SECONDS], [0.97, 1.01], clamp)})`}}>
+        <Shot name="music" width={MUSIC_W} crop={MUSIC_CROP}>
+          <div style={{position: 'absolute', left: MUSIC_STAGE.x * k, top: MUSIC_STAGE.y * k, width: MUSIC_STAGE.w * k, height: MUSIC_STAGE.h * k,
+            borderRadius: 6, overflow: 'hidden', background: '#0b0908'}}>
+            {MUSIC_MODES.map((mode, i) => <Sequence key={mode} name={`Folia · ${mode}`} from={at(bounds[i])} durationInFrames={at(bounds[i + 1]) - at(bounds[i])} premountFor={fps}>
+              <Video src={staticFile(`story/folia-${mode.toLowerCase()}.mp4`)} muted objectFit="cover" style={{width: '100%', height: '100%'}} />
+            </Sequence>)}
+            <AbsoluteFill style={{background: '#FFF1D6', opacity: 0.22 * flash, mixBlendMode: 'screen'}} />
+          </div>
+        </Shot>
+      </div>
+    </Rise>
+    <Rise delay={MUSIC_POP} y={34} dur={0.6} style={{position: 'absolute', left: 700, top: 724}}>
+      <Shot name="chat-music" width={380} crop={POP_CROP} style={{borderRadius: 14}} />
+    </Rise>
+    <Note style={{right: 140, top: 870}}>Folia 为内置音乐子项目（AGPL-3.0）· 歌曲与歌词为演示内容</Note>
+  </Stage>;
+};
+
+/* ── 06 空间：Agent 做出来的作品，都收在一处 ───────────────────── */
+const SPACES_CROP = {x: 0, y: 116, w: 2880, h: 1684};
+const SPACES_W = 1040;
+// 作品卡片在原图里的位置（四列两行）；空页 spaces-base 与 spaces 之间只差这八张卡片。
+const SPACE_CARDS = [572, 1280].flatMap(y => [520, 1094, 1668, 2242].map(x => ({x, y, w: 526, h: 648})));
+export const CARD_AT = [0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5]; // 八张卡片逐一落位，一张一个八分音符
+
+export const StorySpaces = () => {
+  const t = useSeconds(), k = SPACES_W / SHOT.w;
+  return <Stage glow="34% 48%">
+    <Rise delay={0.2} y={40} style={{position: 'absolute', left: 140, top: 236, perspective: 2200}}>
+      <div style={{transformOrigin: '100% 50%',
+        transform: `rotateY(${interpolate(t, [0.2, 1.8, 4.5], [16, 6, 3], ease)}deg) scale(${interpolate(t, [0, 4.5], [0.97, 1.01], clamp)})`}}>
+        <Shot name="spaces-base" width={SPACES_W} crop={SPACES_CROP}>
+          {SPACE_CARDS.map((card, i) => {
+            const s = CARD_AT[i], p = interpolate(t, [s - 0.06, s + 0.4], [0, 1], ease);
+            const glow = interpolate(t, [s - 0.06, s + 0.05, s + 0.9], [0, 1, 0], clamp);
+            return <div key={i} style={{position: 'absolute', left: (card.x - SPACES_CROP.x) * k, top: (card.y - SPACES_CROP.y) * k, width: card.w * k, height: card.h * k,
+              overflow: 'hidden', borderRadius: 10, opacity: interpolate(t, [s - 0.06, s + 0.16], [0, 1], clamp), translate: `0 ${(1 - p) * 22}px`, scale: 0.94 + 0.06 * p,
+              boxShadow: `0 0 0 1px rgba(226,194,133,${0.7 * glow}), 0 0 34px 4px rgba(226,194,133,${0.3 * glow})`}}>
+              <CanvasImage src={shotSrc('spaces')} style={{position: 'absolute', left: -card.x * k, top: -card.y * k, width: SHOT.w * k, height: SHOT.h * k, maxWidth: 'none'}} />
+            </div>;
+          })}
+        </Shot>
+      </div>
+    </Rise>
+    <Note style={{left: 156, top: 880}}>作品为演示素材 · 只保存在本机</Note>
+    <div style={{position: 'absolute', left: 1260, top: 236, width: 520}}>
+      <Kicker index="06" delay={0.1}>SPACES</Kicker>
+      <Interactive.Div name="主标题" style={{marginTop: 30, fontSize: 96, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.18}}>
+        <Chars text={'做出来的，\n都有处安放'} delay={0.18} />
+      </Interactive.Div>
+      <Rise delay={0.55}><div style={{marginTop: 30, fontSize: 34, lineHeight: 1.5}}>图片、漫画、文档，<br />都收进同一个空间。</div></Rise>
+      <Rise delay={0.7}><div style={{marginTop: 14, fontSize: 25, lineHeight: 1.5, color: c.dim}}>Images, comics and documents<br />your agents make, kept in one place.</div></Rise>
+      <div style={{marginTop: 36, display: 'flex', gap: 10}}>
+        {['星标收藏', '收藏夹', '搜索作品'].map((tag, i) => <Rise key={tag} delay={0.95 + i * 0.08} y={14} dur={0.5}><ModeChip>{tag}</ModeChip></Rise>)}
+      </div>
+    </div>
+  </Stage>;
+};
+
+/* ── 07 用量：每一次调用都有账可查 ────────────────────────────── */
 export const USAGE_SWEEP = [0.75, 2.25] as const; // 金线扫过曲线的起止（秒）
 
 export const StoryUsage = () => {
@@ -281,7 +384,7 @@ export const StoryUsage = () => {
   const chart = {left: (634 - 500) * k, right: (2729 - 500) * k, top: (677 - 300) * k, bottom: (1138 - 300) * k};
   const sweep = interpolate(t, USAGE_SWEEP, [chart.left, chart.right], soft);
   return <Stage glow="50% 62%">
-    <Title index="05" kicker="USAGE & COST" zh="每一次调用，都有账可查" en="Tokens, cache hits and cost, broken down by model and agent." />
+    <Title index="07" kicker="USAGE & COST" zh="每一次调用，都有账可查" en="Tokens, cache hits and cost, broken down by model and agent." />
     <Rise delay={0.3} y={36} style={{position: 'absolute', left: 210, top: 376}}>
       <div style={{scale: interpolate(t, [0, 4.5], [1, 1.035], clamp), transformOrigin: '60% 60%'}}>
         <Shot name="dash" width={1500} crop={{x: 500, y: 300, w: 2380, h: 960}}>
@@ -295,7 +398,7 @@ export const StoryUsage = () => {
   </Stage>;
 };
 
-/* ── 06 外观：多套主题，同一个港湾 ───────────────────────────── */
+/* ── 08 外观：多套主题，同一个港湾 ───────────────────────────── */
 // 名称与公开版 web/app.js 的 THEME_CATEGORIES 一致。二次元主题的截图裁到聊天区为止，不带右侧的角色立绘。
 const LOOKS = [
   {name: 'chat-champagne', zh: '放映室 · 香槟', en: 'Premium · Champagne', swatch: '#E2C285', glow: '226,194,133'},
@@ -315,7 +418,7 @@ export const StoryLooks = () => {
   return <Stage glow="70% 60%">
     {LOOKS.map((look, i) => <AbsoluteFill key={look.name} style={{opacity: weight(i),
       background: `radial-gradient(50% 55% at 68% 62%, rgba(${look.glow},0.13), transparent 72%)`}} />)}
-    <Title index="06" kicker="LOOKS" zh="换一身装扮，还是那个港湾" en="Switch themes freely. It's still your harbour." />
+    <Title index="08" kicker="LOOKS" zh="换一身装扮，还是那个港湾" en="Switch themes freely. It's still your harbour." />
     <div style={{position: 'absolute', left: 140, top: 430, width: 600}}>
       {LOOKS.map((look, i) => {
         const w = weight(i);
@@ -349,7 +452,7 @@ export const StoryLooks = () => {
   </Stage>;
 };
 
-/* ── 07 上手：把安装交给编码 Agent ───────────────────────────── */
+/* ── 09 上手：把安装交给编码 Agent ───────────────────────────── */
 const PROMPT = '请帮我部署 Harbour 外壳：https://github.com/DemonRain7/harbour-lite 。先读取仓库的 AGENTS.md、README.md 和 docs/AGENT-SETUP.md，按交接说明在独立目录安装，保留原 Electron/Web 界面……';
 export const PROMPT_TYPING = [0.55, 2.35] as const;
 export const STEP_AT = [1.75, 2, 2.25];
@@ -363,12 +466,12 @@ const Step = ({n, zh, en, delay}: {n: string; zh: string; en: string; delay: num
 );
 
 export const StoryHandoff = () => {
-  const t = useSeconds(), frame = useCurrentFrame(), {fps} = useVideoConfig();
+  const t = useSeconds();
   const typed = Math.round(interpolate(t, PROMPT_TYPING, [0, PROMPT.length], clamp));
   // 链接和文件名打完整之后变成金色，像编辑器认出了它们。
   const parts = PROMPT.slice(0, typed).split(/(https:\/\/[^\s。]+|[\w/-]+\.md)/);
   return <Stage glow="50% 48%">
-    <Title index="07" kicker="GET STARTED" zh="交给你的编码 Agent 来安装" en="Hand the setup to your coding agent." />
+    <Title index="09" kicker="GET STARTED" zh="交给你的编码 Agent 来安装" en="Hand the setup to your coding agent." />
     <Rise delay={0.3} y={30} style={{position: 'absolute', left: 140, top: 392, width: 1640}}>
       <div style={{position: 'relative', height: 250, borderRadius: 20, border: `1px solid ${c.border}`, background: c.panel, padding: '30px 44px',
         boxShadow: '0 40px 90px -36px rgba(0,0,0,0.95), 0 0 120px -50px rgba(226,194,133,0.25)'}}>
@@ -378,7 +481,7 @@ export const StoryHandoff = () => {
         <div style={{marginTop: 20, fontSize: 31, lineHeight: 1.62, color: c.fg}}>
           {parts.map((part, i) => i % 2 ? <span key={i} style={{color: c.gold}}>{part}</span> : part)}
           <span style={{display: 'inline-block', width: 3, height: 34, marginLeft: 4, verticalAlign: '-6px', background: c.gold,
-            opacity: Math.floor(frame / (STORY_BEAT * fps)) % 2 === 0 ? 1 : 0.15}} />
+            opacity: Math.floor(t / STORY_BEAT) % 2 === 0 ? 1 : 0.15}} />
         </div>
       </div>
     </Rise>
@@ -391,7 +494,7 @@ export const StoryHandoff = () => {
   </Stage>;
 };
 
-/* ── 08 片尾：光束再写一次字标，靠港 ────────────────────────────── */
+/* ── 片尾：光束再写一次字标，靠港 ──────────────────────────────── */
 export const StoryEnd = () => {
   const t = useSeconds();
   const beam = interpolate(t, [0.1, 1.2, 5], [-70, 60, 72], swing);
@@ -440,7 +543,7 @@ const BeamWipe = ({children, presentationDirection, presentationProgress}: Trans
   </AbsoluteFill>;
 };
 
-// 底部航线：01–07 七个章节的刻度，光点从左驶向右，在片尾靠港；光点随拍子轻轻一亮。
+// 底部航线：01–09 九个章节的刻度，光点从左驶向右，在片尾靠港；光点随拍子轻轻一亮。
 const Voyage = () => {
   const t = useSeconds();
   const hits = STORY_STARTS.slice(1).map(s => s + STORY_TRANSITION_SECONDS / 2);
@@ -481,24 +584,28 @@ export const STORY_SCENES = [
   {name: '02 每位伙伴各司其职', seconds: 5.5, component: StoryCrew},
   {name: '03 能力按需挂载', seconds: 4.5, component: StorySkills},
   {name: '04 不止聊天', seconds: 4.5, component: StoryDaily},
-  {name: '05 用量与成本', seconds: 4.5, component: StoryUsage},
-  {name: '06 多套主题', seconds: 4.5, component: StoryLooks},
-  {name: '07 交给编码 Agent 安装', seconds: 5.5, component: StoryHandoff},
+  {name: '05 内置 Folia 音乐', seconds: MUSIC_SECONDS, component: StoryMusic},
+  {name: '06 作品空间', seconds: 4.5, component: StorySpaces},
+  {name: '07 用量与成本', seconds: 4.5, component: StoryUsage},
+  {name: '08 多套主题', seconds: 4.5, component: StoryLooks},
+  {name: '09 交给编码 Agent 安装', seconds: 5.5, component: StoryHandoff},
   {name: '片尾', seconds: 5, component: StoryEnd},
 ] as const;
 export const STORY_TRANSITION_SECONDS = 0.5;
-// 各场景在成片里的起点（秒）：前一场起点 + 时长 - 转场重叠。
+// 各场景在成片里的起点（拍格秒）：前一场起点 + 时长 - 转场重叠。
 export const STORY_STARTS = STORY_SCENES.map((_, i) => STORY_SCENES.slice(0, i).reduce((sum, scene) => sum + scene.seconds - STORY_TRANSITION_SECONDS, 0));
+// 拍格秒换算成帧；100 BPM、30 fps 时一拍正好 18 帧，所有时长都是整数帧。
+export const storyFrames = (seconds: number, fps: number) => Math.round(seconds * TEMPO * fps);
 export const storyDurationInFrames = (fps: number) =>
-  Math.round(STORY_SCENES.reduce((sum, scene) => sum + scene.seconds, 0) * fps - (STORY_SCENES.length - 1) * STORY_TRANSITION_SECONDS * fps);
+  storyFrames(STORY_SCENES.reduce((sum, scene) => sum + scene.seconds, 0) - (STORY_SCENES.length - 1) * STORY_TRANSITION_SECONDS, fps);
 
 export const HarbourStory = () => {
   const {fps} = useVideoConfig();
   return <AbsoluteFill style={{background: c.bg}}>
     <TransitionSeries>
       {STORY_SCENES.flatMap(({name, seconds, component: Scene}, i) => [
-        ...(i ? [<TransitionSeries.Transition key={`t${i}`} presentation={{component: BeamWipe, props: {}}} timing={linearTiming({durationInFrames: STORY_TRANSITION_SECONDS * fps})} />] : []),
-        <TransitionSeries.Sequence key={name} name={name} durationInFrames={seconds * fps}><Scene /></TransitionSeries.Sequence>,
+        ...(i ? [<TransitionSeries.Transition key={`t${i}`} presentation={{component: BeamWipe, props: {}}} timing={linearTiming({durationInFrames: storyFrames(STORY_TRANSITION_SECONDS, fps)})} />] : []),
+        <TransitionSeries.Sequence key={name} name={name} durationInFrames={storyFrames(seconds, fps)}><Scene /></TransitionSeries.Sequence>,
       ])}
     </TransitionSeries>
     <Voyage />
