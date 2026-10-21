@@ -1,0 +1,25 @@
+{
+  "name": "harbour-lite-intro",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Editable public introduction video for Harbour Lite",
+  "scripts": {
+    "studio": "remotion studio src/index.ts --no-open",
+    "typecheck": "tsc --noEmit",
+    "render": "remotion render src/index.ts HarbourLiteIntro ../docs/media/intro.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --color-space=bt709 --concurrency=2 --overwrite",
+    "verify": "node scripts/verify-video.mjs"
+  },
+  "dependencies": {
+    "@fontsource/noto-sans-sc": "5.2.9",
+    "@remotion/cli": "4.0.537",
+    "@remotion/transitions": "4.0.537",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.537"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "typescript": "5.9.3"
+  }
+}

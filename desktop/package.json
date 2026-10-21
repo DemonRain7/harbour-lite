@@ -1,0 +1,14 @@
+{
+  "name": "harbour-lite-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Optional desktop shell for Harbour Lite",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "44.9.2"
+  }
+}
