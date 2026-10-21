@@ -1,6 +1,7 @@
 import type {CSSProperties, ReactNode} from 'react';
 import {AbsoluteFill, CanvasImage, Easing, Interactive, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {TransitionSeries, linearTiming, type TransitionPresentationComponentProps} from '@remotion/transitions';
+import {Audio} from '@remotion/media';
 import '@fontsource/noto-sans-sc/400.css';
 import '@fontsource/noto-sans-sc/500.css';
 import '@fontsource/noto-sans-sc/700.css';
@@ -8,7 +9,7 @@ import {fontFamily} from './theme';
 import './global.css';
 
 // 「放映室 · Champagne」主题配色：与公开版 web/themes.css 的 premium-champagne 一致。
-// 片中所有界面都是公开版实机截图 + 演示数据（demo/public/story/），无音频、无远程资源。
+// 片中所有界面都是公开版实机截图 + 演示数据（demo/public/story/）；配乐与音效是 scripts/make-score.mjs 本地合成的音轨，无远程资源。
 const c = {
   bg: '#070606', bg2: '#0D0B09', panel: '#100F0D', elev: '#1C1915',
   fg: '#F3EEE3', dim: '#ABA495', faint: '#6F6A5E',
@@ -421,5 +422,7 @@ export const HarbourStory = () => {
       ])}
     </TransitionSeries>
     <Finish />
+    {/* 原创合成配乐 + 音效，时间轴与上面的场景一一对应；改了场景时长或 Rise 延迟要重跑 npm run score。 */}
+    <Audio src={staticFile('story/score.m4a')} />
   </AbsoluteFill>;
 };

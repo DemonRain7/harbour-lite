@@ -3,7 +3,7 @@
 成片：[harbour-story.mp4](../docs/media/harbour-story.mp4)。这是在 30 秒短版 `HarbourIntro` 之外新增的长版合成，用于 Bilibili / GitHub 介绍 Harbour 是什么；短版源码与成片不变。
 
 - 49.5 秒，1920×1080，30 fps，1485 帧，H.264 / yuv420p / BT.709，CRF 18。
-- 无音轨（无音乐、无 TTS）；上传 Bilibili 时可自行配乐。
+- 立体声配乐 + 音效（AAC，48 kHz，-16 LUFS）：全部由 [scripts/make-score.mjs](scripts/make-score.mjs) 在本地用代码合成，不含采样、下载素材或 TTS，见下文「配乐与音效」。
 - 中文主标题 + 英文副标题，同一条片子兼顾中文与英文观众。
 - 视觉沿用公开版 `premium-champagne`「放映室 · 香槟」配色：暖黑 #070606、香槟金 #E2C285、米白 #F3EEE3；字标沿用 `web/fonts/wordmark/caveat-harbour.woff2`，中文 Noto Sans SC。
 - 源码：[src/Story.tsx](src/Story.tsx)，在 Studio 的 `HarbourStory` 下预览，各场景也在 `StoryScenes` 文件夹单独注册。
@@ -23,6 +23,22 @@
 | 32–38.5s | 06 外观 | 换一身装扮，还是那个港湾 / Switch themes freely | 香槟、钨丝、薰衣草、雪绒四套主题依次划过 |
 | 38–44.5s | 07 上手 | 交给你的编码 Agent 来安装 / Hand the setup to your coding agent | README 交接 Prompt 打字机节选 + 三步 |
 | 44–49.5s | 片尾 | 让每一位 Agent，都有处停靠。/ A harbour for your agents | 字标、仓库地址、「公开版准备中 · 尚未正式发布」 |
+
+## 配乐与音效
+
+- 和声：D 大调，每次转场压到最暗的那一刻换和弦（I–vi–IV–I⁶–ii–IV–vi–IV–V–I），「07 上手」停在属和弦，片尾字标出现时回到主和弦。
+- 声音全部是合成的：铺底与低音用带限波表 + 轻微失谐；键音、玻璃风铃、界面提示音用衰减分音；海浪、气流、键盘敲击用滤波噪声；再过 Freeverb 混响与左右回声。固定随机种子，每次生成结果相同。
+- 与画面对位（时间取自 `src/Story.tsx` 的场景时长和 `Rise` 延迟）：
+  - 开场：海浪与灯塔光束从左扫到右，灯亮一声风铃，手写字标从左往右逐个落音，金色下划线一道气流。
+  - 每次转场：吸进暗处的一口气 + 一点低频落地。各场标题与英文副标题各落一个音，逐场往上走。
+  - 02 伙伴：四条连线各一声提示音，四张模型卡片依次落音，声像跟着卡片的横向位置。
+  - 03 能力、04 不止聊天：每行挂载、每张截图上浮各配一声。
+  - 05 用量：金线扫曲线时，按同一条缓动曲线反算时刻，五声音阶跟着金线从左往右向上走。
+  - 06 外观：三次主题划入各一道气流，划完落一声风铃。
+  - 07 上手：Prompt 打字时一串轻敲（两行，声像随行移动），三步出现各落一音。
+  - 片尾：海浪回来，灯塔再亮，字标写出，仓库地址一声风铃，最后 2.3 秒淡出。
+- 母带：按 ITU-R BS.1770 积分响度归一到 -16 LUFS，前瞻限制器把采样峰值压在 -1.8 dBFS 以下。
+- 改了场景时长或 `Rise` 延迟，要同步 `make-score.mjs` 里的 `SCENES` 和事件表，再运行 `npm --prefix demo run score` 重新生成 `public/story/score.m4a`（用 `@remotion/cli` 自带的 ffmpeg 编码，不需要另装）。要单独检查各分轨电平：`node demo/scripts/make-score.mjs --wav <输出.wav> --stems <目录>`。
 
 ## 素材与事实边界
 
@@ -48,15 +64,20 @@ npm --prefix demo run studio -- --port=3321
 在 Studio 里选择 `HarbourStory`。导出：
 
 ```powershell
+npm --prefix demo run score   # 可选：重新生成配乐，仓库里已附带 public/story/score.m4a
 npm --prefix demo run render:story
 ```
 
-写入 `docs/media/harbour-story.mp4`（覆盖同名文件）。首次渲染会由 Remotion 下载 Chrome Headless Shell。
+写入 `docs/media/harbour-story.mp4`（覆盖同名文件），配乐经 `@remotion/media` 的 `<Audio>` 混进成片。首次渲染会由 Remotion 下载 Chrome Headless Shell。
 
 ## 本轮验收
 
 - `npm --prefix demo run typecheck` 通过；渲染前逐场景出静帧查看，修正了能力页副标题被截图遮挡、三张局部截图过小、主题扇形布局失衡等问题。
-- 最终 MP4 经 ffprobe 确认：h264、1920×1080、30/1、yuv420p、bt709 / tv range、1485 帧、49.5 秒、无音轨，约 10 MB；`ffmpeg -xerror` 全片解码通过。
+- 最终 MP4 经 ffprobe 确认：h264、1920×1080、30/1、yuv420p、bt709 / tv range、1485 帧、49.5 秒；音轨 AAC LC、48 kHz 立体声、49.5 秒；约 11.7 MB；`ffmpeg -xerror` 全片解码通过。
+- 配乐是后加的：没有重新渲染画面，而是把 `score.m4a` 直接封装进已验收的无声版 MP4，前后视频流 SHA-256 一致。
+- 音轨实测（ffmpeg ebur128）：积分响度 -16.0 LUFS、响度范围 3.4 LU、真峰值 -2.1 dBTP；折叠成单声道为 -19.7 LUFS，没有明显的相位抵消。
+- 用 Remotion 局部渲染前 150 帧：输出音轨与 `score.m4a` 互相关 0.9998、零偏移、增益差 0.02 dB，说明 `render:story` 重新导出会带上同一条音轨。
+- 声音只做了客观检查（频谱图、逐段响度、分轨电平、事件对位），发布前请再人工试听一遍。
 - 从最终 MP4 抽取 10 张关键帧与 3 张转场帧查看：文字未溢出或重叠，转场无标题叠影。
 - [海报](../docs/media/harbour-story-poster.png)（第 3.6 秒）与[关键帧联系表](../docs/media/harbour-story-contact-sheet.png)均从最终 MP4 解码生成。
-- 本片由 Claude Code 按 `remotion-best-practices` Skill 的约定直接编写源码与渲染，不是 Harbour 内的 Agent 运行；渲染本身不调用任何语言模型。
+- 本片由 Claude Code 按 `remotion-best-practices` Skill 的约定直接编写源码与渲染，不是 Harbour 内的 Agent 运行；渲染和配乐生成都不调用任何语言模型。
