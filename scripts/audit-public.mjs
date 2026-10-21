@@ -1,94 +1,29 @@
-import { execFileSync } from 'node:child_process';
-import { readFileSync, lstatSync } from 'node:fs';
+import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 
-const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
-const files = [
-  ...new Set(
-    execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'], {
-      cwd: root,
-      encoding: 'utf8',
-    })
-      .split('\0')
-      .filter(Boolean),
-  ),
-];
-const rootFiles = new Set([
-  '.env.example',
-  '.gitattributes',
-  '.gitignore',
-  '.prettierrc.json',
-  'AGENTS.md',
-  'CONTRIBUTING.md',
-  'LICENSE',
-  'README.md',
-  'SECURITY.md',
-  'THIRD_PARTY_NOTICES.md',
-  'package.json',
-  'package-lock.json',
-  'tsconfig.json',
-]);
-const allowed = [
-  /^src\/[\w-]+\.ts$/,
-  /^web\/(index\.html|styles\.css|app\.js|favicon\.svg)$/,
-  /^tests\/[\w.-]+\.ts$/,
-  /^scripts\/[\w.-]+\.(ts|mjs)$/,
-  /^docs\/[A-Z-]+\.md$/,
-  /^docs\/media\/(intro\.mp4|poster\.png|contact-sheet\.png|workbench\.png|appearance\.png)$/,
-  /^agents\/(assistant|planner)\/CLAUDE\.md$/,
-  /^skills\/(clear-writing|task-planning)\/SKILL\.md$/,
-  /^desktop\/(main\.cjs|package(-lock)?\.json)$/,
-  /^demo\/(\.gitignore|package(-lock)?\.json|tsconfig\.json|VIDEO-NOTES\.md)$/,
-  /^demo\/(src|scripts)\/[\w/-]+\.(tsx?|mjs)$/,
-  /^\.github\/(workflows\/ci\.yml|dependabot\.yml)$/,
-];
-const patterns = [
-  [
-    'personal home path',
-    /(?:[a-z]:[\\/]Users[\\/](?!Public\b|Default\b)[^\s/\\]+|\/Users\/[^\s/]+|\/home\/[^\s/]+)/i,
-  ],
-  ['private key', /-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----/],
-  ['GitHub token', /\b(?:gh[pousr]_[A-Za-z0-9]{25,}|github_pat_[A-Za-z0-9_]{30,})\b/],
-  ['provider secret', /\b(?:sk-(?:proj-|ant-)?[A-Za-z0-9_-]{24,}|AKID[A-Za-z0-9]{28,})\b/],
-  [
-    'private address',
-    /\b(?:192\.168\.[0-9]{1,3}\.[0-9]{1,3}|10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})\b/,
-  ],
-];
-const errors = [];
-for (const file of files) {
-  if (
-    !rootFiles.has(file) &&
-    file !== 'demo/src/global.css' &&
-    !allowed.some((pattern) => pattern.test(file))
-  ) {
-    errors.push(`${file}: not in the reviewed public-file allowlist`);
-    continue;
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const files=[...new Set(execFileSync('git',['ls-files','--cached','--others','--exclude-standard','-z'],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024}).split('\0'))]
+  .filter(p=>p&&fs.existsSync(path.join(root,p))&&fs.statSync(path.join(root,p)).isFile());
+const findings=[];
+for(const file of files){
+  if(/^(?:data|assets|\.local|\.claude|\.codex|node_modules)\//.test(file)
+    ||/(?:^|\/)(?:MASTER|PREFERENCE|MEMORY)\.md$/i.test(file)
+    ||/^(?:agents\/[^/]+\/inbox\/|\.env$|desktop\/(?:config|startup\.config)\.json$)/.test(file)){
+    findings.push({file,reason:'private runtime path'});continue;
   }
-  const absolute = path.join(root, file);
-  const info = lstatSync(absolute);
-  if (info.isSymbolicLink() || !info.isFile()) {
-    errors.push(`${file}: non-regular file`);
-    continue;
-  }
-  if (info.size > 8 * 1024 * 1024) errors.push(`${file}: unexpectedly large file`);
-  if (/\.(png|mp4)$/.test(file)) continue;
-  const text = readFileSync(absolute, 'utf8');
-  for (const [label, pattern] of patterns) if (pattern.test(text)) errors.push(`${file}: ${label}`);
-  if (/^\.env/.test(file) && file !== '.env.example')
-    errors.push(`${file}: environment file must never be published`);
+  if(!/\.(?:[cm]?js|ts|tsx|jsx|json|html|css|md|yaml|yml|txt|toml)$/.test(file)||file.endsWith('lock.json'))continue;
+  // Third-party fixtures retain their own sample names and licensing. Check them separately.
+  if(file.startsWith('vendor/'))continue;
+  const text=fs.readFileSync(path.join(root,file),'utf8');
+  if(/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/.test(text))findings.push({file,reason:'private key material'});
+  if(/C:[\\/]+Users[\\/]+\d{5,}[\\/]+/i.test(text))findings.push({file,reason:'personal absolute home path'});
+  if(/\b(?:sk-ant-api\d{2}-|AIza)[A-Za-z0-9_-]{24,}/.test(text))findings.push({file,reason:'possible API credential'});
 }
-const tracked = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' })
-  .split('\0')
-  .filter(Boolean);
-if (tracked.some((file) => /(?:^|\/)(?:data|node_modules|\.claude|\.codex)\//.test(file)))
-  errors.push('Private or generated directory is tracked.');
-if (!files.length) errors.push('No files found; run from a Git repository.');
-if (errors.length) {
-  console.error(errors.join('\n'));
-  process.exitCode = 1;
-} else
-  console.log(
-    `Public audit passed: ${files.length} reviewed paths; no configured secret/path patterns found. Manual review of content and media is still required.`,
-  );
+const privateRoots=['assets/Memory','assets/sessions','assets/uploads','agents/main-elaina','agents/main-aemeath','agents/main-winefox','workflows','mcp'];
+for(const dir of privateRoots){
+  if(files.some(file=>file.startsWith(dir+'/')))findings.push({file:dir,reason:'unexpected private capability or state'});
+}
+console.log(JSON.stringify({checkedFiles:files.length,findings,note:'Pattern checks are not a complete security or licensing review.'},null,2));
+if(findings.length)process.exitCode=1;

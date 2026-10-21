@@ -1,0 +1,200 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { openTownMenu, visitTownResident, exerciseTownMovement, exerciseTownSocial } = require('./town-ui.cjs');
+const fs = require('node:fs');
+const path = require('node:path');
+const http = require('node:http');
+const os = require('node:os');
+const { chromium } = require('../../vendor/folia/node_modules/playwright');
+const web = path.resolve(__dirname, '../../web');
+const { townAudioFixture } = require('./town-audio-fixture.cjs');
+const imported = fs.existsSync(path.join(web, 'town/maps/suibo/source/src/core/env.js'));
+
+test('Suibo real renderer: three residents, day/night, map transfer, drafts, Main identity, unload', { skip: !imported, timeout: 300000 }, async t => {
+  const server = http.createServer((req, res) => {
+    const name = decodeURIComponent(new URL(req.url, 'http://local').pathname);
+    if (name === '/town/audio/local/lingering-summer-light.m4a' && !fs.existsSync(path.join(web, name))) {
+      res.setHeader('Content-Type', 'audio/wav'); res.end(townAudioFixture(8)); return;
+    }
+    const file = path.resolve(web, `.${name}`);
+    if (!file.startsWith(web + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); res.end(); return; }
+    res.setHeader('Content-Type', ({ '.js': 'application/javascript', '.html': 'text/html', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.mp3': 'audio/mpeg' })[path.extname(file)] || 'application/octet-stream');
+    fs.createReadStream(file).pipe(res);
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }));
+  const browser = await chromium.launch({ headless: true, args: ['--mute-audio'], executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || (process.platform === 'win32' ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' : undefined) });
+  t.after(() => browser.close());
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  page.setDefaultTimeout(60000);
+  const errors = [], requests = [], sessions = new Map(), runs = [];
+  let finishReply;
+  const output = path.join(os.tmpdir(), 'harbour-town-suibo'); fs.mkdirSync(output, { recursive: true });
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', msg => { if (msg.type() === 'error') { errors.push(msg.text()); console.log('browser:', msg.text().slice(0, 1800)); } });
+  page.on('request', req => requests.push(req.url()));
+  page.on('requestfailed', req => console.log('request-failed:', req.url(), req.failure()));
+  await page.route('**/api/**', async route => {
+    const url = new URL(route.request().url()), body = route.request().postDataJSON();
+    if (url.pathname === '/api/conversations') return route.fulfill({ json: { enabled: true, activeId: [...sessions.values()].find(s => s.key === url.searchParams.get('key'))?.id } });
+    if (url.pathname === '/api/conversations/new') { const session = { ...body, id: body.agentName + '-town', messages: [] }; sessions.set(session.id, session); return route.fulfill({ json: { session } }); }
+    if (url.pathname.startsWith('/api/conversations/')) return route.fulfill({ json: { session: sessions.get(url.pathname.split('/').at(-1)) } });
+    if (url.pathname === '/api/run') { runs.push(body); await new Promise(resolve => { finishReply = resolve; }); return route.fulfill({ json: { answer: '今天也来散步吧。' } }); }
+    return route.fulfill({ json: { asks: [] } });
+  });
+  await page.addInitScript(() => { if (!localStorage.getItem('harbour-town-quality')) localStorage.setItem('harbour-town-quality', 'low'); });
+  const ready = async () => {
+    await page.waitForFunction(() => window.HarbourTown?.status().ready || document.querySelector('.loading button'), null, { timeout: 180000 });
+    assert.equal(await page.evaluate(() => HarbourTown.status().ready), true, await page.locator('#loading').innerText());
+    await page.waitForFunction(() => HarbourTown.status().frames > 2, null, { timeout: 60000 });
+  };
+  await page.goto(`http://127.0.0.1:${server.address().port}/town/index.html?map=suibo`);
+  await ready();
+  const status = await page.evaluate(() => HarbourTown.status()); console.log('Suibo status:', JSON.stringify(status));
+  assert.equal(status.mapId, 'suibo'); assert.equal(status.residents, 3); assert.equal(status.modules, 15); assert.deepEqual(status.missingTextures, []);
+  assert.equal(status.timeOfDay, 1, 'fresh Suibo arrival starts at night');
+  assert.equal(await page.locator('#daytime').textContent(), '时光 · 夜晚');
+  assert.ok(Math.abs(status.position[0] - 34) < .01 && Math.abs(status.position[2] - 55.5) < .01, 'arrive inside the café entrance');
+  assert.ok(Math.abs(status.position[1] - .35) < .01, 'spawn on the café floor, not the roof');
+  assert.ok(Math.abs(status.yaw - 195 * Math.PI / 180) < 1e-6, 'face into the hall');
+  await page.screenshot({ path: path.join(output, 'suibo-arrival-night.png'), animations: 'disabled' });
+  await exerciseTownMovement(page, page.keyboard);
+  assert.ok(status.models.every(m => m.behavior.walkableCells > 2), 'all residents can roam safely');
+  if (fs.existsSync(path.join(web, 'town/models/local/manifest.json'))) assert.ok(status.models.every(m => m.type === 'mmd'));
+  assert.equal(runs.length, 0);
+  await openTownMenu(page);
+  await page.locator('#sound').click();
+  await page.waitForFunction(() => HarbourTown.status().audio.playing > 0 && HarbourTown.status().audio.state === 'running');
+  assert.equal(await page.evaluate(() => HarbourTown.status().audio.music), '不散的夏之灯');
+  assert.equal(await page.evaluate(() => HarbourTown.status().audio.playing), 1);
+  const musicTime = await page.evaluate(() => HarbourTown.status().audio.musicTime);
+  for (let n = 0; n < 3; n++) await page.locator('#daytime').click();
+  assert.equal(await page.evaluate(() => HarbourTown.status().timeOfDay), 1);
+  assert.ok(await page.evaluate(() => HarbourTown.status().audio.musicTime) >= musicTime, 'day/night does not rewind the shared music');
+  assert.equal(requests.filter(url => url.includes('/town/audio/local/')).length, 1);
+  assert.equal(requests.filter(url => /bgm_(day|night)\.mp3/.test(url)).length, 0);
+  await page.evaluate(() => HarbourTown.setVisible(false));
+  await page.waitForFunction(() => HarbourTown.status().audio.playing === 0 && HarbourTown.status().audio.state === 'suspended');
+  const hiddenFrames = await page.evaluate(() => HarbourTown.status().frames);
+  await page.waitForTimeout(150);
+  assert.equal(await page.evaluate(() => HarbourTown.status().frames), hiddenFrames);
+  await page.evaluate(() => HarbourTown.setVisible(true));
+  await page.waitForFunction(() => HarbourTown.status().audio.playing > 0 && HarbourTown.status().audio.state === 'running');
+  await openTownMenu(page);
+  await page.locator('#sound').click();
+  await page.waitForFunction(() => HarbourTown.status().audio.playing === 0 && HarbourTown.status().audio.state === 'suspended');
+  await exerciseTownSocial(page, page.keyboard, name => page.screenshot({ path: path.join(output, `suibo-${name}.png`) }));
+  await visitTownResident(page, 'chisa');
+  await page.waitForFunction(() => document.querySelector('#interact').textContent.includes('和千咲互动'));
+  await page.locator('#interact').click();
+  await page.locator('[data-social="wave"]').click();
+  await page.waitForFunction(() => { const s = HarbourTown.status().models.find(m => m.id === 'chisa').behavior; return s.mode === 'greet' && s.phase > .8; });
+  assert.equal(await page.locator('#chat').isHidden(), true); assert.equal(runs.length, 0); assert.equal(sessions.size, 0);
+  await page.screenshot({ path: path.join(output, 'suibo-chisa.png') });
+  await page.screenshot({ path: path.join(output, 'suibo-night.png') });
+  await openTownMenu(page);
+  await page.locator('#daytime').click();
+  assert.equal(await page.evaluate(() => HarbourTown.status().timeOfDay), 0);
+  assert.equal(await page.locator('#daytime').textContent(), '时光 · 白昼');
+  await page.locator('#daytime').click();
+  assert.equal(await page.evaluate(() => HarbourTown.status().timeOfDay), .5);
+  await page.locator('#daytime').click();
+  assert.equal(await page.evaluate(() => HarbourTown.status().timeOfDay), 1);
+  for (const id of ['main-elaina', 'main-aemeath']) {
+    await visitTownResident(page, id);
+    await page.locator('#interact').waitFor({ state: 'visible', timeout: 15000 });
+    await page.waitForFunction(id => { const state = HarbourTown.status().models.find(m => m.id === id).behavior; return state.mode === 'greet' && state.phase > 1.1; }, id);
+    assert.match(await page.locator('#interact').innerText(), id === 'main-elaina' ? /伊蕾娜/ : /爱弥斯/, 'facing one resident must not target the other');
+    await page.screenshot({ path: path.join(output, `suibo-${id}.png`) });
+    assert.equal(await page.evaluate(id => HarbourTown.status().models.find(m => m.id === id).behavior.mode, id), 'greet');
+  }
+  await page.locator('#interact').click();
+  await page.locator('[data-social="chat"]').click();
+  await page.locator('#message').fill('穗波未发送草稿');
+  const hasModels = fs.existsSync(path.join(web, 'town/models/local/manifest.json'));
+  if (hasModels) {
+    await openTownMenu(page, 'residents');
+    await page.locator('.appearance summary').click();
+    assert.equal(await page.getByLabel('伊蕾娜丝袜').inputValue(), 'white');
+    await page.getByLabel('伊蕾娜丝袜').selectOption('original');
+    assert.equal(await page.evaluate(() => HarbourTown.snapshot().hosiery['main-elaina']), 'original');
+    await page.getByLabel('伊蕾娜服装').selectOption('light');
+    await page.waitForFunction(() => HarbourTown.status().models.find(m => m.id === 'main-elaina').variant === 'light');
+    assert.equal(await page.getByLabel('伊蕾娜丝袜').inputValue(), 'original', 'outfit swap keeps hosiery selection');
+  }
+  const pose = await page.evaluate(() => HarbourTown.status().position);
+  await openTownMenu(page);
+  await Promise.all([page.waitForURL('**map=station'), page.locator('#map').selectOption('station')]);
+  await ready();
+  assert.equal(await page.evaluate(() => HarbourTown.status().mapId), 'station');
+  assert.equal(await page.locator('#message').inputValue(), '穗波未发送草稿');
+  assert.equal(await page.evaluate(() => HarbourTown.status().selected), 'main-aemeath');
+  assert.equal(await page.locator('#chat-place').textContent(), '春色咖啡厅内');
+  assert.equal(await page.locator('#daytime').isHidden(), true);
+  if (hasModels) {
+    await page.waitForFunction(() => document.getElementById('loading').hidden);
+    assert.equal(await page.evaluate(() => HarbourTown.status().models.find(m => m.id === 'main-elaina').variant), 'light');
+    assert.equal(await page.evaluate(() => HarbourTown.status().models.find(m => m.id === 'main-elaina').hosiery), 'original');
+    await page.evaluate(() => { const saved = HarbourTown.snapshot(); saved.hosiery['main-elaina'] = 'white'; return HarbourTown.restore(saved); });
+    assert.equal(await page.evaluate(() => HarbourTown.snapshot().hosiery['main-elaina']), 'white', 'popout snapshot restores independent appearance');
+  }
+  assert.equal(runs.length, 0, 'transferring a draft does not submit it');
+  await openTownMenu(page);
+  await Promise.all([page.waitForURL('**map=suibo'), page.locator('#map').selectOption('suibo')]);
+  await ready();
+  if (hasModels) assert.equal(await page.evaluate(() => HarbourTown.status().models.find(m => m.id === 'main-elaina').hosiery), 'white');
+  assert.ok((await page.evaluate(() => HarbourTown.status().position)).every((n, i) => Math.abs(n - pose[i]) < 1e-6));
+  assert.equal(await page.locator('#message').inputValue(), '穗波未发送草稿');
+  await page.locator('#send').click();
+  await page.waitForFunction(() => HarbourTown.status().busy);
+  assert.equal(await page.locator('#map').isDisabled(), true, 'do not abandon an active Main run');
+  assert.equal(await page.locator('#quality').isDisabled(), true);
+  while (!finishReply) await page.waitForTimeout(10);
+  finishReply();
+  await page.waitForFunction(() => !HarbourTown.status().busy);
+  assert.equal(runs.length, 1); assert.equal(runs[0].agent, 'main-aemeath');
+  assert.equal(runs[0].session.key, 'web:town:main-aemeath');
+  assert.match(runs[0].input, /穗波市 · 列车长咖啡厅内/);
+  assert.equal(await page.locator('#map').isEnabled(), true);
+  // Exercise the normal-quality MRT/MSAA/TAA path too, not only the FXAA path.
+  await openTownMenu(page);
+  await Promise.all([page.waitForEvent('load'), page.locator('#quality').selectOption('medium')]);
+  await ready(); assert.equal(await page.evaluate(() => HarbourTown.status().quality), 'medium');
+  await page.locator('#chat-close').click();
+  await page.evaluate(() => { const pose = HarbourTown.snapshot(); pose.pose.timeOfDay = 0; return HarbourTown.restore(pose); });
+  assert.equal(await page.evaluate(() => HarbourTown.status().timeOfDay), 0, 'explicitly restored daytime overrides the night default');
+  assert.equal(await page.locator('#daytime').textContent(), '时光 · 白昼');
+  await page.waitForFunction(() => HarbourTown.status().frames > 20);
+  await page.screenshot({ path: path.join(output, 'suibo-medium-resident.png') });
+  // Shared input must still work with the new map's collision adapter.
+  const beforeWalk = await page.evaluate(() => HarbourTown.status().position);
+  await page.locator('#scene').focus(); await page.keyboard.down('KeyS'); await page.waitForTimeout(500); await page.keyboard.up('KeyS');
+  const afterWalk = await page.evaluate(() => HarbourTown.status().position);
+  assert.ok(Math.hypot(beforeWalk[0] - afterWalk[0], beforeWalk[2] - afterWalk[2]) > .1);
+  await page.setViewportSize({ width: 390, height: 760 });
+  await openTownMenu(page);
+  assert.equal(await page.locator('#map').isVisible(), true);
+  const mapRect = await page.locator('#map').boundingBox(); assert.ok(mapRect.x >= 0 && mapRect.x + mapRect.width <= 390);
+  await page.screenshot({ path: path.join(output, 'suibo-narrow.png') });
+  await page.evaluate(() => HarbourTown.setVisible(false));
+  const frames = await page.evaluate(() => HarbourTown.status().frames);
+  await page.waitForTimeout(200);
+  assert.equal(await page.evaluate(() => HarbourTown.status().frames), frames);
+  await page.evaluate(() => HarbourTown.destroy());
+  assert.equal(await page.evaluate(() => HarbourTown.status().destroyed), true);
+  assert.equal(requests.filter(url => !url.startsWith(`http://127.0.0.1:${server.address().port}/`) && !url.startsWith('blob:') && !url.startsWith('data:')).length, 0);
+  assert.deepEqual(errors, []);
+  // A missing locally imported map must offer a working way back, not a black canvas.
+  await page.route('**/maps/suibo/source/src/core/env.js', route => route.fulfill({ status: 404, body: 'fixture: missing local map' }));
+  await page.goto(`http://127.0.0.1:${server.address().port}/town/index.html?map=suibo`);
+  await page.getByRole('button', { name: '返回樱花车站' }).waitFor();
+  assert.equal(await page.evaluate(() => HarbourTown.status().ready), false);
+  await page.route('**/motions/quaternius.json', route => route.fulfill({ json: { version: 0 } }));
+  await Promise.all([page.waitForURL('**map=station'), page.getByRole('button', { name: '返回樱花车站' }).click()]);
+  await ready(); assert.equal(await page.evaluate(() => HarbourTown.status().mapId), 'station');
+  if (hasModels) assert.ok((await page.evaluate(() => HarbourTown.status().models)).every(m => m.type === 'mmd' && m.motionLibrary === 'procedural fallback'), 'bad optional motion library cannot prevent actual model loading');
+  assert.equal(runs.length, 1, 'fallback does not create a new Main request');
+  assert.ok(errors.every(message => /404 \(Not Found\)/.test(message)), errors.join('\n'));
+  await page.evaluate(() => HarbourTown.destroy());
+  console.log('Screenshots:', output);
+});

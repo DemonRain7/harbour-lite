@@ -1,0 +1,10 @@
+body[data-panel="town"] .harbour-hero{display:none!important}
+body[data-panel="town"] #content{padding:0;overflow:hidden;min-height:0;min-width:0;max-width:none;margin:0;display:flex;flex:1;border-radius:20px}
+.town-stage{position:relative;flex:1;width:100%;height:100%;min-height:440px;border-radius:20px;overflow:hidden;background:#edf0ed}
+.town-portal{position:fixed;z-index:2;border-radius:20px;overflow:hidden;background:#edf0ed}
+.town-portal[hidden]{display:none}
+.town-frame{display:block;border:0;width:100%;height:100%;background:#edf0ed;border-radius:inherit}
+.town-detached{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px;text-align:center;color:#535950;background:radial-gradient(ellipse at 70% 25%,#ffe5eb,transparent 65%),#edf0ed;box-sizing:border-box}
+.town-detached[hidden]{display:none}
+.town-detached h2,.town-detached p{margin:0}.town-detached p{font-size:14px;line-height:1.8}
+.town-detached button{margin:6px;border:1px solid #cdd4c8;border-radius:12px;background:#fffc;padding:12px 20px;color:inherit;cursor:pointer}

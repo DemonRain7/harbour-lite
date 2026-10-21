@@ -1,0 +1,62 @@
+/* A small listening room, using the same persona palette as the conversation. */
+.drawer-body:has(.orb-music-player) { display: flex; flex: 1; padding-bottom: 12px; }
+.orb-music-player { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 14px; padding: 1px 4px 8px; }
+.orb-music-player > :not(.music-queue) { flex-shrink: 0; }
+.orb-music-player:has(.music-queue:not([hidden])) { gap: 8px; min-height: 240px; }
+/* Queue mode keeps the current song + transport, giving the list the room.
+   One tap returns to the larger progress/volume controls. */
+.orb-music-player:has(.music-queue:not([hidden])) :is(.music-disc,.music-timeline,.music-volume) { display: none; }
+.orb-music-player:has(.music-queue:not([hidden])) .music-song strong { font-size: 15px; }
+.orb-music-player:has(.music-queue:not([hidden])) .music-song small { font-size: 10px; margin-top: 0; }
+.orb-music-player:has(.music-queue:not([hidden])) .music-play { width: 36px; height: 36px; }
+.music-caption { display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 10px; }
+.music-caption .quiet { font-size: 10px; gap: 5px; color: var(--accent); }
+.music-caption svg { width: 12px; height: 12px; }
+.music-song { display: flex; align-items: center; gap: 13px; padding: 2px 0 3px; min-width: 0; }
+.music-disc { flex: 0 0 auto; display: grid; place-items: center; width: 49px; height: 49px; border-radius: 50%;
+  background: repeating-radial-gradient(circle, transparent 0 5px, color-mix(in srgb,var(--accent) 9%,transparent) 6px 7px), color-mix(in srgb,var(--accent) 7%,var(--bg)); color: var(--accent); }
+.music-disc svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.music-song > div { min-width: 0; }
+.music-song strong, .music-song small { display: block; white-space: nowrap; overflow: hidden; mask-image: linear-gradient(to right,black 89%,transparent); }
+.music-song strong { font-size: 19px; font-weight: 550; letter-spacing: -.4px; line-height: 1.6; }
+.music-song small { color: var(--dim); font-size: 11px; margin-top: 2px; }
+.music-timeline { display: grid; gap: 3px; }
+.music-timeline > div { display: flex; justify-content: space-between; color: var(--dim); font-size: 10px; font-variant-numeric: tabular-nums; }
+.orb-music-player input[type="range"] { --fill: 0%; appearance: none; height: 16px; margin: 0; width: 100%; padding: 0; border: 0; border-radius: 0; box-shadow: none;
+  background: linear-gradient(to right,var(--accent) var(--fill),color-mix(in srgb,var(--accent) 13%,var(--bg)) var(--fill)) center / 100% 3px no-repeat; cursor: pointer; }
+.orb-music-player input[type="range"]::-webkit-slider-thumb { appearance: none; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+.orb-music-player input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.orb-music-player input:disabled { cursor: default; opacity: .4; }
+.music-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 6px; }
+.music-controls .icon { width: 36px; height: 36px; }
+.music-controls .icon[aria-expanded="true"] { color: var(--accent); background: var(--elev); }
+.music-play { display: grid; place-items: center; width: 46px; height: 46px; flex: 0 0 auto; border: 0; border-radius: 50%;
+  background: var(--accent); color: var(--bg); box-shadow: 0 4px 11px color-mix(in srgb,var(--accent) 20%,transparent); }
+.music-play:hover:not(:disabled) { filter: brightness(1.06); }
+.music-play svg { width: 21px; height: 21px; stroke-width: 2; }
+.music-mode { position: relative; }
+.music-mode small { position: absolute; font: 8px/1 var(--font); inset: 14px auto auto 16px; background: var(--bg); padding: 0 1px; }
+.music-volume { display: flex; align-items: center; justify-content: center; gap: 9px; }
+.music-volume input[type="range"] { width: 124px; }
+.music-volume output { width: 32px; text-align: right; color: var(--dim); font-size: 10px; font-variant-numeric: tabular-nums; }
+.music-volume svg { width: 15px; height: 15px; }
+.music-feedback { margin: 0; color: var(--dim); font-size: 11px; line-height: 1.65; overflow-wrap: anywhere; }
+.music-feedback[data-error="true"] { color: var(--signal-rose); }
+.music-queue { display: flex; flex-direction: column; flex: 1; min-height: 84px; border-top: 1px solid var(--border); padding-top: 11px; }
+.music-queue [data-music="tracks"] { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.music-queue-heading, .music-queue > small { flex-shrink: 0; }
+.music-queue-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; color: var(--dim); font-size: 10px; }
+.music-queue-heading input { width: 126px; min-width: 0; padding: 5px 8px; font: 10px var(--font); color: var(--fg); border: 1px solid var(--border); border-radius: 7px; background: transparent; }
+.music-track { display: flex; align-items: center; gap: 11px; width: 100%; padding: 8px 7px; border: 0; border-radius: 9px; background: transparent; color: var(--fg); text-align: left; }
+.music-track:hover { background: var(--elev); }
+.music-track[data-current="true"] { color: var(--accent); background: color-mix(in srgb,var(--accent) 7%,transparent); }
+.music-track > span:first-child { font-size: 10px; color: var(--dim); width: 17px; text-align: center; flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+.music-track > span:last-child { min-width: 0; }
+.music-track strong, .music-track small { display: block; overflow: hidden; white-space: nowrap; mask-image: linear-gradient(to right,black 87%,transparent); }
+.music-track strong { font-size: 11px; font-weight: 500; }
+.music-track small { font-size: 10px; color: var(--dim); margin-top: 3px; }
+.music-queue > small { display: block; color: var(--dim); font-size: 10px; line-height: 1.6; margin-top: 9px; }
+#music { color: var(--accent); }
+@media (prefers-reduced-motion: no-preference) {
+  .music-play, .music-track { transition: background .15s ease, color .15s ease; }
+}

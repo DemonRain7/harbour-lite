@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Harbour · 正在连接</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, "Microsoft YaHei UI", system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body {
+      display: grid; place-items: center; overflow: hidden; color: #eee8f6;
+      background:
+        radial-gradient(circle at 22% 18%, rgba(142, 112, 214, .18), transparent 34%),
+        radial-gradient(circle at 78% 82%, rgba(235, 205, 139, .1), transparent 30%),
+        linear-gradient(145deg, #12121a, #191520 58%, #11131a);
+    }
+    main {
+      width: min(520px, calc(100vw - 48px)); padding: 34px 36px; border: 1px solid rgba(218, 199, 238, .15);
+      border-radius: 28px; background: rgba(27, 23, 34, .78); box-shadow: 0 28px 80px rgba(0, 0, 0, .34);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    }
+    .sigil {
+      display: grid; place-items: center; width: 42px; height: 42px; border-radius: 15px;
+      color: #ebcd8b; background: rgba(235, 205, 139, .09); border: 1px solid rgba(235, 205, 139, .2);
+    }
+    h1 { margin: 20px 0 9px; font-size: 25px; letter-spacing: -.02em; }
+    p { margin: 0; color: rgba(238, 232, 246, .62); font-size: 14px; line-height: 1.7; }
+    code {
+      display: block; margin-top: 17px; padding: 10px 12px; overflow: hidden; text-overflow: ellipsis;
+      border-radius: 12px; color: rgba(238, 232, 246, .55); background: rgba(255, 255, 255, .035); font-size: 12px;
+    }
+    footer { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 24px; }
+    .status { display: flex; align-items: center; gap: 9px; color: rgba(238, 232, 246, .48); font-size: 12px; }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%; background: #c19bed;
+      box-shadow: 0 0 12px rgba(193, 155, 237, .7); animation: pulse 1.4s ease-in-out infinite;
+    }
+    button {
+      padding: 10px 17px; border: 1px solid rgba(235, 205, 139, .28); border-radius: 13px;
+      color: #f4dfac; background: rgba(235, 205, 139, .09); cursor: pointer; font: inherit;
+    }
+    button:hover { background: rgba(235, 205, 139, .16); }
+    button:disabled { opacity: .55; cursor: wait; }
+    @keyframes pulse { 50% { opacity: .3; transform: scale(.72); } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="sigil" aria-hidden="true">✦</div>
+    <h1>正在连接 Harbour</h1>
+    <p>正在等待后端服务就绪。首次启动或渠道连接可能需要一些时间；连接成功后会自动进入主界面，无需反复打开快捷方式。</p>
+    <code id="endpoint"></code>
+    <footer>
+      <span class="status"><i class="dot"></i><span id="status">正在重试连接…</span></span>
+      <button id="retry" type="button">立即重试</button>
+    </footer>
+  </main>
+  <script>
+    const query = new URLSearchParams(location.search);
+    document.getElementById("endpoint").textContent = query.get("url") || "Harbour backend";
+    const button = document.getElementById("retry");
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      document.getElementById("status").textContent = "正在连接…";
+      const connected = await window.harbourDesktop?.reloadDashboard?.().catch(() => false);
+      if (!connected) {
+        button.disabled = false;
+        document.getElementById("status").textContent = "后端尚未就绪，将继续自动重试";
+      }
+    });
+  </script>
+</body>
+</html>

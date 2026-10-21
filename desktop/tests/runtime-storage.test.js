@@ -1,0 +1,37 @@
+"use strict";
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const { initializeDesktopStorage, localDataHome } = require("../companion/runtime-storage");
+
+test("desktop cold start relocates its own profile without deleting history or importing credentials", t => {
+  const fixtures = path.resolve(__dirname, "../../data/runtime/test-fixtures");
+  fs.mkdirSync(fixtures, { recursive: true });
+  const base = fs.mkdtempSync(path.join(fixtures, "desktop-storage-"));
+  t.after(() => fs.rmSync(base, { recursive: true, force: true }));
+  const repo = path.join(base, "repo"), roaming = path.join(base, "roaming");
+  const oldProfile = path.join(roaming, "harbour-desktop");
+  fs.mkdirSync(repo); fs.mkdirSync(oldProfile, { recursive: true });
+  fs.writeFileSync(path.join(repo, "package.json"), '{"name":"harbour"}');
+  fs.writeFileSync(path.join(repo, ".env"), 'TENCENT_TTS_SECRET_KEY=do-not-import\nHARBOUR_DATA_HOME="data/runtime"\n');
+  fs.writeFileSync(path.join(oldProfile, "Preferences"), "profile fixture");
+  const values = { appData: roaming, userData: oldProfile };
+  const app = { getPath: key => values[key], setPath: (key, value) => { values[key] = value; }, getName: () => "harbour-desktop" };
+  const env = { LOCALAPPDATA: path.join(base, "local") };
+  assert.equal(localDataHome(repo), "data/runtime");
+  const root = initializeDesktopStorage(app, { repoRoot: repo, env });
+  assert.equal(root, path.join(repo, "data/runtime"));
+  assert.equal(values.userData, path.join(root, "electron"));
+  assert.equal(env.TEMP, path.join(root, "tmp"));
+  assert.equal(env.TENCENT_TTS_SECRET_KEY, undefined);
+  assert.equal(fs.readFileSync(path.join(values.userData, "Preferences"), "utf8"), "profile fixture");
+  assert.equal(fs.readFileSync(path.join(oldProfile, "Preferences"), "utf8"), "profile fixture");
+  fs.writeFileSync(path.join(oldProfile, "Preferences"), "stale");
+  values.userData = oldProfile;
+  initializeDesktopStorage(app, { repoRoot: repo, env });
+  assert.equal(fs.readFileSync(path.join(values.userData, "Preferences"), "utf8"), "profile fixture");
+  values.userData = path.join(base, "explicit-test-profile");
+  initializeDesktopStorage(app, { repoRoot: repo, env });
+  assert.equal(values.userData, path.join(base, "explicit-test-profile"));
+});

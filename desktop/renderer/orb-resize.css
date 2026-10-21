@@ -1,0 +1,43 @@
+/* Quiet on resting UI; conventional edge/corner cursors when approached. */
+.panel-resize { position: absolute; z-index: 7; pointer-events: none; }
+.panel-resize-handle { position: absolute; display: block; margin: 0; padding: 0; border: 0;
+  border-radius: 0; background: transparent; box-shadow: none; pointer-events: auto;
+  touch-action: none; -webkit-app-region: no-drag; }
+.panel-resize-handle[data-resize="n"], .panel-resize-handle[data-resize="s"] { left: 16px; right: 16px; height: 10px; cursor: ns-resize; }
+.panel-resize-handle[data-resize="n"] { top: -5px; }
+.panel-resize-handle[data-resize="s"] { bottom: -5px; }
+.panel-resize-handle[data-resize="e"], .panel-resize-handle[data-resize="w"] { top: 16px; bottom: 16px; width: 10px; cursor: ew-resize; }
+.panel-resize-handle[data-resize="e"] { right: -5px; }
+.panel-resize-handle[data-resize="w"] { left: -5px; }
+.panel-resize-handle[data-resize="nw"], .panel-resize-handle[data-resize="ne"],
+.panel-resize-handle[data-resize="sw"], .panel-resize-handle[data-resize="se"] { width: 21px; height: 21px; }
+.panel-resize-handle[data-resize="nw"], .panel-resize-handle[data-resize="ne"] { top: -5px; }
+.panel-resize-handle[data-resize="sw"], .panel-resize-handle[data-resize="se"] { bottom: -5px; }
+.panel-resize-handle[data-resize="nw"], .panel-resize-handle[data-resize="sw"] { left: -5px; }
+.panel-resize-handle[data-resize="ne"], .panel-resize-handle[data-resize="se"] { right: -5px; }
+.panel-resize-handle[data-resize="nw"], .panel-resize-handle[data-resize="se"] { cursor: nwse-resize; }
+.panel-resize-handle[data-resize="ne"], .panel-resize-handle[data-resize="sw"] { cursor: nesw-resize; }
+.panel-resize-handle[data-resize="se"]::after { content: ""; position: absolute; width: 8px; height: 8px; right: 10px; bottom: 10px;
+  border-right: 1px solid var(--accent); border-bottom: 1px solid var(--accent); border-radius: 0 0 3px 0; opacity: .2; }
+.panel-resize-handle[data-resize="se"]:is(:hover, :focus-visible)::after { opacity: .8; }
+.panel-resize-handle:focus-visible { outline-offset: -4px; border-radius: 6px; }
+body:not([data-resizing="none"]) .orb-panel { border-color: color-mix(in srgb, var(--accent) 48%, var(--border)); }
+body:not([data-resizing="none"]) * { user-select: none !important; }
+body[data-resizing="n"], body[data-resizing="s"] { cursor: ns-resize; }
+body[data-resizing="e"], body[data-resizing="w"] { cursor: ew-resize; }
+body[data-resizing="nw"], body[data-resizing="se"] { cursor: nwse-resize; }
+body[data-resizing="ne"], body[data-resizing="sw"] { cursor: nesw-resize; }
+/* A deliberately short panel should still have reading space. Tighten only
+   spacing, not controls or font legibility; larger windows keep their rhythm. */
+body[data-compact-chat="true"] .orb-header { padding: 10px 12px 8px; }
+body[data-compact-chat="true"] .brand { gap: 7px; }
+body[data-compact-chat="true"] .brand-glyph { font-size: 26px; width: 22px; }
+body[data-compact-chat="true"] .brand strong { font-size: 18px; }
+body[data-compact-chat="true"] .brand small { font-size: 9px; }
+body[data-compact-chat="true"] .conversation-tools { padding: 8px 12px; }
+body[data-compact-chat="true"] .current-session { margin: 3px 12px 0; padding: 3px; }
+body[data-compact-chat="true"] .composer { margin: 3px 10px 9px; padding: 7px 9px 5px; }
+body[data-compact-chat="true"] .run-controls { margin-bottom: 4px; }
+body[data-compact-chat="true"] textarea { min-height: 34px; max-height: 64px; line-height: 1.4; }
+body[data-compact-chat="true"] .run-status { padding: 4px 13px; }
+body[data-compact-chat="true"] .messages { padding: 12px; }

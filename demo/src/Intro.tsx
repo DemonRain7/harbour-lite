@@ -1,5 +1,5 @@
 import type {CSSProperties, ReactNode} from 'react';
-import {AbsoluteFill, Easing, Interactive, interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
+import {AbsoluteFill, CanvasImage, Easing, Interactive, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {TransitionSeries, linearTiming, type TransitionPresentationComponentProps} from '@remotion/transitions';
 import '@fontsource/noto-sans-sc/400.css';
 import '@fontsource/noto-sans-sc/500.css';
@@ -7,275 +7,261 @@ import '@fontsource/noto-sans-sc/700.css';
 import {fontFamily, palette as p} from './theme';
 import './global.css';
 
-const ease = Easing.bezier(0.16, 1, 0.3, 1);
-const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: ease} as const;
+const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
+const ease = {...clamp, easing: Easing.bezier(0.16, 1, 0.3, 1)} as const;
+const photoShadow = '0 28px 70px -28px rgba(83,61,100,0.28)';
+const imageSrc = () => staticFile('original-main-chat.png');
 
-// Fade through the paper background so successive headlines never double-expose.
+// No audio, remote assets, live UI requests or private content.
 const PaperTransition = ({children, presentationDirection, presentationProgress}: TransitionPresentationComponentProps<Record<string, never>>) => (
   <AbsoluteFill style={{opacity: presentationDirection === 'exiting'
-    ? interpolate(presentationProgress, [0, 0.48], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})
-    : interpolate(presentationProgress, [0.52, 1], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}}>
-    {children}
-  </AbsoluteFill>
-);
-
-// All imagery is original code-native geometry. This is not a screen recording.
-const HarbourMark = ({size = 46, light = false}: {size?: number; light?: boolean}) => (
-  <svg width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
-    <path d="M14 11v30c0 9 7 14 18 14s18-5 18-14V11" stroke={light ? p.mint : p.ink} strokeWidth="8" strokeLinecap="round" />
-    <path d="M14 30h36" stroke={light ? p.mint : p.ink} strokeWidth="8" strokeLinecap="round" />
-    <circle cx="32" cy="12" r="4" fill={light ? p.paper : p.ink} />
-  </svg>
-);
-
-const Arrow = ({size = 36, color = p.ink}: {size?: number; color?: string}) => (
-  <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-    <path d="M8 24h30M27 12l12 12-12 12" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const Check = ({size = 27}: {size?: number}) => (
-  <svg width={size} height={size} viewBox="0 0 28 28" fill="none">
-    <path d="m6 14 5 5L22 8" stroke={p.ink} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const FolderIcon = ({size = 42}: {size?: number}) => (
-  <svg width={size} height={size} viewBox="0 0 52 44" fill="none">
-    <path d="M4 13V8a4 4 0 0 1 4-4h13l6 7h17a4 4 0 0 1 4 4v21a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V13Z" fill={p.mint} stroke={p.ink} strokeWidth="2.5" />
-    <path d="M5 15h42" stroke={p.ink} strokeWidth="2.5" />
-  </svg>
+    ? interpolate(presentationProgress, [0, 0.46], [1, 0], clamp)
+    : interpolate(presentationProgress, [0.54, 1], [0, 1], clamp)}}>{children}</AbsoluteFill>
 );
 
 const Reveal = ({children, delay = 0, style}: {children: ReactNode; delay?: number; style?: CSSProperties}) => {
-  const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
-  return <div style={{
-    ...style,
-    opacity: interpolate(frame, [delay * fps, (delay + 0.7) * fps], [0, 1], clamp),
-    translate: `0 ${interpolate(frame, [delay * fps, (delay + 0.9) * fps], [28, 0], clamp)}px`,
+  const frame = useCurrentFrame(); const {fps} = useVideoConfig();
+  return <div style={{...style,
+    opacity: interpolate(frame, [delay * fps, (delay + 0.55) * fps], [0, 1], ease),
+    translate: `0 ${interpolate(frame, [delay * fps, (delay + 0.8) * fps], [22, 0], ease)}px`,
   }}>{children}</div>;
 };
 
-const Shell = ({children, number, dark = false}: {children: ReactNode; number: string; dark?: boolean}) => (
-  <AbsoluteFill style={{background: dark ? p.ink : p.paper, color: dark ? p.paper : p.ink, fontFamily, overflow: 'hidden'}}>
-    <div style={{position: 'absolute', top: 64, left: 132, display: 'flex', alignItems: 'center', gap: 16}}>
-      <HarbourMark light={dark} size={40} />
-      <div style={{fontSize: 25, letterSpacing: 2.2, fontWeight: 500}}>HARBOUR LITE</div>
-    </div>
-    <div style={{position: 'absolute', top: 69, right: 132, fontSize: 21, letterSpacing: 3, opacity: 0.55}}>{number} / 06</div>
-    {children}
-    <div style={{position: 'absolute', bottom: 64, left: 132, fontSize: 23, opacity: 0.7}}>轻量 Agent 启动器</div>
-    <div style={{position: 'absolute', bottom: 64, right: 132, fontSize: 21, letterSpacing: 1, opacity: 0.55}}>PUBLIC EDITION</div>
-  </AbsoluteFill>
-);
-
-const Eyebrow = ({children}: {children: ReactNode}) => (
-  <div style={{fontSize: 22, letterSpacing: 4, color: p.muted, marginBottom: 30, fontWeight: 500}}>{children}</div>
-);
-
-const Headline = ({children, size = 108}: {children: ReactNode; size?: number}) => (
-  <Interactive.Div name="Headline" style={{fontSize: size, fontWeight: 700, lineHeight: 1.25, letterSpacing: -3}}>{children}</Interactive.Div>
-);
-
-const Supporting = ({children, style}: {children: ReactNode; style?: CSSProperties}) => (
-  <div style={{fontSize: 35, lineHeight: 1.8, color: p.muted, ...style}}>{children}</div>
-);
-
-const Panel = ({children, title, style}: {children: ReactNode; title: string; style?: CSSProperties}) => (
-  <div style={{border: `1.5px solid ${p.line}`, borderRadius: 28, background: p.white, boxShadow: '0 26px 70px rgba(21,62,64,0.06)', overflow: 'hidden', ...style}}>
-    <div style={{height: 74, display: 'flex', alignItems: 'center', padding: '0 30px', gap: 12, borderBottom: `1px solid ${p.line}`, fontSize: 23, color: p.muted}}>
-      <div style={{display: 'flex', gap: 7, marginRight: 9}}>{[0, 1, 2].map(i => <div key={i} style={{width: 8, height: 8, background: p.line, borderRadius: 9}} />)}</div>
-      <span>{title}</span>
-      <span style={{marginLeft: 'auto', fontSize: 17, border: `1px solid ${p.line}`, borderRadius: 30, padding: '5px 12px', color: p.muted}}>界面示意</span>
-    </div>
-    {children}
-  </div>
-);
-
-const Tag = ({children, pale = false}: {children: ReactNode; pale?: boolean}) => (
-  <div style={{display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 24, padding: '12px 19px', borderRadius: 13, background: pale ? p.paper : p.mint, color: p.ink}}>{children}</div>
-);
-
-export const WelcomeScene = () => {
-  const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
-  return <Shell number="01">
-    <Reveal style={{position: 'absolute', left: 132, top: 247}}>
-      <Eyebrow>MAKE ROOM FOR YOUR AI</Eyebrow>
-      <Headline size={118}>给 AI 一个<br />自己的工作台。</Headline>
-      <Supporting style={{marginTop: 37}}>从一个简单、可控的起点开始。</Supporting>
-    </Reveal>
-    <div style={{position: 'absolute', left: 1170, top: 175, width: 580, height: 660, borderRadius: '48% 48% 40% 40%', background: p.mint, opacity: 0.5, scale: interpolate(frame, [0, 3 * fps], [0.92, 1], clamp)}} />
-    <Reveal delay={0.25} style={{position: 'absolute', top: 262, right: 132, width: 650, rotate: `${interpolate(frame, [0, 1.2 * fps], [2, 0], clamp)}deg`}}>
-      <Panel title="你的工作台">
-        <div style={{padding: '42px 38px 32px'}}>
-          <div style={{display: 'flex', alignItems: 'center', gap: 17}}>
-            <div style={{background: p.pale, padding: 15, borderRadius: 22}}><HarbourMark size={47} /></div>
-            <div><div style={{fontSize: 31, fontWeight: 500}}>Main</div><div style={{fontSize: 20, color: p.muted, marginTop: 4}}>你的中性 AI 助手</div></div>
-          </div>
-          <Reveal delay={0.65}><div style={{fontSize: 35, marginTop: 36, lineHeight: 1.6}}>今天，从哪里开始？</div></Reveal>
-          <Reveal delay={1.05}><div style={{display: 'flex', gap: 11, marginTop: 27}}><Tag>模型</Tag><Tag pale>Agent</Tag><Tag pale>角色图片</Tag></div></Reveal>
-          <div style={{height: 66, border: `1px solid ${p.line}`, borderRadius: 14, marginTop: 37, padding: '0 20px', display: 'flex', alignItems: 'center', color: p.muted, fontSize: 22}}>
-            写下你的第一个问题<span style={{marginLeft: 'auto'}}><Arrow size={29} /></span>
-          </div>
-        </div>
-      </Panel>
-    </Reveal>
-  </Shell>;
-};
-
-const Field = ({label, children}: {label: string; children: ReactNode}) => (
-  <div style={{marginBottom: 24}}>
-    <div style={{fontSize: 21, color: p.muted, marginBottom: 10}}>{label}</div>
-    <div style={{height: 65, display: 'flex', alignItems: 'center', padding: '0 19px', border: `1px solid ${p.line}`, borderRadius: 13, background: p.paper, fontSize: 23}}>{children}</div>
-  </div>
-);
-
-export const ModelScene = () => (
-  <Shell number="02">
-    <Reveal style={{position: 'absolute', left: 132, top: 253}}>
-      <Eyebrow>01 — CONNECT</Eyebrow>
-      <Headline>接入你<br />选择的模型。</Headline>
-      <Supporting style={{marginTop: 37}}>OpenAI-compatible API<br />密钥只在后端配置。</Supporting>
-      <Reveal delay={1.5}><div style={{marginTop: 42}}><Tag><Check />也可先用离线演示</Tag></div></Reveal>
-    </Reveal>
-    <Reveal delay={0.2} style={{position: 'absolute', top: 210, right: 132, width: 770}}>
-      <Panel title="模型连接">
-        <div style={{padding: '32px 36px'}}>
-          <Field label="连接类型">OpenAI-compatible API</Field>
-          <Field label="服务地址">https://example.invalid/v1</Field>
-          <Field label="模型 ID">your-model</Field>
-          <Reveal delay={1}><div style={{display: 'flex', alignItems: 'center', gap: 13, fontSize: 25, padding: '19px 22px', borderRadius: 14, background: p.mint}}><Check />API Key · 后端环境变量</div></Reveal>
-        </div>
-      </Panel>
-      <div style={{marginTop: 19, paddingLeft: 9, fontSize: 20, color: p.muted}}>地址与模型名均为占位示例</div>
-    </Reveal>
-  </Shell>
-);
-
-export const AgentScene = () => (
-  <Shell number="03">
-    <Reveal style={{position: 'absolute', left: 132, top: 253}}>
-      <Eyebrow>02 — DEFINE</Eyebrow>
-      <Headline>一个文件夹。<br />一个 Agent。</Headline>
-      <Supporting style={{marginTop: 37}}>用 Markdown 写下人设与规则，<br />让技能按需进入上下文。</Supporting>
-    </Reveal>
-    <Reveal delay={0.2} style={{position: 'absolute', top: 210, right: 132, width: 770}}>
-      <Panel title="Agent 配置">
-        <div style={{padding: 35}}>
-          <div style={{display: 'flex', alignItems: 'center', gap: 18, fontSize: 28, marginBottom: 25}}><FolderIcon />agents/assistant/</div>
-          <div style={{border: `1px solid ${p.line}`, background: p.paper, borderRadius: 17, overflow: 'hidden'}}>
-            <div style={{height: 55, display: 'flex', alignItems: 'center', padding: '0 22px', fontSize: 21, borderBottom: `1px solid ${p.line}`, color: p.muted}}>CLAUDE.md</div>
-            <div style={{padding: '22px 25px 29px', fontSize: 27, lineHeight: 1.9}}>
-              <Reveal delay={0.55}><div><span style={{color: p.muted}}># </span>中性、清晰、可靠的助手</div></Reveal>
-              <Reveal delay={0.9}><div><span style={{color: p.muted}}>· </span>先理解目标，再给出行动</div></Reveal>
-              <Reveal delay={1.25}><div><span style={{color: p.muted}}>· </span>需要时，读取已挂载技能</div></Reveal>
-            </div>
-          </div>
-          <Reveal delay={1.7}><div style={{display: 'flex', alignItems: 'center', gap: 16, marginTop: 25}}><Tag>skills/</Tag><div style={{fontSize: 23, color: p.muted}}>按需加载 · 保持轻量</div></div></Reveal>
-        </div>
-      </Panel>
-    </Reveal>
-  </Shell>
-);
-
-// A neutral geometric plant illustration: no existing character or third-party asset.
-const OriginalArtwork = () => (
-  <svg viewBox="0 0 500 410" style={{width: '100%', height: '100%'}}>
-    <circle cx="255" cy="202" r="139" fill={p.mint} />
-    <ellipse cx="259" cy="352" rx="106" ry="13" fill={p.ink} opacity="0.08" />
-    <path d="M244 302c-12-64-10-129 25-198" fill="none" stroke={p.ink} strokeWidth="8" strokeLinecap="round" />
-    <path d="M249 208c-59 3-100-25-105-77 63-8 100 27 105 77Z" fill={p.ink} />
-    <path d="M249 172c60-1 94-32 95-80-58-2-91 29-95 80Z" fill="#7aa88d" />
-    <path d="M240 253c52 6 89-15 103-58-54-11-92 11-103 58Z" fill="#7aa88d" />
-    <path d="M193 286h110l-14 56a13 13 0 0 1-13 10h-55a13 13 0 0 1-13-10Z" fill={p.white} stroke={p.ink} strokeWidth="3" />
-    <path d="M194 295h107" stroke={p.ink} strokeWidth="3" />
-    <circle cx="372" cy="263" r="8" fill={p.amber} />
-    <circle cx="134" cy="271" r="4" fill={p.ink} opacity="0.5" />
+const Star = ({size = 32, color = p.accent, outline = false}: {size?: number; color?: string; outline?: boolean}) => (
+  <svg width={size} height={size} viewBox="0 0 64 64" fill={outline ? 'none' : color}>
+    <path d="M32 4c3 19 9 25 28 28-19 3-25 9-28 28C29 41 23 35 4 32 23 29 29 23 32 4Z" stroke={color} strokeWidth={outline ? 1.7 : 0} strokeLinejoin="round" />
   </svg>
 );
 
-export const CharacterScene = () => (
-  <Shell number="04">
-    <Reveal style={{position: 'absolute', left: 132, top: 253}}>
-      <Eyebrow>03 — MAKE IT YOURS</Eyebrow>
-      <Headline>让开屏，<br />有你的样子。</Headline>
-      <Supporting style={{marginTop: 37}}>换上自己的角色图片，<br />从熟悉的画面开始对话。</Supporting>
-      <Reveal delay={1.3}><div style={{marginTop: 37, fontSize: 25, color: p.muted}}>默认不含任何第三方角色</div></Reveal>
-    </Reveal>
-    <Reveal delay={0.2} style={{position: 'absolute', top: 198, right: 132, width: 770}}>
-      <Panel title="自定义开屏图片">
-        <div style={{height: 360, padding: '5px 60px 0', background: '#f0f3e9'}}><OriginalArtwork /></div>
-        <div style={{padding: '26px 33px 30px'}}>
-          <div style={{display: 'flex', alignItems: 'center', fontSize: 29, gap: 14}}><div style={{width: 9, height: 9, background: p.ink, borderRadius: 9}} />你的图片，你的工作台。</div>
-          <div style={{display: 'flex', alignItems: 'center', gap: 17, marginTop: 22}}><Tag>选择图片</Tag><span style={{fontSize: 22, color: p.muted}}>支持自定义开屏角色</span></div>
-        </div>
-      </Panel>
-      <div style={{marginTop: 18, paddingLeft: 8, fontSize: 20, color: p.muted}}>原创几何插图，仅作图片位置示意</div>
-    </Reveal>
-  </Shell>
+const Brand = ({size = 100}: {size?: number}) => <div style={{position: 'relative', width: size * 3.6, height: size * 1.25, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: size * 0.13}}>
+  <span style={{fontFamily: '"Harbour Hand", cursive', fontSize: size, fontWeight: 600, lineHeight: 1.1, letterSpacing: '-0.035em', color: p.ink}}>Harbour</span>
+  <svg viewBox="0 0 360 125" style={{position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible'}}>
+    <path d="M23 104c70-14 168 18 307-6m-73 19c29-1 47-3 63-8" fill="none" stroke={p.accent} strokeWidth="2.3" strokeLinecap="round" opacity="0.55" />
+  </svg>
+</div>;
+
+const Paper = ({children, chapter, lavender = false}: {children: ReactNode; chapter: string; lavender?: boolean}) => (
+  <AbsoluteFill style={{background: lavender ? '#F5EFFA' : p.paper, fontFamily, color: p.ink, overflow: 'hidden'}}>
+    <AbsoluteFill style={{backgroundImage: lavender
+      ? 'radial-gradient(ellipse at 20% 75%, #FAF3E6 0%, transparent 70%)'
+      : 'radial-gradient(ellipse at 84% 26%, rgba(237,229,253,0.6) 0%, transparent 64%)'}} />
+    <div style={{position: 'absolute', left: 77, top: 0, bottom: 0, width: 1, background: 'rgba(240,143,176,0.26)'}} />
+    <div style={{position: 'absolute', right: 0, top: 0, bottom: 0, width: 600, backgroundImage: 'radial-gradient(rgba(110,94,130,0.13) 1px, transparent 1.4px)', backgroundSize: '28px 28px', opacity: 0.6}} />
+    <div style={{position: 'absolute', left: 130, top: 55, fontSize: 24, letterSpacing: 3, color: p.muted}}>{chapter}</div>
+    {children}
+  </AbsoluteFill>
 );
 
-export const DataScene = () => {
-  const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
-  return <Shell number="05">
-    <Reveal style={{position: 'absolute', left: 132, top: 206}}>
-      <Eyebrow>04 — KEEP IT LOCAL</Eyebrow>
-      <Headline size={108}>数据，留在自己这里。</Headline>
-      <Supporting style={{marginTop: 26}}>本地会话 · 自己的配置 · 后端密钥</Supporting>
+const Tape = ({style, pink = false}: {style?: CSSProperties; pink?: boolean}) => <div style={{
+  position: 'absolute', width: 170, height: 35, background: pink ? '#F4C9D7' : '#DACDF3',
+  borderLeft: '2px dashed rgba(255,255,255,0.7)', borderRight: '2px dashed rgba(255,255,255,0.7)',
+  opacity: 0.8, rotate: '-5deg', ...style,
+}} />;
+
+const Headline = ({children, style}: {children: ReactNode; style?: CSSProperties}) => (
+  <Interactive.Div name="宣传主标题" style={{fontSize: 104, fontWeight: 700, letterSpacing: '-0.04em', lineHeight: 1.28, ...style}}>{children}</Interactive.Div>
+);
+
+const Underline = ({width = 520}: {width?: number}) => {
+  const frame = useCurrentFrame(); const {fps} = useVideoConfig();
+  return <svg width={width} height={24} viewBox="0 0 520 24" preserveAspectRatio="none">
+    <path d="M4 12C117-1 267 24 513 7" pathLength={1} fill="none" stroke={p.accent} strokeWidth={4} strokeLinecap="round"
+      strokeDasharray={1} strokeDashoffset={interpolate(frame, [0.5 * fps, 1.5 * fps], [1, 0], ease)} />
+  </svg>;
+};
+
+export const WelcomeScene = () => {
+  const frame = useCurrentFrame(); const {fps} = useVideoConfig();
+  return <Paper chapter="HARBOUR / 公开版介绍">
+    <div style={{position: 'absolute', left: 1022, top: 93, width: 710, height: 860, border: '1px solid rgba(138,112,224,0.22)', borderRadius: '49% 49% 47% 47%', rotate: '12deg'}} />
+    <Reveal style={{position: 'absolute', left: 103, top: 167}}><Brand size={161} /></Reveal>
+    <Reveal delay={0.15} style={{position: 'absolute', left: 132, top: 408}}>
+      <Headline style={{fontSize: 99}}>熟悉的外壳，<br />你的 <span style={{color: p.accent}}>Agent。</span></Headline>
+      <div style={{marginTop: 10}}><Underline width={600} /></div>
     </Reveal>
-    <Reveal delay={0.4} style={{position: 'absolute', left: 132, top: 514, width: 773, height: 276, border: `1.5px solid ${p.line}`, borderRadius: 24, background: p.white, padding: 34}}>
-      <div style={{display: 'flex', alignItems: 'center', gap: 16, fontSize: 30, fontWeight: 500}}><HarbourMark size={38} />你的本地工作台</div>
-      <div style={{display: 'flex', gap: 15, marginTop: 32}}><Tag>会话</Tag><Tag>Agent 文件</Tag><Tag>技能</Tag></div>
-      <div style={{marginTop: 25, fontSize: 22, color: p.muted}}>由你保存与管理</div>
+    <Reveal delay={0.45} style={{position: 'absolute', left: 138, top: 752, fontSize: 36, lineHeight: 1.65, color: p.muted}}>
+      保留原版的精致日常。<br />把助手，换成你自己的。
     </Reveal>
-    <Reveal delay={1.2} style={{position: 'absolute', left: 942, top: 568, width: 272, height: 180, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-      <div style={{fontSize: 24, marginBottom: 18, color: p.muted}}>模型请求</div>
-      <svg width="260" height="44" viewBox="0 0 260 44" fill="none"><path d="M10 22h234m-13-13 14 13-14 13" stroke={p.ink} strokeWidth="2" strokeLinecap="round" /><circle cx={interpolate(frame, [1.5 * fps, 3.1 * fps], [10, 237], clamp)} cy="22" r="7" fill={p.ink} /></svg>
+    <Reveal delay={0.18} style={{position: 'absolute', left: 885, top: 205, width: 940, height: 710}}>
+      <div style={{position: 'absolute', inset: 0, padding: 10, background: p.panel, border: '1px solid rgba(135,112,155,0.26)', borderRadius: 25, boxShadow: photoShadow, rotate: '-1.1deg',
+        scale: interpolate(frame, [0, 4.5 * fps], [0.98, 1.015], clamp)}}>
+        <div style={{width: '100%', height: '100%', position: 'relative', overflow: 'hidden', borderRadius: 16}}>
+          <CanvasImage src={imageSrc()} style={{position: 'absolute', width: 1232, height: 1232 * 1371 / 2360, maxWidth: 'none', left: -302, top: -8}} />
+        </div>
+      </div>
+      <Tape style={{top: -14, left: 54, rotate: '-7deg'}} />
+      <div style={{position: 'absolute', left: 45, top: 744, fontSize: 25, letterSpacing: 1, color: p.muted}}>原版 UI 局部 / 公开截图</div>
     </Reveal>
-    <Reveal delay={0.8} style={{position: 'absolute', right: 132, top: 514, width: 536, height: 276, border: `1.5px solid ${p.line}`, borderRadius: 24, background: p.pale, padding: 34, display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
-      <div style={{fontSize: 36, fontWeight: 500}}>你选择的模型服务商</div>
-      <div style={{fontSize: 25, color: p.muted, marginTop: 22}}>按你的连接配置处理请求</div>
+    <div style={{position: 'absolute', left: 790, top: 220, rotate: '10deg'}}><Star size={57} outline /></div>
+    <div style={{position: 'absolute', left: 1700, top: 110}}><Star size={30} color={p.pink} /></div>
+    <div style={{position: 'absolute', left: 132, bottom: 43, fontSize: 23, color: p.muted}}>把熟悉的外壳，交给你自己的 Agent</div>
+  </Paper>;
+};
+
+export const OriginalUIScene = () => {
+  const frame = useCurrentFrame(); const {fps} = useVideoConfig();
+  return <Paper chapter="01 / 熟悉的外观，不必告别">
+    <div style={{position: 'absolute', right: 132, top: 58, fontSize: 24, color: p.muted}}>公开副本真实截图 · 非实时录屏</div>
+    <Reveal style={{position: 'absolute', left: 130, top: 119}}>
+      <Headline style={{fontSize: 96}}>原来的界面，完整保留。</Headline>
     </Reveal>
-    <Reveal delay={1.6} style={{position: 'absolute', top: 827, left: 132, fontSize: 29, color: p.muted}}>模型请求仍会发送给所选服务商；本地保存不代表离线推理。</Reveal>
-  </Shell>;
+    <Reveal delay={0.25} style={{position: 'absolute', left: 315, top: 294}}>
+      <div style={{position: 'relative', width: 1290, height: 1290 * 1371 / 2360, overflow: 'hidden', border: '1px solid rgba(123,100,145,0.3)', borderRadius: 20, boxShadow: photoShadow,
+        scale: interpolate(frame, [0, 5.5 * fps], [0.97, 1.01], clamp), transformOrigin: '50% 30%'}}>
+        <CanvasImage src={imageSrc()} style={{width: '100%', height: '100%'}} />
+      </div>
+    </Reveal>
+    <Reveal delay={0.4} style={{position: 'absolute', left: 132, top: 244, fontSize: 31, color: p.muted}}>
+      Electron / Web · 主题 · 聊天布局 · 开屏动画
+    </Reveal>
+    <div style={{position: 'absolute', left: 151, top: 550, rotate: '-14deg'}}><Star size={47} outline /></div>
+    <div style={{position: 'absolute', right: 137, top: 825}}><Star size={35} color={p.pink} /></div>
+  </Paper>;
+};
+
+const AgentGraph = () => {
+  const frame = useCurrentFrame(); const {fps} = useVideoConfig();
+  return <div style={{position: 'relative', width: 900, height: 690}}>
+    <svg width={900} height={690} viewBox="0 0 900 690" style={{position: 'absolute', inset: 0}}>
+      <ellipse cx="455" cy="360" rx="375" ry="273" stroke="rgba(138,112,224,0.18)" strokeWidth={1.5} strokeDasharray="4 11" fill="none" />
+      <path d="M455 157C449 205 461 232 455 267M306 440C285 503 234 511 203 543M594 440C630 497 656 511 705 544"
+        pathLength={1} stroke={p.accent} strokeWidth={2.7} fill="none" strokeLinecap="round"
+        strokeDasharray={1} strokeDashoffset={interpolate(frame, [0.5 * fps, 1.7 * fps], [1, 0], ease)} />
+      <circle cx="455" cy="267" r="5" fill={p.accent} />
+      <circle cx="306" cy="440" r="5" fill={p.accent} />
+      <circle cx="594" cy="440" r="5" fill={p.accent} />
+    </svg>
+    <Reveal delay={0.3} style={{position: 'absolute', left: 242, top: 63, width: 425, textAlign: 'center'}}>
+      <div style={{fontSize: 46, fontWeight: 500}}>自己的模型</div>
+      <div style={{fontSize: 25, color: p.muted, marginTop: 12}}>由你选择与接入</div>
+    </Reveal>
+    <Reveal delay={0.1} style={{position: 'absolute', left: 195, top: 268, width: 520, height: 177}}>
+      <div style={{position: 'absolute', inset: 0, borderRadius: '49% 47% 48% 46%', background: p.mist, border: '1.7px solid rgba(138,112,224,0.42)', rotate: '-2deg'}} />
+      <div style={{position: 'relative', textAlign: 'center', fontSize: 66, fontWeight: 500, paddingTop: 20}}>你的 Agent</div>
+      <div style={{position: 'relative', textAlign: 'center', fontSize: 29, marginTop: 7, color: p.muted}}>你的规则与工作方式</div>
+    </Reveal>
+    <Reveal delay={0.7} style={{position: 'absolute', left: 87, top: 549, width: 260, textAlign: 'center'}}>
+      <div style={{fontSize: 47, fontWeight: 500}}>工具</div><div style={{fontSize: 27, color: p.muted, marginTop: 11}}>按授权接入</div>
+    </Reveal>
+    <Reveal delay={0.9} style={{position: 'absolute', left: 530, top: 549, width: 350, textAlign: 'center'}}>
+      <div style={{fontSize: 47, fontWeight: 500}}>Skill · MCP</div><div style={{fontSize: 27, color: p.muted, marginTop: 11}}>按需挂载</div>
+    </Reveal>
+  </div>;
+};
+
+export const AgentScene = () => <Paper chapter="02 / 自己的 Agent，自己的能力">
+  <div style={{position: 'absolute', right: 132, top: 58, fontSize: 24, color: p.muted}}>能力关系示意 · 非连接状态</div>
+  <Reveal style={{position: 'absolute', left: 132, top: 265}}>
+    <Headline style={{fontSize: 112}}>内核，<br />由你定义。</Headline>
+    <div style={{marginTop: 20}}><Underline width={500} /></div>
+  </Reveal>
+  <Reveal delay={0.4} style={{position: 'absolute', left: 139, top: 645, fontSize: 39, lineHeight: 1.65, color: p.muted}}>
+    写下自己的规则，<br />接入需要的能力。
+  </Reveal>
+  <div style={{position: 'absolute', left: 859, top: 138}}><AgentGraph /></div>
+  <Reveal delay={0.8} style={{position: 'absolute', left: 132, right: 132, top: 924, borderTop: '1px solid rgba(138,112,224,0.27)', paddingTop: 25, fontSize: 33, color: p.muted}}>
+    模型由你接入，调用发往你所选的服务商。
+  </Reveal>
+</Paper>;
+
+export const CharacterScene = () => {
+  const frame = useCurrentFrame(); const {fps} = useVideoConfig();
+  return <Paper chapter="03 / 让开场，也像你">
+    <div style={{position: 'absolute', left: 1135, top: 160, width: 635, height: 764, border: '1px solid rgba(138,112,224,0.2)', borderRadius: '48% 48% 43% 43%', rotate: '-8deg'}} />
+    <Reveal style={{position: 'absolute', left: 132, top: 238}}>
+      <Headline style={{fontSize: 103}}>开屏角色，<br />也由你来定。</Headline>
+      <div style={{marginTop: 16}}><Underline width={610} /></div>
+    </Reveal>
+    <Reveal delay={0.35} style={{position: 'absolute', left: 139, top: 586, fontSize: 39, color: p.muted, lineHeight: 1.7}}>
+      换一张自己的图片。<br />展示图片与 Agent 身份，分开配置。
+    </Reveal>
+    <Reveal delay={0.65} style={{position: 'absolute', left: 139, top: 847, fontSize: 34, color: p.ink}}>
+      <span style={{display: 'inline-block', width: 38, marginRight: 14, verticalAlign: 'middle'}}><Star size={28} color={p.pink} /></span>
+      不附私人记忆、偏好与任务。
+    </Reveal>
+    <Reveal delay={0.2} style={{position: 'absolute', left: 1190, top: 149, width: 510, height: 812}}>
+      <div style={{position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 12,
+        scale: interpolate(frame, [0, 5.5 * fps], [0.99, 1.025], clamp)}}>
+        {/* Crop from the authorised screenshot, not an invented startup recording. */}
+        <CanvasImage src={imageSrc()} style={{position: 'absolute', width: 2360 * 510 / 540, height: 1371 * 510 / 540, maxWidth: 'none', left: -1820 * 510 / 540, top: -300 * 510 / 540}} />
+      </div>
+      <Tape pink style={{left: 47, top: 32, rotate: '-11deg', width: 135}} />
+    </Reveal>
+    <div style={{position: 'absolute', left: 1133, top: 986, fontSize: 24, color: p.muted}}>原版聊天装饰局部 · 非开屏录屏</div>
+    <div style={{position: 'absolute', left: 1734, top: 323}}><Star size={52} outline /></div>
+  </Paper>;
+};
+
+export const HandoffScene = () => {
+  const frame = useCurrentFrame(); const {fps} = useVideoConfig();
+  return <Paper chapter="04 / 把安装，交接给你的 Agent">
+    <Reveal style={{position: 'absolute', left: 130, top: 139}}>
+      <Headline style={{fontSize: 93}}>让你的 Agent 帮你安装。</Headline>
+    </Reveal>
+    <Reveal delay={0.25} style={{position: 'absolute', left: 136, top: 300, fontSize: 43, fontWeight: 500, whiteSpace: 'nowrap'}}>
+      复制 README 的交接 Prompt <span style={{color: p.accent, margin: '0 18px'}}>→</span> 发给你的 Agent
+    </Reveal>
+    <Reveal delay={0.5} style={{position: 'absolute', left: 178, top: 444, width: 1564, height: 349}}>
+      <div style={{position: 'absolute', inset: 0, borderRadius: '16px 23px 15px 21px', background: p.panel, border: '1.5px solid rgba(138,112,224,0.27)', boxShadow: photoShadow,
+        rotate: `${interpolate(frame, [0.5 * fps, 2 * fps], [-1.4, -0.35], ease)}deg`,
+        translate: `${interpolate(frame, [0.5 * fps, 1.5 * fps], [45, 0], ease)}px 0`}}>
+        <div style={{position: 'absolute', left: 37, top: 60, fontFamily: 'Georgia, serif', fontSize: 122, color: '#DBCEF0', lineHeight: 1}}>“</div>
+        <div style={{position: 'absolute', left: 105, top: 47, fontSize: 25, color: p.muted, letterSpacing: 1}}>对话缩写示意 / 安装请用 README 完整 Prompt</div>
+        <div style={{position: 'absolute', left: 105, top: 114, fontSize: 56, fontWeight: 500, lineHeight: 1.6}}>
+          帮我部署 Harbour，保留原界面，<br />接入我的 Agent。
+        </div>
+        <svg width={75} height={75} viewBox="0 0 75 75" style={{position: 'absolute', right: 54, bottom: 47}}>
+          <circle cx="37.5" cy="37.5" r="34" fill={p.mist} />
+          <path d="M24 49 50 23M28 23h22v22" stroke={p.accent} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        </svg>
+      </div>
+      <Tape style={{left: 73, top: -15}} /><Tape pink style={{right: 84, bottom: -16, rotate: '5deg', width: 122}} />
+    </Reveal>
+    <Reveal delay={0.9} style={{position: 'absolute', left: 138, top: 872, fontSize: 31, color: p.muted, lineHeight: 1.8}}>
+      Agent 需具备本地文件与终端能力。<br />
+      先验证 Mock 演示，再确认真实模型接入。
+    </Reveal>
+  </Paper>;
 };
 
 export const ClosingScene = () => {
-  const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
-  return <Shell number="06" dark>
-    <div style={{position: 'absolute', width: 880, height: 880, left: 520, top: 90, border: '1px solid rgba(199,232,212,0.12)', borderRadius: '50%', scale: interpolate(frame, [0, 4.5 * fps], [0.93, 1], clamp)}} />
-    <div style={{position: 'absolute', width: 630, height: 630, left: 645, top: 215, border: '1px solid rgba(199,232,212,0.09)', borderRadius: '50%'}} />
-    <Reveal delay={0.1} style={{position: 'absolute', top: 229, width: '100%', display: 'flex', justifyContent: 'center'}}><HarbourMark size={100} light /></Reveal>
-    <Reveal delay={0.2} style={{position: 'absolute', top: 365, width: '100%', textAlign: 'center'}}>
-      <Interactive.Div name="Project name" style={{fontSize: 145, letterSpacing: -5, fontWeight: 500}}>Harbour <span style={{color: p.mint}}>Lite</span></Interactive.Div>
-      <div style={{fontSize: 45, marginTop: 19, letterSpacing: 6, color: p.mint}}>轻量 Agent 启动器</div>
+  const frame = useCurrentFrame(); const {fps} = useVideoConfig();
+  return <Paper chapter="HARBOUR / 由你定义的工作台" lavender>
+    <div style={{position: 'absolute', left: 450, top: 125, width: 1020, height: 690, border: '1px solid rgba(138,112,224,0.21)', borderRadius: '50%', rotate: '-9deg',
+      scale: interpolate(frame, [0, 5 * fps], [0.97, 1.02], clamp)}} />
+    <Reveal style={{position: 'absolute', left: 546, top: 170}}><Brand size={230} /></Reveal>
+    <Reveal delay={0.3} style={{position: 'absolute', left: 130, top: 519, width: 1660, textAlign: 'center'}}>
+      <Headline style={{fontSize: 81, fontWeight: 500, lineHeight: 1.44}}>
+        把熟悉的外壳，<br />交给你自己的 <span style={{color: p.accent}}>Agent。</span>
+      </Headline>
     </Reveal>
-    <Reveal delay={0.9} style={{position: 'absolute', top: 686, width: '100%', textAlign: 'center', fontSize: 31, letterSpacing: 3, opacity: 0.7}}>你的模型 · 你的 Agent · 你的工作台</Reveal>
-    <Reveal delay={1.6} style={{position: 'absolute', top: 780, width: '100%', display: 'flex', justifyContent: 'center'}}><div style={{display: 'flex', alignItems: 'center', gap: 14, fontSize: 25, padding: '14px 25px', borderRadius: 40, border: '1px solid rgba(199,232,212,0.4)', color: p.mint}}>从离线演示开始 <Arrow size={27} color={p.mint} /></div></Reveal>
-  </Shell>;
+    <Reveal delay={0.7} style={{position: 'absolute', top: 810, left: 420, width: 1080, textAlign: 'center', fontSize: 40, color: p.accent}}>
+      从 README 的交接 Prompt 开始 <span style={{marginLeft: 12}}>→</span>
+    </Reveal>
+    <div style={{position: 'absolute', left: 130, right: 130, top: 977, fontSize: 28, textAlign: 'center', color: p.muted}}>
+      公开版仍待审核 · 非已发布版本
+    </div>
+    <div style={{position: 'absolute', left: 399, top: 400, rotate: '-10deg'}}><Star size={57} color={p.pink} /></div>
+    <div style={{position: 'absolute', right: 364, top: 261, rotate: '8deg'}}><Star size={75} outline /></div>
+    <div style={{position: 'absolute', right: 482, top: 725}}><Star size={26} color={p.gold} /></div>
+  </Paper>;
 };
 
-export const HarbourLiteIntro = () => {
-  const frame = useCurrentFrame();
-  const {fps, durationInFrames} = useVideoConfig();
+export const HarbourIntro = () => {
+  const {fps} = useVideoConfig();
   return <AbsoluteFill style={{background: p.paper}}>
     <TransitionSeries>
-      <TransitionSeries.Sequence name="给 AI 一个工作台" durationInFrames={4.5 * fps}><WelcomeScene /></TransitionSeries.Sequence>
+      <TransitionSeries.Sequence name="熟悉的外壳，你的 Agent" durationInFrames={4.5 * fps}><WelcomeScene /></TransitionSeries.Sequence>
       <TransitionSeries.Transition presentation={{component: PaperTransition, props: {}}} timing={linearTiming({durationInFrames: 0.5 * fps})} />
-      <TransitionSeries.Sequence name="接入模型" durationInFrames={5.5 * fps}><ModelScene /></TransitionSeries.Sequence>
+      <TransitionSeries.Sequence name="原版公开 UI 实景" durationInFrames={5.5 * fps}><OriginalUIScene /></TransitionSeries.Sequence>
       <TransitionSeries.Transition presentation={{component: PaperTransition, props: {}}} timing={linearTiming({durationInFrames: 0.5 * fps})} />
-      <TransitionSeries.Sequence name="配置 Agent" durationInFrames={5.5 * fps}><AgentScene /></TransitionSeries.Sequence>
+      <TransitionSeries.Sequence name="自接模型与 Agent 能力" durationInFrames={5.5 * fps}><AgentScene /></TransitionSeries.Sequence>
       <TransitionSeries.Transition presentation={{component: PaperTransition, props: {}}} timing={linearTiming({durationInFrames: 0.5 * fps})} />
-      <TransitionSeries.Sequence name="自定义角色图片" durationInFrames={5.5 * fps}><CharacterScene /></TransitionSeries.Sequence>
+      <TransitionSeries.Sequence name="自己的开屏与干净起点" durationInFrames={5.5 * fps}><CharacterScene /></TransitionSeries.Sequence>
       <TransitionSeries.Transition presentation={{component: PaperTransition, props: {}}} timing={linearTiming({durationInFrames: 0.5 * fps})} />
-      <TransitionSeries.Sequence name="本地数据与模型请求" durationInFrames={6.5 * fps}><DataScene /></TransitionSeries.Sequence>
+      <TransitionSeries.Sequence name="README 一句交接给 Agent" durationInFrames={6.5 * fps}><HandoffScene /></TransitionSeries.Sequence>
       <TransitionSeries.Transition presentation={{component: PaperTransition, props: {}}} timing={linearTiming({durationInFrames: 0.5 * fps})} />
-      <TransitionSeries.Sequence name="Harbour Lite" durationInFrames={5 * fps}><ClosingScene /></TransitionSeries.Sequence>
+      <TransitionSeries.Sequence name="把熟悉的外壳，交给你自己的 Agent" durationInFrames={5 * fps}><ClosingScene /></TransitionSeries.Sequence>
     </TransitionSeries>
-    <div style={{position: 'absolute', height: 3, bottom: 0, left: 0, background: p.mint, width: `${interpolate(frame, [0, durationInFrames - 1], [0, 100], {extrapolateRight: 'clamp'})}%`}} />
   </AbsoluteFill>;
 };

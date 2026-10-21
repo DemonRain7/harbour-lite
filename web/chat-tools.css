@@ -1,0 +1,57 @@
+/* The session rail owns navigation and utilities; the conversation owns the height. */
+.chat-sessions > .chat-mode-tabs { align-self: stretch; width: auto; margin: 0 0 18px; padding: 4px; border: 0; border-radius: 11px; background: var(--panel-2); gap: 3px; }
+.chat-sessions > .chat-mode-tabs > button { flex: 1; padding: 8px 5px; font-size: 10px; letter-spacing: .025em; white-space: nowrap; border: 0; border-radius: 8px; }
+.chat-sessions > .chat-mode-tabs > button.active { color: var(--accent); background: var(--panel); box-shadow: 0 1px 4px color-mix(in srgb, var(--fg) 8%, transparent); }
+.chat-sessions > .chat-tools { position: relative; display: flex; align-items: center; justify-content: space-evenly; gap: 3px; flex: none; margin-top: 12px; padding: 10px 0 0; border-top: 1px solid var(--border); }
+.chat-tools .hero-toolbar-group { padding: 0; gap: 3px; background: transparent; border: 0; box-shadow: none; }
+.chat-tools .chat-tool-button { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box; width: 34px; height: 34px; min-height: 34px; margin: 0; padding: 7px; border: 0; border-radius: 10px; background: transparent; color: var(--fg-dim); box-shadow: none; cursor: pointer; text-decoration: none; overflow: visible; transition: background .16s, color .16s; }
+.chat-tools .chat-tool-button svg { width: 18px; height: 18px; flex: none; color: currentColor; }
+.chat-tools .chat-tool-button:hover, .chat-tools .chat-tool-button[aria-expanded="true"] { color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
+.chat-tools .chat-tool-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chat-tools .chat-tool-label { position: absolute; display: block; z-index: 60; bottom: calc(100% + 9px); left: 0; width: max-content; max-width: min(240px, calc(100vw - 32px)); padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; color: var(--fg); background: var(--panel); box-shadow: var(--shadow-sm); font: 500 11px/1.5 var(--font-ui); letter-spacing: 0; white-space: normal; overflow-wrap: anywhere; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .12s, visibility .12s; }
+.chat-tools .chat-tool-button:is(:hover, :focus-visible):not([aria-expanded="true"]) > .chat-tool-label { opacity: 1; visibility: visible; }
+.chat-tools #chatHeroControls .chat-tool-label { left: auto; right: 0; }
+/* Fixed + top layer: neither the rail's scroll area nor a portrait can clip the panel. */
+.chat-tool-popover { box-sizing: border-box; position: fixed; inset: auto; margin: 0; z-index: 80; max-width: calc(100vw - 24px); max-height: var(--chat-tool-height, calc(100dvh - 24px)); overflow-y: auto; overscroll-behavior: contain; border: 1px solid color-mix(in srgb, var(--accent) 15%, var(--border)); border-radius: 18px; background: var(--panel); color: var(--fg); box-shadow: 0 16px 50px color-mix(in srgb, #000 16%, transparent), 0 2px 6px color-mix(in srgb, var(--accent) 6%, transparent); }
+.chat-tool-popover[hidden] { display: none; }
+.chat-tool-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--fg-dim); font: 600 11px/1.5 var(--font-ui); }
+.chat-tool-heading button { display: grid; place-items: center; width: 28px; height: 28px; padding: 5px; border: 0; border-radius: 8px; color: var(--fg-dim); background: transparent; cursor: pointer; }
+.chat-tool-heading button:hover { color: var(--accent); background: var(--panel-2); }
+.chat-tool-heading svg { width: 16px; height: 16px; }
+.chat-hero-picker .chat-hero-popover { width: 354px; top: auto; right: auto; left: auto; overflow: hidden; }
+.chat-hero-picker[open] .chat-hero-popover { animation: none; }
+.hero-background { margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--border); }
+.hero-background h4 { margin: 0 0 10px; font: 600 12px/1.5 var(--font-ui); }
+.hero-visibility .hero-compact-hint { display: none; }
+body[data-theme-cat="anime"] .hero-background .bg-picker { position: static; display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 0; border-radius: 10px; box-shadow: none; background: var(--panel-2); backdrop-filter: none; }
+body[data-theme-cat="anime"] .hero-background .bgp-btn { flex: 1; min-height: 30px; padding: 4px 7px; border: 0; border-radius: 7px; }
+body[data-theme-cat="anime"] .hero-background .bgp-btn:hover { transform: none; }
+body[data-theme-cat="anime"] .hero-background .bgp-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 1120px) {
+  .chat-layout.chat-layout-2 > .chat-sessions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: 36px 28px minmax(0, 1fr); gap: 6px 10px; }
+  .chat-sessions > .chat-mode-tabs { grid-column: 1; grid-row: 1; margin: 0; align-self: center; justify-self: start; min-width: 170px; }
+  .chat-sessions > .chat-sessions-head { grid-column: 1; grid-row: 2; margin: 0; }
+  .chat-sessions > .source-filter-host { grid-column: 2; grid-row: 2; margin: 0; }
+  .chat-sessions > .chat-session-list { grid-column: 1 / -1; grid-row: 3; }
+  .chat-sessions > .chat-tools { grid-column: 2; grid-row: 1; justify-content: flex-end; align-self: center; margin: 0; padding: 0; border: 0; }
+  .chat-tools .chat-tool-label { bottom: auto; top: calc(100% + 9px); left: auto; right: 0; }
+}
+@media (max-width: 600px) {
+  /* Small windows prioritize reading; stored portrait preferences remain intact. */
+  body[data-panel="chat"][data-theme-cat="anime"] .content { padding-right: 16px; }
+  body[data-panel="chat"][data-theme-cat="anime"] .harbour-hero { display: none; }
+  .chat-tools .hero-quick-toggle { display: none; }
+  .hero-visibility small:not(.hero-compact-hint) { display: none; }
+  .hero-visibility .hero-compact-hint { display: block; }
+  /* The narrow session area keeps its original 176px height; icons do not grow it. */
+  .chat-layout.chat-layout-2 > .chat-sessions { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 36px 32px minmax(0, 1fr); padding: 8px; gap: 5px; }
+  .chat-sessions > .chat-mode-tabs { min-width: 0; width: 100%; }
+  .chat-sessions > .chat-mode-tabs > button { font-size: 10px; padding-inline: 4px; }
+  .chat-sessions > .chat-tools { gap: 0; }
+  .chat-tools .hero-toolbar-group { gap: 0; }
+  .chat-tools .chat-tool-button { width: 32px; min-height: 36px; height: 36px; padding: 6px; }
+  .chat-sessions > .source-filter-host { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-tools .chat-tool-button, .chat-tools .chat-tool-label { transition: none; }
+}

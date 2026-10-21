@@ -1,0 +1,29 @@
+Motion data derived from the free Standard editions of
+Universal Animation Library and Universal Animation Library 2.
+Author: Quaternius / Gonzalo Furnier
+
+CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Official sources:
+https://quaternius.com/packs/universalanimationlibrary.html
+https://quaternius.com/packs/universalanimationlibrary2.html
+https://quaternius.itch.io/universal-animation-library
+https://quaternius.itch.io/universal-animation-library-2
+
+Harbour adaptation: six sampled rotation-only clips, authored T-pose removed,
+retargeted to the existing PMX rigs at runtime. No source mesh or texture is
+included in quaternius.json. Character model licenses remain separate.
+
+Original Standard-pack License.txt notice:
+-------------------------------------------------------
+License:
+CC0 1.0 Universal (CC0 1.0)
+Public Domain Dedication
+https://creativecommons.org/publicdomain/zero/1.0/
+
+------------------------------------------------------
+Models by @Quaternius
+Consider supporting me on Patreon!
+
+https://www.patreon.com/quaternius

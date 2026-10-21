@@ -1,0 +1,214 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Folia Noto Serif SC';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://cdn.jsdmirror.cn/npm/@fontsource/noto-serif-sc@5.2.9/files/noto-serif-sc-chinese-simplified-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Folia Noto Serif SC';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('https://cdn.jsdmirror.cn/npm/@fontsource/noto-serif-sc@5.2.9/files/noto-serif-sc-chinese-simplified-500-normal.woff2') format('woff2');
+}
+
+/* Custom Global Styles */
+body {
+  background-color: #09090b;
+  color: #e4e4e7;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+:root {
+  --scrollbar-track: #18181b;
+  --scrollbar-thumb: #3f3f46;
+  --scrollbar-thumb-hover: #52525b;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+@media (max-width: 768px) {
+  .mobile-hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .mobile-hide-scrollbar::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+.visualizer-overlay-scrollbar {
+  /* Remove standard scrollbar-width/color to prevent Chromium from ignoring -webkit-scrollbar styles */
+}
+
+.visualizer-overlay-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.visualizer-overlay-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.visualizer-overlay-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb-color, rgba(255, 255, 255, 0.18));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.visualizer-overlay-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover-color, rgba(255, 255, 255, 0.3));
+}
+
+.visualizer-overlay-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Polaroid Card theme-adaptive styles */
+.theme-polaroid-card {
+  background-color: color-mix(in srgb, var(--bg-color) 95%, transparent) !important;
+  border-color: color-mix(in srgb, var(--text-primary) 5%, transparent) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.3s ease;
+}
+
+.theme-polaroid-card:hover {
+  border-color: color-mix(in srgb, var(--text-primary) 32%, transparent) !important;
+}
+
+/* Glass panel (search box, sidebar) theme-adaptive styles */
+.theme-glass-panel {
+  background-color: color-mix(in srgb, var(--bg-color) 85%, transparent) !important;
+  border-color: color-mix(in srgb, var(--text-primary) 12%, transparent) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Click-through: the window ignores real clicks but still receives forwarded mouse-move, so hover
+   styles would keep lighting up components nobody can reach. Only the unlock control stays live. */
+html[data-click-through='active'] body * {
+  pointer-events: none !important;
+}
+
+html[data-click-through='active'] body .click-through-interactive,
+html[data-click-through='active'] body .click-through-interactive * {
+  pointer-events: auto !important;
+}
+
+/* Remote control: during an audio transition the progress bar breathes a
+   soft glow, so the handoff reads at a glance without watching the timestamps.
+   The glow rides on an overlay sibling because the track itself clips overflow
+   to keep the fill's rounded ends, which would cut any shadow off the fill. */
+@keyframes remote-progress-transition-glow {
+
+  0%,
+  100% {
+    opacity: 0.5;
+    box-shadow: 0 0 4px 0 var(--transition-glow-color), 0 0 9px 0 var(--transition-glow-color);
+  }
+
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 7px 1px var(--transition-glow-color), 0 0 16px 3px var(--transition-glow-color);
+  }
+}
+
+.remote-progress-transition-glow {
+  animation: remote-progress-transition-glow 2.4s ease-in-out infinite;
+}
+
+/* 降级状态由 useMotionSettingsStore 同步到 <html data-reduce-motion>，不再直接跟随系统偏好。
+   见 stores/useMotionSettingsStore.ts。 */
+:root[data-reduce-motion~='uiMicroMotion'] .remote-progress-transition-glow {
+  animation: none;
+  opacity: 0.85;
+  box-shadow: 0 0 6px 0 var(--transition-glow-color);
+}
+
+/* Grid 顶部标题的面板开关：用户第一次进入 grid 视图时，让开关自己呼吸几下并把
+   "展开"文案短暂推出来，把"标题可以点开左侧面板"这件事主动说一次。
+   两段动画都有固定的结束时间，跑完自动还原成 hover 控制的静止态，不需要计时器。 */
+@keyframes grid-panel-toggle-hint {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+
+  50% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+}
+
+.grid-panel-toggle-hint {
+  animation: grid-panel-toggle-hint 1.4s ease-in-out 3;
+}
+
+@keyframes grid-panel-toggle-hint-label {
+
+  0%,
+  100% {
+    max-width: 0;
+    opacity: 0;
+  }
+
+  12%,
+  76% {
+    max-width: 5rem;
+    opacity: 1;
+  }
+}
+
+.grid-panel-toggle-hint-label {
+  animation: grid-panel-toggle-hint-label 4.2s ease-in-out 1;
+}
+
+/* 关掉动画的用户改为静态展示文案，仍然拿得到这条提示。 */
+:root[data-reduce-motion~='uiMicroMotion'] .grid-panel-toggle-hint {
+  animation: none;
+}
+
+:root[data-reduce-motion~='uiMicroMotion'] .grid-panel-toggle-hint-label {
+  animation: none;
+  max-width: 5rem;
+  opacity: 1;
+}

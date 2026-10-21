@@ -1,0 +1,28 @@
+/* A compact remote control, not another player or a full-width chat row. */
+#chatMusic { flex: none; min-width: 0; }
+.chat-music-bar { display: flex; }
+.chat-music-content { width: 340px; padding: 16px; }
+.chat-music-content[hidden] { display: none; }
+.chat-music-indicator { position: absolute; right: 5px; top: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--fg-faint); opacity: 0; box-shadow: 0 0 0 2px var(--panel); }
+#chatMusic[data-loaded="true"] .chat-music-indicator { opacity: 1; }
+#chatMusic[data-playing="true"] .chat-music-indicator { background: #32a67c; }
+.chat-music-link { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 18px 0; color: var(--fg); text-decoration: none; }
+.chat-music-link > svg { flex: none; width: 40px; height: 40px; padding: 9px; box-sizing: border-box; color: var(--accent); border-radius: 12px; background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
+.chat-music-link > span { min-width: 0; }
+.chat-music-title { display: block; font: 650 14px/1.6 var(--font-ui); overflow-wrap: anywhere; }
+.chat-music-meta { display: block; margin-top: 3px; color: var(--fg-dim); font: 11px/1.7 var(--font-ui); overflow-wrap: anywhere; }
+.chat-music-actions { display: flex; align-items: center; gap: 7px; padding: 4px 0 15px; }
+.chat-music-actions button { display: grid; place-items: center; flex: none; border: 0; background: transparent; color: var(--fg-dim); border-radius: 10px; height: 36px; min-width: 32px; padding: 6px; cursor: pointer; }
+.chat-music-actions svg { width: 18px; height: 18px; }
+.chat-music-actions button:hover:not(:disabled), .chat-music-link:hover { color: var(--accent); }
+.chat-music-actions button:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.chat-music-actions [data-music-action="toggle"] { width: 40px; height: 40px; border-radius: 50%; color: var(--on-accent); background: var(--accent); }
+.chat-music-actions [data-music-action="toggle"]:hover:not(:disabled) { color: var(--on-accent); background: color-mix(in srgb, var(--accent) 90%, var(--fg)); }
+.chat-music-actions [data-music-action="set_playback_mode"]:is([data-mode="all"], [data-mode="one"], [data-mode="shuffle"]) { color: var(--accent); }
+.chat-music-actions button:disabled { opacity: .35; cursor: default; }
+.chat-music-actions .chat-music-discuss { font: 500 11px var(--font-ui); padding: 6px 9px; margin-left: auto; background: var(--panel-2); }
+.chat-music-open { display: flex; justify-content: space-between; padding: 12px 2px 0; border-top: 1px solid var(--border); color: var(--fg-dim); font: 500 11px/1.5 var(--font-ui); text-decoration: none; }
+.chat-music-open:hover { color: var(--accent); }
+.chat-music-content :is(button, a):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.chat-music-notice { display: block; padding-bottom: 12px; color: var(--fg-dim); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
+.chat-music-notice[hidden] { display: none; }

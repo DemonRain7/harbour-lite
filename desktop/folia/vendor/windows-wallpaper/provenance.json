@@ -1,0 +1,16 @@
+{
+  "name": "folia-wallpaper-helper",
+  "platform": "win32-x64",
+  "license": "AGPL-3.0",
+  "repository": "https://github.com/chthollyphile/folia-major",
+  "release": "v0.7.4",
+  "releaseCommit": "5e4e7fbbd8e38a1b3c12cb46cb2ba13ef35b9652",
+  "sourceDirectory": "vendor/folia/packaging/windows/wallpaper-helper",
+  "releaseAsset": "https://github.com/chthollyphile/folia-major/releases/download/v0.7.4/Folia-Setup-0.7.4.exe",
+  "releaseAssetSha256": "9c822be8590da5e2742b8e60e219239c2dfb38716822b403fc902ec126ed241d",
+  "archiveEntry": "$PLUGINSDIR/app-64.7z/resources/folia-wallpaper-helper.exe",
+  "sha256": "38955018ae9143792465c5c2ea168742dfc8dd2817ff52651109c5f16b03249e",
+  "sourceFiles": ["Cargo.lock", "Cargo.toml", "src/attach.rs", "src/cli.rs", "src/events.rs", "src/main.rs", "src/message_window.rs", "src/monitor.rs", "src/mouse_forward.rs"],
+  "sourceSha256": "e070ed1dfcd3287b36cc7834a5b7777be4f49dac443e261dd6dc85c856664102",
+  "notes": "Extracted without running the installer. Helper sources are unchanged between this release and the pinned Folia commit; full source and license are vendored. sourceSha256 hashes each listed relative name plus NUL plus LF-normalized UTF-8 source, in listed order."
+}

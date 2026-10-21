@@ -1,0 +1,25 @@
+.voice-picker-trigger { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border:0; border-radius:10px; background:transparent; color:inherit; opacity:.75; cursor:pointer; }
+.voice-picker-trigger:hover,.voice-picker-trigger[aria-expanded="true"] { background:var(--accent-bg, #9a8abc18); opacity:1; }
+.voice-picker-trigger svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.voice-picker-popup { position:fixed; z-index:12000; display:flex; flex-direction:column; box-sizing:border-box; padding:14px; border:1px solid var(--border, #ddd5e4); border-radius:18px; color:var(--fg, #554b61); background:var(--bg, #fffcff); box-shadow:0 12px 45px #271e3826; font:14px/1.45 system-ui,sans-serif; overflow:hidden; }
+.voice-picker-head { display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.voice-picker-popup button { font:inherit; color:inherit; cursor:pointer; }
+.voice-picker-close { border:0; background:none; font-size:23px!important; width:28px; border-radius:7px; }
+.voice-picker-note,.voice-picker-status { font-size:11px; opacity:.7; margin:5px 0 9px; flex-shrink:0; }
+.voice-picker-status { margin:10px 2px 0; overflow-wrap:anywhere; }
+.voice-picker-list { overflow-y:auto; overscroll-behavior:contain; min-height:0; scrollbar-width:thin; }
+.voice-picker-group { font-size:11px; font-weight:500; opacity:.65; margin:14px 8px 5px; }
+.voice-picker-row { display:flex; align-items:center; gap:3px; border-radius:10px; }
+.voice-picker-row:has([aria-pressed="true"]) { background:var(--accent-bg, #9a8abc18); }
+.voice-picker-choice { display:grid; grid-template-columns:17px 1fr; gap:0 4px; padding:9px 7px; border:0; border-radius:10px; background:none; flex:1; min-width:0; text-align:left; }
+.voice-picker-choice:hover:not(:disabled),.voice-picker-preview:hover,.voice-picker-manage:hover { background:var(--accent-bg, #9a8abc18); }
+.voice-picker-choice:disabled { cursor:default; opacity:.45; }
+.voice-picker-choice small { grid-column:2; font-size:11px; opacity:.65; margin-top:2px; }
+.voice-picker-label { font-weight:550; overflow-wrap:anywhere; }
+.voice-picker-preview { border:0; background:none; border-radius:9px; min-width:32px; height:32px; font-size:20px!important; }
+.voice-picker-manage { border:0; border-top:1px solid var(--border, #ddd5e4); background:none; margin-top:12px; padding:10px 0 0; text-align:left; font-size:12px!important; }
+.voice-picker-popup button:focus-visible,.voice-picker-trigger:focus-visible { outline:2px solid var(--accent, #9575c9); outline-offset:-2px; }
+.voice-library-roles { display:flex; flex-wrap:wrap; gap:18px; margin:12px 0; }
+.voice-library-roles > div { display:flex; align-items:center; gap:12px; padding:8px 16px; border:1px solid var(--border, #ddd5e4); border-radius:14px; }
+.voice-library-select { display:flex; gap:12px; margin:16px 0; }
+.voice-library-select select { flex:1; min-width:0; }

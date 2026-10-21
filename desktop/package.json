@@ -1,14 +1,237 @@
 {
-  "name": "harbour-lite-desktop",
+  "name": "harbour-desktop",
   "version": "0.1.0",
   "private": true,
-  "license": "MIT",
-  "description": "Optional desktop shell for Harbour Lite",
-  "main": "main.cjs",
+  "description": "Harbour 桌面壳（Electron）——把 dashboard 包成像 Claude Desktop 那样的 app，可连本机或树莓派上的 Harbour 服务。",
+  "main": "main.js",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
-    "start": "electron ."
+    "test:file-viewer-ui": "electron tests/attachment-viewer-smoke.js",
+    "test:run-picker": "electron tests/session-browsing-smoke.js --run-picker && electron tests/session-browsing-smoke.js --run-picker --scale=1.5 && electron tests/orb-smoke.js",
+    "test:orb": "node --test tests/orb.test.js tests/orb-desktop.test.js tests/orb-lifecycle.test.js tests/orb-state.test.js tests/orb-feedback.test.js tests/orb-dock.test.js tests/orb-signals.test.js tests/orb-unread.test.js tests/orb-unread-renderer.test.js tests/orb-music.test.js tests/orb-resize.test.js && electron tests/orb-smoke.js && electron tests/orb-dock-smoke.js && electron tests/orb-signals-smoke.js && electron tests/orb-music-smoke.js && npm run test:orb-resize && npm run test:orb-clipping && npm run test:orb-lyrics",
+    "test:orb-unread": "node --test --test-concurrency=1 tests/orb-unread.test.js tests/orb-unread-renderer.test.js tests/orb-signals.test.js tests/orb-lifecycle.test.js tests/orb.test.js",
+    "test:ui-performance": "node --test tests/orb-state.test.js tests/orb-lifecycle.test.js ../tests/web/traceProgress.test.cjs && electron tests/trace-progress-smoke.cjs && electron tests/orb-smoke.js",
+    "test:visual-policy": "node --test --test-concurrency=1 tests/visual-policy.test.js tests/music-player-performance.test.js tests/live2d-visibility.test.js ../tests/web/visualActivity.test.cjs && electron tests/visual-policy-smoke.js",
+    "test:orb-resize": "node --test tests/orb-resize.test.js && electron tests/orb-resize-smoke.js && electron tests/orb-resize-smoke.js --scale=1.5",
+    "test:orb-clipping": "node tests/orb-clipping-matrix.js",
+    "test:orb-music": "node --test tests/orb-music.test.js tests/orb-lifecycle.test.js && electron tests/orb-music-smoke.js && npm run test:orb-lyrics",
+    "test:orb-lyrics": "node --test tests/orb-lyrics.test.js && electron tests/orb-lyrics-smoke.js && electron tests/orb-lyrics-smoke.js --scale=1.5",
+    "test:folia-startup": "node --test tests/folia-provider-startup.test.js tests/folia-provider-worker.test.js && electron tests/folia-startup-performance.js --providers",
+    "test:window-menu": "node --test tests/window-menu.test.js && electron tests/window-menu-background.js",
+    "test:town-compat": "electron tests/town-host-compat.js",
+    "test:town-background": "electron tests/town-background.js",
+    "test:folia": "node --test tests/folia-windows-helper.test.js tests/folia-package.test.js && electron tests/folia-smoke.js && npm run test:folia-transparency && npm run test:folia-player-panel && npm run test:folia-recovery && electron tests/folia-dashboard-smoke.js --panels --themes && electron tests/folia-exit-smoke.js",
+    "test:folia-player-panel": "electron tests/folia-empty-player-smoke.js && electron tests/folia-local-smoke.js --player-panel",
+    "test:folia-workshop": "electron tests/folia-local-smoke.js --tempera-workshop",
+    "test:folia-no-webgl": "electron tests/folia-no-webgl-smoke.js",
+    "test:folia-recovery": "node --test tests/folia-renderer-health.test.js && electron tests/folia-local-smoke.js --visualizer-switch",
+    "test:folia-device-menu": "electron tests/folia-dashboard-smoke.js --device-menu",
+    "test:folia-source-menu": "electron tests/folia-dashboard-smoke.js --source-menu",
+    "test:folia-compact": "electron tests/folia-dashboard-smoke.js --compact-height",
+    "test:folia-shuffle": "electron tests/folia-local-smoke.js --shuffle && electron tests/folia-dashboard-smoke.js --shuffle-ui",
+    "test:music-companion": "node --test tests/music-companion.test.js tests/music-device-identity.test.js && electron tests/music-companion-smoke.js",
+    "test:folia-background": "electron tests/folia-controller-background.js",
+    "test:folia-cold-play": "electron tests/folia-local-smoke.js --cold-start",
+    "test:folia-nav-overlay": "electron tests/folia-clip-smoke.js && electron tests/folia-dashboard-smoke.js --themes && electron tests/folia-local-smoke.js --nav-overlay",
+    "test:folia-transparency": "electron tests/folia-transparency-smoke.js && electron tests/folia-local-smoke.js --transparency",
+    "test:folia-recording": "electron tests/folia-local-smoke.js --advanced",
+    "test:folia-wallpaper": "electron tests/folia-wallpaper-smoke.js",
+    "test:folia-packaged": "electron tests/folia-smoke.js --packaged && electron tests/folia-local-smoke.js --packaged",
+    "test:packaged-client": "node tests/packaged-client-smoke.cjs",
+    "test:folia-online": "electron tests/folia-online-smoke.js",
+    "test:pet-performance": "npm run build:companion && node --test tests/live2d-visibility.test.js && electron tests/live2d-performance-smoke.js",
+    "test:live2d-actions": "npm run build:companion && node --test tests/live2d-actions.test.js && electron tests/live2d-state-visual-smoke.js",
+    "test:pet-resources": "node --test tests/remote-tts-lifecycle.test.js && electron tests/pet-resource-lifecycle-smoke.js --folia",
+    "test:pet-notification": "node --test tests/pet-notification.test.js && electron tests/pet-notification-smoke.js",
+    "test:unsaved-ui": "electron tests/unsaved-editors-smoke.js",
+    "test:exit-guard-ui": "electron tests/exit-guard-lifecycle-smoke.js",
+    "test:cowork-ui": "electron tests/cowork-ui-smoke.js",
+    "test:composer-ui": "electron tests/composer-resize-smoke.js",
+    "test:composer-layout": "electron tests/chat-composer-layout-smoke.js && electron tests/chat-composer-layout-smoke.js --scale=1.5",
+    "test:chat-navigation-ui": "electron tests/chat-navigation-smoke.cjs",
+    "test:session-browsing-ui": "electron tests/session-browsing-smoke.js",
+    "test:chat-windows-ui": "node ../tests/web/chatWindows.preview.cjs",
+    "test:session-delete-ui": "electron tests/session-delete-smoke.js",
+    "test:chat-shortcuts": "electron tests/session-browsing-smoke.js --chat-shortcuts && electron tests/orb-smoke.js",
+    "test:chat-hero-ui": "electron tests/chat-hero-smoke.js",
+    "test:chat-tools-ui": "electron tests/session-browsing-smoke.js --chat-tools && electron tests/session-browsing-smoke.js --chat-tools --scale=1.5",
+    "test:file-changes-ui": "electron tests/file-changes-smoke.js",
+    "test:trace-progress-ui": "electron tests/trace-progress-smoke.cjs",
+    "test:agent-editor-ui": "electron tests/agent-editor-smoke.js",
+    "test:settings-ui": "electron tests/settings-layout-smoke.js",
+    "test:workflow-ui": "electron tests/workflow-canvas-smoke.js",
+    "test:timezone-ui": "electron tests/time-zone-smoke.js",
+    "test:startup": "node --test tests/desktop-startup.test.js tests/startup-splash.test.js ../tests/web/desktopStartup.test.cjs",
+    "test:splash-ui": "electron tests/startup-splash-smoke.js && electron tests/startup-splash-smoke.js --scale=1.5 && electron tests/startup-splash-smoke.js --reduced-motion",
+    "test:startup-handoff": "electron tests/startup-handoff-smoke.js && electron tests/startup-handoff-smoke.js --scale=1.5 && electron tests/startup-handoff-smoke.js --reduced-motion",
+    "test:live2d-installer": "node --test tests/live2d-installer.test.js",
+    "build:companion": "node companion/build-live2d.js",
+    "install:live2d:lss": "node scripts/install-live2d-pack.js --profile companion/profiles/elaina-lss.json",
+    "ensure:live2d:lss": "node scripts/ensure-live2d-pack.js --profile companion/profiles/elaina-lss.json --best-effort",
+    "start": "npm run build:companion && electron .",
+    "build:win": "npm run build:companion && electron-builder --win",
+    "build:mac": "npm run build:companion && electron-builder --mac",
+    "test:companion": "npm run build:companion && node tests/companion-runtime.test.js && node --test tests/live2d-actions.test.js && electron tests/live2d-smoke.js && electron tests/pet-interaction-feedback-smoke.js && electron tests/pet-work-prop-smoke.js && electron tests/pet-bubble-smoke.js && npm run test:pet-notification"
   },
   "devDependencies": {
-    "electron": "44.9.2"
+    "electron": "^43.3.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.25.0"
+  },
+  "dependencies": {
+    "harbour": "file:..",
+    "pixi-live2d-display": "0.5.0-beta",
+    "pixi.js": "^7.3.0",
+    "ws": "^8.18.0"
+  },
+  "optionalDependencies": {
+    "koffi": "3.2.0"
+  },
+  "build": {
+    "beforePack": "folia/before-pack.js",
+    "afterPack": "folia/after-pack.js",
+    "appId": "org.harbour.public",
+    "productName": "Harbour",
+    "asar": true,
+    "asarUnpack": [
+      "companion/qqmusic-bridge.ps1",
+      "node_modules/koffi/**/*.node",
+      "node_modules/@koromix/koffi-*/**/*.node"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "town/**/*.js",
+      "folia/host.js",
+      "folia/crash-reporting.js",
+      "folia/controller.js",
+      "folia/device-menu.js",
+      "folia/device-menu.html",
+      "folia/device-menu-preload.js",
+      "folia/renderer-health.js",
+      "companion/*.js",
+      "companion/*.ps1",
+      "companion/profiles/**/*",
+      "scripts/install-live2d-pack.js",
+      "scripts/ensure-live2d-pack.js",
+      "renderer/**/*",
+      "THIRD_PARTY_NOTICES.md",
+      "package.json",
+      "assets/icon.ico"
+    ],
+    "extraResources": [
+      {
+        "from": ".folia-package/${arch}",
+        "to": "folia",
+        "filter": [
+          "**/*",
+          "!build/**/target/**/*",
+          "!node_modules/.cache/**/*"
+        ]
+      },
+      {
+        "from": ".folia-package/${arch}/node_modules",
+        "to": "folia/node_modules",
+        "filter": [
+          "**/*",
+          "!.bin{,/**/*}",
+          "!.cache{,/**/*}"
+        ]
+      },
+      {
+        "from": "../web",
+        "to": "web",
+        "filter": [
+          "desktop-pet.html",
+          "desktop-pet.css",
+          "desktop-pet.js",
+          "pet-core.js",
+          "music-context.js",
+          "run-picker.js",
+          "run-picker.css",
+          "voice-picker.js",
+          "voice-picker.css",
+          "pet-music.js",
+          "live2d-host.js",
+          "visual-activity.js",
+          "harbour-cubism-adapter.js",
+          "assets/aemeath-avatar.jpg",
+          "assets/orb/*-expressions-v1.png",
+          "assets/orb/*-expressions-v2.png",
+          "assets/orb/*-thinking-v2.png",
+          "assets/orb/*-peek-v1.png",
+          "assets/orb/*-peek-v2.png",
+          "assets/orb/*-peek-blink-v2.png",
+          "assets/orb/*-peek-v3.png",
+          "assets/orb/*-peek-blink-v3.png",
+          "assets/orb/aemeath-avatar-v4.png",
+          "assets/orb/aemeath-expressions-v4.png",
+          "assets/orb/aemeath-peek-v4.png",
+          "assets/orb/aemeath-peek-blink-v4.png",
+          "assets/orb/aemeath-peek-v5.png",
+          "assets/orb/aemeath-peek-blink-v5.png",
+          "assets/pets/**/*"
+        ]
+      },
+      {
+        "from": "../web/assets/elaina-avatar.png",
+        "to": "web/assets/elaina-avatar.png"
+      }
+    ],
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Harbour uses the microphone only when you start a voice call or recording."
+      },
+      "artifactName": "${productName}-${version}-mac-${arch}.${ext}",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}.${ext}"
+    }
   }
 }

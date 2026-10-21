@@ -1,358 +1,108 @@
 <!doctype html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="color-scheme" content="light" />
-    <title>Harbour Lite · 你的 AI 工作台</title>
-    <link rel="icon" href="/favicon.svg" />
-    <link rel="stylesheet" href="/styles.css" />
-    <script type="module" src="/app.js"></script>
-  </head>
-  <body>
-    <aside id="sidebar" class="sidebar">
-      <a class="brand" href="/" aria-label="Harbour Lite 首页"
-        ><img src="/favicon.svg" alt="" width="36" height="36" /><span
-          >Harbour <small>LITE</small></span
-        ></a
-      >
-      <button id="new-chat" class="new-chat">
-        <i data-icon="plus"></i>开始新对话 <span class="shortcut">＋</span>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Harbour</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%2312141d'/%3E%3Cpath d='M8 3.2 L11.6 8 L8 12.8 L4.4 8 Z' fill='%23818cf8'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/themes.css" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/file-viewer.css" />
+  <link rel="stylesheet" href="/cowork.css" />
+  <link rel="stylesheet" href="/workflow-canvas.css" />
+  <link rel="stylesheet" href="/motion.css" />
+  <link rel="stylesheet" href="/chat-hero.css" />
+  <link rel="stylesheet" href="/music.css" />
+  <link rel="stylesheet" href="/chat-music.css" />
+  <link rel="stylesheet" href="/chat-intake.css" />
+  <link rel="stylesheet" href="/calendar.css" />
+  <link rel="stylesheet" href="/google-integrations.css" />
+  <link rel="stylesheet" href="/town-host.css" />
+  <link rel="stylesheet" href="/cron.css" />
+  <link rel="stylesheet" href="/shell.css" />
+  <link rel="stylesheet" href="/studio.css" />
+  <link rel="stylesheet" href="/collections.css" />
+  <link rel="stylesheet" href="/chat-sessions.css" />
+  <link rel="stylesheet" href="/trace-progress.css" />
+  <link rel="stylesheet" href="/run-picker.css" />
+  <link rel="stylesheet" href="/voice-picker.css" />
+  <link rel="stylesheet" href="/chat-tools.css" />
+  <link rel="stylesheet" href="/chat-composer.css" />
+</head>
+<body data-theme-cat="premium" data-theme-persona="neutral" data-theme="premium-champagne">
+  <img class="harbour-hero" alt="Harbour" />
+
+  <header class="topbar">
+    <div class="topbar-identity">
+      <button class="nav-toggle" id="navToggle" type="button" aria-label="展开导航" aria-controls="sidebar" aria-expanded="false" title="展开导航（也可悬停屏幕左缘）">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9 4.5v15"/></svg>
       </button>
-      <div class="rail-heading">最近的对话 <span id="session-count">0</span></div>
-      <nav id="sessions" aria-label="会话列表"></nav>
-      <footer class="rail-footer">
-        <button id="open-agents">
-          <i data-icon="agents"></i><span>我的 Agent</span><i data-icon="arrow"></i>
+      <div class="nav-history" role="group" aria-label="页面历史">
+        <button class="nav-history-button" id="navBack" type="button" disabled aria-label="后退" title="后退（Alt+←）">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
         </button>
-        <button id="open-settings">
-          <i data-icon="settings"></i><span>设置与外观</span><i data-icon="arrow"></i>
-        </button>
-        <div class="local-note"><span class="status-dot"></span>本机工作台 <span>v0.1</span></div>
-      </footer>
-    </aside>
-    <button id="sidebar-backdrop" class="sidebar-backdrop" aria-label="关闭侧栏" hidden></button>
-    <main class="main">
-      <header class="topbar">
-        <button
-          id="toggle-sidebar"
-          class="icon-button mobile-only"
-          title="切换侧栏"
-          aria-label="切换侧栏"
-        >
-          <i data-icon="panel"></i>
-        </button>
-        <div class="top-select">
-          <label for="agent-select">AGENT</label
-          ><select id="agent-select" aria-label="选择 Agent"></select>
-        </div>
-        <div class="model-select">
-          <span id="mode-dot" class="status-dot"></span
-          ><select id="model-select" aria-label="选择模型"></select>
-        </div>
-        <button id="preview-splash" class="icon-button" title="预览开屏" aria-label="预览开屏">
-          <i data-icon="spark"></i>
-        </button>
-      </header>
-      <div id="chat-scroll" class="chat-scroll">
-        <section id="welcome" class="welcome">
-          <div class="eyebrow"><span></span> A SPACE FOR YOUR IDEAS</div>
-          <h1>从一个想法，<br />开始。</h1>
-          <p>选择你的模型，遇见你的助手。<br />让灵感在这里慢慢成形。</p>
-          <div class="suggestions">
-            <button data-prompt="请读取已挂载的技能，告诉我你能怎么帮助我。">
-              <i data-icon="spark"></i><span>认识你的助手<small>从一个轻松的问题开始</small></span
-              ><i data-icon="arrow"></i>
-            </button>
-            <button data-action="models">
-              <i data-icon="connect"></i
-              ><span>接入自己的模型<small>API 密钥只保存在后端</small></span
-              ><i data-icon="arrow"></i>
-            </button>
-          </div>
-        </section>
-        <section id="messages" class="messages" aria-label="聊天消息" aria-live="polite"></section>
-        <details id="run-details" class="run-details" hidden>
-          <summary id="run-summary">任务进度</summary>
-          <ol id="run-trace"></ol>
-        </details>
-      </div>
-      <div class="composer-wrap">
-        <div id="run-hint" class="run-hint" aria-live="polite"></div>
-        <form id="composer" class="composer">
-          <label class="sr-only" for="message">输入消息</label
-          ><textarea id="message" rows="2" maxlength="12000" aria-label="输入消息"></textarea>
-          <div class="composer-tools">
-            <span class="composer-label"
-              ><i data-icon="shield"></i
-              ><span id="composer-mode">离线演示 · 不产生 API 费用</span></span
-            ><span class="composer-right"
-              ><kbd>Enter 发送</kbd
-              ><button
-                type="button"
-                id="stop-run"
-                class="icon-button stop"
-                hidden
-                title="停止任务"
-                aria-label="停止任务"
-              >
-                <i data-icon="stop"></i></button
-              ><button id="send" class="send-button" type="submit" title="发送" aria-label="发送">
-                <i data-icon="up"></i></button
-            ></span>
-          </div>
-        </form>
-        <p class="composer-footnote">
-          对话保存在本机。使用在线模型时，相关内容会发送给你选择的服务商。
-        </p>
-      </div>
-    </main>
-    <dialog id="settings-dialog" class="settings-dialog">
-      <div class="dialog-head">
-        <div>
-          <span class="eyebrow">MAKE IT YOURS</span>
-          <h2>你的工作台，你来定义。</h2>
-        </div>
-        <button class="icon-button" data-close title="关闭" aria-label="关闭">
-          <i data-icon="close"></i>
+        <button class="nav-history-button" id="navForward" type="button" disabled aria-label="前进" title="前进（Alt+→）">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
         </button>
       </div>
-      <nav class="settings-tabs" aria-label="设置分类">
-        <button data-tab="models">模型连接</button><button data-tab="agents">Agent</button
-        ><button data-tab="appearance">开屏外观</button><button data-tab="about">数据与隐私</button>
-      </nav>
-      <div class="dialog-content">
-        <section data-section="models">
-          <div class="section-intro">
-            <h3>连接你喜欢的模型</h3>
-            <p>
-              支持 OpenAI 兼容 Chat Completions 和 Anthropic
-              Messages。模型名称由你填写，不附带账户或额度。
-            </p>
-          </div>
-          <div class="editor-grid">
-            <div>
-              <div id="model-list" class="item-list"></div>
-              <button id="add-model" class="quiet-button"><i data-icon="plus"></i>添加连接</button>
-            </div>
-            <form id="model-form" class="settings-form">
-              <div class="field-row">
-                <label
-                  >连接标识<input
-                    name="id"
-                    required
-                    pattern="[a-z0-9][a-z0-9-]{0,47}"
-                    maxlength="48"
-                    autocomplete="off"
-                    placeholder="my-model" /></label
-                ><label
-                  >显示名称<input name="label" required maxlength="80" placeholder="我的模型"
-                /></label>
-              </div>
-              <label
-                >协议<select name="provider">
-                  <option value="openai-compatible">OpenAI 兼容</option>
-                  <option value="anthropic">Anthropic</option>
-                </select></label
-              >
-              <label
-                >API 根地址<input
-                  name="baseUrl"
-                  required
-                  type="url"
-                  placeholder="https://api.example.com/v1"
-              /></label>
-              <div class="field-row">
-                <label
-                  >模型 ID<input
-                    name="model"
-                    required
-                    maxlength="120"
-                    placeholder="服务商提供的模型名称" /></label
-                ><label
-                  >最大输出 token<input
-                    name="maxOutputTokens"
-                    type="number"
-                    min="128"
-                    max="32768"
-                    value="2048"
-                    required
-                /></label>
-              </div>
-              <label
-                >API Key<input
-                  name="apiKey"
-                  type="password"
-                  autocomplete="new-password"
-                  maxlength="4096"
-                  placeholder="留空保留已有密钥；本地模型可不填"
-              /></label>
-              <p class="field-note">
-                密钥写入本机 .env，不返回浏览器，不进入 Git。保存配置不会发起模型调用。
-              </p>
-              <div class="form-footer">
-                <span class="form-status" aria-live="polite"></span
-                ><button class="primary-button" type="submit">
-                  保存连接<i data-icon="check"></i>
-                </button>
-              </div>
-            </form>
-          </div>
-        </section>
-        <section data-section="agents" hidden>
-          <div class="section-intro">
-            <h3>不只一个名字，是你的工作方式。</h3>
-            <p>每个 Agent 有独立指令、默认模型和技能白名单。修改写入本机副本，不覆盖仓库模板。</p>
-          </div>
-          <div class="editor-grid">
-            <div>
-              <div id="agent-list" class="item-list"></div>
-              <button id="add-agent" class="quiet-button">
-                <i data-icon="plus"></i>创建 Agent
-              </button>
-            </div>
-            <form id="agent-form" class="settings-form">
-              <div class="field-row">
-                <label
-                  >Agent 标识<input
-                    name="id"
-                    required
-                    pattern="[a-z0-9][a-z0-9-]{0,47}"
-                    maxlength="48"
-                    placeholder="my-assistant" /></label
-                ><label>名字<input name="name" required maxlength="80" /></label>
-              </div>
-              <label>一句话介绍<input name="description" maxlength="300" /></label>
-              <div class="field-row">
-                <label>默认模型<select name="model"></select></label
-                ><label
-                  >最多模型回合<input
-                    name="maxSteps"
-                    type="number"
-                    min="1"
-                    max="32"
-                    required
-                    value="8"
-                /></label>
-              </div>
-              <label
-                >指令<textarea name="prompt" rows="7" required maxlength="24000"></textarea>
-              </label>
-              <fieldset>
-                <legend>可读取的技能</legend>
-                <div id="agent-skills" class="skill-checks"></div>
-              </fieldset>
-              <label class="check-label"
-                ><input name="readSkills" type="checkbox" checked />允许
-                read_skill（只读已挂载技能）</label
-              >
-              <div class="form-footer">
-                <span class="form-status" aria-live="polite"></span
-                ><button class="primary-button" type="submit">
-                  保存 Agent<i data-icon="check"></i>
-                </button>
-              </div>
-            </form>
-          </div>
-        </section>
-        <section data-section="appearance" hidden>
-          <div class="section-intro">
-            <h3>让打开的瞬间，有一点自己的样子。</h3>
-            <p>默认不附带任何角色。上传你拥有使用权的图片，也可以只保留干净的文字。</p>
-          </div>
-          <div class="appearance-grid">
-            <div id="appearance-preview" class="appearance-preview">
-              <img id="appearance-image" alt="自定义开屏角色" hidden />
-              <div class="preview-symbol">H<span>✦</span></div>
-              <strong id="appearance-title"></strong><span id="appearance-subtitle"></span>
-            </div>
-            <form id="appearance-form" class="settings-form">
-              <label class="check-label"
-                ><input name="enabled" type="checkbox" />启动时显示开屏</label
-              >
-              <label>欢迎语<input name="title" maxlength="60" required /></label
-              ><label>补充文字<input name="subtitle" maxlength="120" /></label>
-              <label class="upload-control"
-                ><i data-icon="image"></i
-                ><span>选择角色图片<small>PNG / JPG / WebP · 最大 2 MB</small></span
-                ><input id="image-upload" type="file" accept="image/png,image/jpeg,image/webp"
-              /></label>
-              <button id="remove-image" type="button" class="quiet-button">
-                移除图片，使用默认图形
-              </button>
-              <p class="field-note">
-                图片仅保存在本机；服务端会重新编码并移除元数据。静态立绘配合轻量入场，不会常驻高负载动画。
-              </p>
-              <div class="form-footer">
-                <button id="appearance-try" type="button" class="quiet-button">预览</button
-                ><span class="form-status" aria-live="polite"></span
-                ><button class="primary-button" type="submit">
-                  保存外观<i data-icon="check"></i>
-                </button>
-              </div>
-            </form>
-          </div>
-        </section>
-        <section data-section="about" hidden>
-          <div class="section-intro">
-            <h3>轻一点，也清楚一点。</h3>
-            <p>Harbour Lite 是一个独立的 Agent 工作台底座，不是托管 AI 服务。</p>
-          </div>
-          <div class="privacy-cards">
-            <article>
-              <i data-icon="shield"></i>
-              <h4>本机优先，不等于完全离线</h4>
-              <p>
-                会话、配置和角色图片在 data/；API Key 在 .env。它们默认不进
-                Git，但并未加密。在线模型会收到当前 Agent 指令、相关对话和实际读取的技能。
-              </p>
-            </article>
-            <article>
-              <i data-icon="agents"></i>
-              <h4>能力由你明确选择</h4>
-              <p>
-                默认只有受限 read_skill，不运行
-                Shell、不访问私人文件、不附带现成业务流程。新增工具需自行实现权限与确认机制。
-              </p>
-            </article>
-            <article>
-              <i data-icon="connect"></i>
-              <h4>不偷偷重试，不后台跑单</h4>
-              <p>
-                启动不调用模型。失败不会自动换服务或重试。关闭网页不会停止已发送的任务，请使用停止按钮；发出的请求仍可能计费。
-              </p>
-            </article>
-          </div>
-        </section>
-      </div>
-    </dialog>
-    <dialog id="confirm-dialog" class="small-dialog">
-      <h2>删除这段对话？</h2>
-      <p>仅删除本机聊天记录。已经发送到模型服务商的数据不会因此撤回。</p>
-      <div class="dialog-actions">
-        <button id="cancel-delete" class="quiet-button">取消</button
-        ><button id="confirm-delete" class="danger-button">删除对话</button>
-      </div>
-    </dialog>
-    <dialog id="auth-dialog" class="small-dialog">
-      <h2>连接你的工作台</h2>
-      <p>输入服务端设置的访问口令。它仅存于当前浏览器标签页。</p>
-      <form id="auth-form" class="settings-form">
-        <label>访问口令<input name="token" type="password" required autocomplete="off" /></label
-        ><span id="auth-error" role="alert"></span
-        ><button class="primary-button" type="submit">连接</button>
-      </form>
-    </dialog>
-    <div id="splash" class="splash" hidden>
-      <div class="splash-inner">
-        <img id="splash-image" alt="自定义角色" hidden />
-        <div class="splash-symbol">H<span>✦</span></div>
-        <span class="eyebrow">HARBOUR LITE</span>
-        <h2 id="splash-title"></h2>
-        <p id="splash-subtitle"></p>
-        <button id="skip-splash" class="quiet-button">进入工作台<i data-icon="arrow"></i></button>
+      <div class="brand">
+        <span class="brand-name">Harbour</span>
+        <svg class="brand-flourish" viewBox="0 0 132 44" aria-hidden="true" focusable="false">
+          <path class="brand-tide" d="M9 36c29-5 60 8 108-2m-28 6c9 0 16-1 23-3"/>
+        </svg>
       </div>
     </div>
-    <div id="toast" class="toast" role="status" hidden></div>
-  </body>
+    <div class="topbar-theme">
+      <label class="theme-label">THEME</label>
+      <select id="themeCat" class="theme-select" title="大类（视觉语言）"></select>
+      <select id="themePersona" class="theme-select" title="角色皮肤"></select>
+      <select id="themeVariant" class="theme-select" title="配色变体"></select>
+    </div>
+  </header>
+
+  <div class="shell">
+    <div class="nav-edge" id="navEdge" title="导航（悬停唤出）"></div>
+    <nav class="sidebar" id="sidebar" aria-label="主导航">
+      <div class="nav-primary" id="navPrimary"></div>
+      <details class="nav-more" id="navMore">
+        <summary><span class="nav-more-icon" aria-hidden="true">···</span><span>更多功能</span><svg class="nav-more-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m7 5 5 5-5 5"/></svg></summary>
+        <div class="nav-secondary" id="navSecondary"></div>
+        <button class="desktop-pet-quick" id="desktopPetQuick" type="button" hidden title="显示当前角色桌宠">桌面陪伴</button>
+      </details>
+    </nav>
+
+    <main class="content" id="content">
+      <!-- active panel injected by app.js -->
+    </main>
+  </div>
+
+  <!-- Charts are loaded only when Dashboard is opened, not for ordinary Main Chat. -->
+  <script src="/visual-activity.js"></script>
+  <script src="/time-zone.js"></script>
+  <script src="/agent-config.js"></script>
+  <script src="/workflow-canvas.js"></script>
+  <script src="/unsaved-changes.js"></script>
+  <script src="/chat-tools.js"></script>
+  <script src="/chat-hero.js"></script>
+  <script src="/music.js"></script>
+  <script src="/music-context.js"></script>
+  <script src="/chat-music.js"></script>
+  <script src="/chat-unread.js"></script>
+  <script src="/chat-intake.js"></script>
+  <script src="/calendar.js"></script>
+  <script src="/google-integrations.js"></script>
+  <script src="/town.js"></script>
+  <script src="/cron.js"></script>
+  <script src="/spaces.js"></script>
+  <script src="/trace-progress.js"></script>
+  <script src="/run-picker.js"></script>
+  <script src="/voice-picker.js"></script>
+  <script src="/voice-library.js"></script>
+  <script src="/file-viewer.js"></script>
+  <script src="/desktop-startup.js"></script>
+  <script src="/markdown-copy.js"></script>
+  <script src="/app.js"></script>
+  <!-- 动效层 MOTION v1：纯增强，必须在 app.js 之后（按名包装其顶层函数）。 -->
+  <script src="/motion.js"></script>
+</body>
 </html>

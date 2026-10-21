@@ -1,0 +1,50 @@
+/* Inherit Harbour's semantic colors in premium, anime and dark themes. */
+.google-integrations { min-width:0; }
+.google-integrations *, .google-integrations *::before { box-sizing:border-box; }
+.google-integrations [hidden] { display:none!important; }
+.google-heading { flex-wrap:wrap; }
+.google-heading>div { flex:1; min-width:150px; }
+.google-heading>.btn { margin-left:auto; }
+.google-body { min-width:0; }
+.google-privacy,.google-footnote { margin:0 0 18px; color:var(--fg-dim); font-size:12px; line-height:1.7; }
+.google-footnote { margin:20px 0 0; font-size:11px; color:var(--fg-faint); }
+.google-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr)); gap:16px; align-items:start; }
+.google-card { min-width:0; padding:20px; border:1px solid var(--border); border-radius:var(--radius-lg,16px); background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 3%,var(--panel)),var(--panel)); box-shadow:var(--shadow-sm); }
+.google-card-heading { display:flex; align-items:center; gap:11px; flex-wrap:wrap; }
+.google-card-heading>div { flex:1; min-width:120px; }
+.google-card-icon { display:grid; place-items:center; width:40px; height:40px; border:1px solid color-mix(in srgb,var(--accent) 16%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--accent) 8%,var(--panel)); color:var(--accent); font-size:23px; }
+.google-eyebrow { font:600 9px var(--font-ui); color:var(--fg-faint); letter-spacing:.09em; }
+.google-card h4 { margin:4px 0 0; font:600 19px var(--font-display); color:var(--fg); }
+.google-card h4 small { margin-left:6px; color:var(--fg-dim); font:400 12px var(--font-ui); }
+.google-status { display:inline-flex; align-items:center; gap:6px; padding:5px 8px; border-radius:20px; font-size:11px; color:var(--fg-dim); background:var(--panel-2); white-space:nowrap; }
+.google-status i { display:block; width:5px; height:5px; border-radius:50%; background:var(--fg-faint); }
+.google-status.is-connected { color:var(--ok); }
+.google-status.is-connected i { background:var(--ok); }
+.google-card>p { margin:16px 0; color:var(--fg-dim); font-size:12px; line-height:1.8; overflow-wrap:anywhere; }
+.google-card-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:18px 0; }
+.google-card-actions>.btn { text-decoration:none; }
+.google-action-hint { flex:1; min-width:100px; font-size:11px; line-height:1.6; color:var(--fg-faint); }
+.google-setup { border-top:1px solid var(--border); margin-top:18px; padding-top:14px; color:var(--fg-dim); }
+.google-setup summary { cursor:pointer; font-size:12px; color:var(--fg); }
+.google-setup p { font-size:12px; line-height:1.8; margin:12px 0 0; overflow-wrap:anywhere; }
+.google-setup>div>code { display:block; margin-top:8px; }
+.google-setup code { font:11px/1.7 var(--font-mono); overflow-wrap:anywhere; white-space:normal; color:var(--fg); }
+.google-code-list { display:block; margin-top:5px; }
+.google-code-list code { display:block; }
+.google-usage { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:20px 0 8px; padding:14px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+.google-usage div { min-width:0; }
+.google-usage dt { color:var(--fg-dim); font-size:11px; }
+.google-usage dd { margin:8px 0 0; color:var(--fg); font:500 clamp(16px,2vw,23px) var(--font-mono); overflow-wrap:anywhere; }
+.google-card>.google-usage-note { font-size:11px; margin:10px 0 0; }
+.google-message,.google-confirm { border:1px solid var(--border); background:color-mix(in srgb,var(--accent) 6%,var(--panel)); padding:12px 14px; border-radius:var(--radius,10px); font-size:12px; line-height:1.8; overflow-wrap:anywhere; margin-bottom:16px; color:var(--fg-dim); }
+.google-message.is-error,.google-card>.google-card-warning { color:var(--danger); }
+.google-message.is-error { border-color:color-mix(in srgb,var(--danger) 35%,var(--border)); }
+.google-confirm { margin-top:14px; border-color:color-mix(in srgb,var(--warn) 40%,var(--border)); }
+.google-confirm strong { color:var(--fg); }
+.google-confirm p { margin:8px 0 12px; }
+.google-confirm>div { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
+.google-integrations .google-danger { color:var(--danger); }
+.google-auth-link a { color:var(--accent); }
+.google-integrations :is(button,a,summary):focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+body[data-theme-cat="anime"] .google-card { background:color-mix(in srgb,var(--panel) 94%,transparent); border-radius:18px; }
+@media(max-width:600px) { .google-card { padding:16px; } .google-card-heading { gap:9px; } .google-heading>.btn { margin-left:0; } }

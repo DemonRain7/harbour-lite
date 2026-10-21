@@ -1,17 +1,12 @@
-# Harbour Lite contributor guide
+# Harbour 公开版工作约定
 
-This is an independent, public-safe starter. It does not share a repository,
-configuration, runtime directory, port, or Git history with another application.
+本分支是现有 Harbour 的脱敏副本，不是另写一个精简客户端。
 
-- Work only in this repository. Do not inspect or import personal configuration,
-  conversation history, credentials, character assets, or private prompt libraries.
-- Never commit `.env`, `data/`, `node_modules/`, local credentials, or personal paths.
-- Do not bundle third-party content without an explicit redistribution license.
-- Keep model requests on the server, credentials in environment variables, and
-  user-configured agent instructions separate from the UI.
-- The default demo is offline. Tests must not call paid model services.
-- Run `npm test`, `npm run typecheck`, and `npm run audit:public` before publishing.
-- Never add Co-Authored-By or AI attribution to Git commits.
-
-Video development is isolated in `demo/`. It may write only to that directory
-and `docs/media/`; it must not add runtime dependencies to the main package.
+- 保留原 Electron / Web 的界面、主题、布局、动效和通用能力框架。
+- 只在本目录修改，不改原项目，不读取或迁移它的运行数据与凭据。
+- `.env`、data、个人 MASTER / PREFERENCE / MEMORY、聊天、上传、报表、私人能力包不得入库。
+- 普通素材按清单保留；第三方资源不得因为在本机可用就宣称可重新授权。
+- 用户配置的 Agent、Skill、Workflow、MCP 与框架分离；新 clone 不附带私人任务与能力挂载。
+- 本地预览使用独立端口和独立数据目录，不调用付费模型，不连接私人 QQ / Discord。
+- 发布前必须审核实际 staged 文件和 Git 历史，不得直接推送来源仓库历史。
+- `.claude/` 必须忽略；提交不得添加 Co-Authored-By 或 AI 作者归属。

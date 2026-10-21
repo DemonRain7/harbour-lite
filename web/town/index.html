@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Harbour · 小镇</title>
+  <link rel="stylesheet" href="./town.css">
+  <link rel="stylesheet" href="./models.css">
+  <link rel="stylesheet" href="./presentation.css">
+  <link rel="stylesheet" href="./maps.css">
+  <link rel="stylesheet" href="./settings-panel.css">
+  <link rel="stylesheet" href="./social-panel.css">
+  <script type="importmap">{"imports":{"three":"./lib/three/build/three.module.js","three/addons/":"./lib/three/examples/jsm/"}}</script>
+</head>
+<body>
+  <canvas id="scene" tabindex="0" aria-label="樱花小镇三维场景，WASD 行走，鼠标靠边持续转向，点击锁定鼠标，Alt 或 Esc 释放"></canvas>
+  <div class="look-crosshair" aria-hidden="true"></div>
+  <header class="town-header">
+    <div class="town-settings">
+      <button id="settings-toggle" type="button" aria-label="小镇菜单" title="小镇菜单 · M" aria-keyshortcuts="M" aria-expanded="false" aria-controls="settings-panel" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        <span>菜单</span>
+      </button>
+      <section id="settings-panel" class="settings-panel" role="dialog" aria-labelledby="settings-title" tabindex="-1" hidden>
+        <header class="settings-heading"><div><h2 id="settings-title">小镇</h2><p id="current-map-name">Harbour</p></div><button id="settings-close" type="button" aria-label="收起小镇菜单">×</button></header>
+        <div class="town-tabs" role="tablist" aria-label="小镇菜单分类">
+          <button id="tab-residents" type="button" role="tab" aria-selected="true" aria-controls="panel-residents" data-town-tab="residents">居民</button>
+          <button id="tab-scene" type="button" role="tab" aria-selected="false" aria-controls="panel-scene" data-town-tab="scene" tabindex="-1">场景</button>
+          <button id="tab-help" type="button" role="tab" aria-selected="false" aria-controls="panel-help" data-town-tab="help" tabindex="-1">帮助</button>
+        </div>
+        <section id="panel-residents" class="town-tabpanel" role="tabpanel" aria-labelledby="tab-residents">
+          <p class="panel-intro">选一个人，去她身边。</p>
+          <div id="resident-list"></div>
+          <section id="company-controls" class="company-controls" aria-label="当前同行" hidden>
+            <strong id="company-name"></strong><p id="company-status" role="status"></p>
+            <div><button id="company-wait" type="button">等我一下</button><button id="company-end" type="button">结束同行</button></div>
+          </section>
+          <details class="appearance"><summary>角色外观</summary><div id="model-options"><small>正在检查本机模型…</small></div></details>
+        </section>
+        <section id="panel-scene" class="town-tabpanel" role="tabpanel" aria-labelledby="tab-scene" hidden>
+        <fieldset class="settings-group"><legend>去哪里</legend>
+          <label class="sr-only" for="map">小镇地图</label><select id="map" aria-label="小镇地图"><option value="station">樱花车站</option><option value="suibo">穗波市</option></select>
+        </fieldset>
+        <fieldset class="settings-group"><legend>画面</legend>
+          <div class="settings-grid">
+            <label for="quality">画质<select id="quality" aria-label="画质" title="画质与帧率独立；最高档使用原生分辨率、4K 阴影与可用的原尺寸角色贴图，显存占用更高"><option value="low">省电</option><option value="medium">均衡</option><option value="high">细腻</option><option value="ultra">最高 · 原生</option></select></label>
+            <label for="fps">帧率上限<select id="fps" aria-label="帧率上限" title="目标上限，不保证实际帧率；受显卡性能、显示器刷新率与系统设置限制"><option value="30">30 帧</option><option value="60">60 帧</option><option value="120">120 帧</option></select></label>
+          </div>
+          <p class="settings-note">画质与帧率独立。最高画质更耗显存，实际帧率取决于设备。</p>
+        </fieldset>
+        <fieldset class="settings-group"><legend>氛围与环顾</legend>
+          <div class="settings-grid">
+            <button id="sound" type="button" aria-pressed="false" title="默认安静；开启《不散的夏之灯》与地图环境音">环境音 · 关</button>
+            <button id="look" type="button" aria-pressed="true" title="移入场景即可环顾，左右靠边持续转向；点击场景无限环顾，Alt 或 Esc 释放鼠标，再点击继续">环顾 · 开</button>
+            <button id="daytime" class="settings-wide" type="button" hidden title="切换白昼、黄昏与夜晚">时光 · 白昼</button>
+          </div>
+        </fieldset>
+        <fieldset class="settings-group"><legend>窗口与播放</legend>
+          <div class="settings-grid">
+            <button id="fullscreen" type="button" aria-pressed="false" title="全屏显示小镇；Esc 退出">全屏 ⛶</button>
+            <button id="popout" type="button" title="在独立窗口里继续散步">独立窗口 ↗</button>
+            <button id="pause" class="settings-wide" type="button" aria-pressed="false">暂停画面</button>
+          </div>
+        </fieldset>
+        </section>
+        <section id="panel-help" class="town-tabpanel" role="tabpanel" aria-labelledby="tab-help" hidden>
+          <h3>散步与交谈</h3>
+          <dl class="town-controls">
+            <div><dt><kbd>W A S D</kbd></dt><dd>行走，<kbd>Shift</kbd> 快走</dd></div>
+            <div><dt>鼠标</dt><dd>移入场景环顾，点击后可无限转向</dd></div>
+            <div><dt><kbd>Alt</kbd> / <kbd>Esc</kbd></dt><dd>释放鼠标</dd></div>
+            <div><dt><kbd>E</kbd></dt><dd>和面前的角色互动</dd></div>
+            <div><dt><kbd>M</kbd></dt><dd>打开或收起小镇菜单</dd></div>
+          </dl>
+          <p class="settings-note">触屏：左侧滑动行走，右侧滑动环顾。</p>
+          <p id="look-hint" class="settings-note">点击场景锁定鼠标，Alt / Esc 释放。</p>
+          <details class="town-about"><summary>关于小镇与素材</summary>
+            <p>散步、动作和换装不调用模型。发送消息时连接对应 Main，沿用人格与记忆，小镇聊天单独保存。</p>
+            <p id="model-credit">本机模型 · 载入中</p>
+            <p id="motion-credit"></p>
+            <p>模型仅在本机使用，不随 Git 分发。修改与使用需遵守各模型原作者条款。</p>
+          </details>
+        </section>
+      </section>
+    </div>
+  </header>
+  <button id="interact" type="button" hidden></button>
+  <button id="company-toggle" type="button" aria-label="管理同行" hidden></button>
+  <section id="social-panel" class="social-panel" role="dialog" aria-labelledby="social-name" tabindex="-1" hidden>
+    <header class="social-heading"><span id="social-avatar" aria-hidden="true"></span><div><span class="social-kicker">一起待一会儿</span><h2 id="social-name"></h2></div><button id="social-close" type="button" aria-label="收起互动，继续散步">×</button></header>
+    <p id="social-feedback" class="social-feedback" role="status">不急着说什么，也可以一起玩一会儿。</p>
+    <div class="social-actions">
+      <button type="button" data-social="chat"><span aria-hidden="true">◌</span> 聊聊天</button>
+      <button type="button" data-social="follow"><span aria-hidden="true">↗</span> 一起散步</button>
+      <button type="button" data-social="wave"><span aria-hidden="true">⌁</span> 挥挥手</button>
+      <button type="button" data-social="pat"><span aria-hidden="true">✧</span> 摸摸头</button>
+    </div>
+    <fieldset class="social-game"><legend>来猜拳吧</legend><div>
+      <button type="button" data-hand="rock" aria-label="出石头">✊<span>石头</span></button>
+      <button type="button" data-hand="scissors" aria-label="出剪刀">✌<span>剪刀</span></button>
+      <button type="button" data-hand="paper" aria-label="出布">✋<span>布</span></button>
+    </div></fieldset>
+    <small class="social-footnote">动作和小游戏在本地进行 · Esc 收起</small>
+  </section>
+  <section id="chat" class="chat" aria-label="居民对话" hidden>
+    <header class="chat-head"><img id="chat-avatar" alt=""><div><h2 id="chat-name"></h2><span id="chat-place"></span></div><button id="chat-close" type="button" aria-label="收起对话，继续散步">×</button></header>
+    <div id="messages" class="messages" role="log" aria-live="polite"></div>
+    <div id="chat-status" class="chat-status" role="status"></div>
+    <form id="chat-form"><label class="sr-only" for="message">想对她说什么</label><textarea id="message" rows="2" maxlength="8000" placeholder="今天想和她说些什么？" required></textarea><div class="compose-bottom"><small>Enter 发送 · Shift+Enter 换行</small><button id="stop" type="button" hidden>停止</button><button id="send" type="submit">发送 ↗</button></div></form>
+  </section>
+  <div id="loading" class="loading"><div><span class="eyebrow">HARBOUR / ARRIVING</span><h2>穿过樱花，马上就到。</h2><p id="load-label">准备场景…</p><progress id="progress" max="18" value="0"></progress><p class="load-note">首次载入需要片刻；所有场景资源均在本地。</p></div></div>
+  <div id="notice" role="status" hidden></div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

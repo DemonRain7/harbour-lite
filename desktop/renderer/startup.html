@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'" />
+  <title>Harbour · 今天也一起</title>
+  <link rel="stylesheet" href="startup.css" />
+  <script src="startup.js" defer></script>
+</head>
+<body>
+  <main class="welcome" aria-labelledby="brand">
+    <div class="ambient" aria-hidden="true"></div>
+    <header class="wordmark">
+      <p class="eyebrow">A LITTLE MAGIC, EVERY DAY</p>
+      <h1 id="brand">Harbour<span aria-hidden="true">✧</span></h1>
+      <p class="tagline">把今天的灵感，慢慢变成喜欢的样子。</p>
+    </header>
+    <div class="portal" id="portal">
+      <div class="paper-content" aria-hidden="true">
+        <div class="paper-heading"><span class="paper-star">✦</span><span>今天也一起</span><span class="paper-date">a little everyday magic</span></div>
+        <div class="mini-chat">
+          <div class="mini-question"><span>聊聊今天，再画一个小故事？</span><i>↗</i></div>
+          <div class="mini-answer"><span class="answer-spark">✧</span><span class="answer-copy">好呀，让灵感在这里靠岸。</span><span class="typing"><i></i><i></i><i></i></span></div>
+        </div>
+        <div class="comic-strip">
+          <svg viewBox="0 0 360 82" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <g class="comic-panel panel-one">
+              <rect x="1" y="1" width="110" height="80" rx="10" fill="#f7f2fc" stroke="#e7ddf0"/>
+              <path class="ink" d="m30 62 17-38 18 36m-45 3q30-11 54 0M38 49l24-4m13-18 3 6 6 2-6 2-3 6-2-6-6-2 6-2" stroke="#ac97c7" stroke-width="1.7"/>
+              <path class="ink" d="M78 51v13m-6-7h12" stroke="#d4b983" stroke-width="1.5"/>
+            </g>
+            <g class="comic-panel panel-two">
+              <rect x="125" y="1" width="110" height="80" rx="10" fill="#fdf0f5" stroke="#f0dfe8"/>
+              <path class="ink" d="m188 18 5 12 13 5-13 5-5 13-5-13-13-5 13-5ZM181 48l-28 19m19-22-17 9" stroke="#cf9eb8" stroke-width="1.7"/>
+              <path class="ink" d="m159 19 2 5 5 2-5 2-2 5-2-5-5-2 5-2" stroke="#89bccc" stroke-width="1.5"/>
+            </g>
+            <g class="comic-panel panel-three">
+              <rect x="249" y="1" width="110" height="80" rx="10" fill="#eff7f7" stroke="#dbeaed"/>
+              <path class="ink" d="m265 43 40-13 39 13-14 17h-50Zm0 0 39 8 40-8m-39-13-1 21 4 9M268 69h26m20 0h27" stroke="#94b8c4" stroke-width="1.7"/>
+              <path class="ink" d="M318 18c-5-6-12 2 0 8 12-6 5-14 0-8Z" fill="#eac0d1" stroke="none"/>
+            </g>
+          </svg>
+          <span class="pencil">✎</span>
+        </div>
+        <div class="mini-composer"><span class="composer-plus">＋</span><span class="composer-line"></span><span class="music-note">♪</span><span class="composer-send">↑</span></div>
+      </div>
+      <div class="illustration elaina-visitor" role="img" aria-label="Elaina 抱着魔法笔记本，在对话卡旁轻轻呼吸。">
+        <div class="visitor-arrival"><div class="visitor-float"><img class="visitor-art" src="assets/startup/elaina-v1.webp" width="640" height="640" alt="" draggable="false" decoding="async" /></div></div>
+      </div>
+      <div class="illustration aemeath-visitor" role="img" aria-label="Aemeath 拿着画笔，带着粉色马尾和青蓝羽饰轻轻浮动。">
+        <div class="visitor-arrival"><div class="visitor-float"><img class="visitor-art" src="assets/startup/aemeath-v6.webp" width="640" height="640" alt="" draggable="false" decoding="async" /></div></div>
+      </div>
+      <span class="orbit-star star-one" aria-hidden="true">✧</span><span class="orbit-star star-two" aria-hidden="true">✦</span>
+    </div>
+    <div class="connection" role="status" aria-live="polite" aria-atomic="true">
+      <span class="status-lights" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span id="connectionText">正在点亮你的小港湾</span>
+    </div>
+    <footer><span class="signatures">ELAINA <i>✧</i> AEMEATH</span><div class="startup-actions">
+      <button id="details" type="button" hidden>连接详情 <span aria-hidden="true">↗</span></button>
+      <button id="skip" type="button" aria-label="略过动画，界面就绪后自动进入">略过动画 <span aria-hidden="true">›</span></button>
+    </div></footer>
+  </main>
+</body>
+</html>

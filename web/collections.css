@@ -1,0 +1,255 @@
+/* Memory / Agents share the capability studio's quiet, theme-aware visual language.
+   Catalogs and details are separate surfaces; all existing editors keep their contracts. */
+body:is([data-panel="memory"], [data-panel="agents"]) #content { padding: 0; overflow: hidden; }
+.collection-studio { --index-ink: color-mix(in srgb, #b78e48 70%, var(--fg)); display: flex; flex-direction: column; height: 100%; min-height: 0; min-width: 0; color: var(--fg); background: var(--bg); font-family: var(--font-ui); }
+.collection-studio [hidden] { display: none !important; }
+.collection-studio svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.collection-studio button { cursor: pointer; font-family: var(--font-ui); }
+.collection-studio :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.collection-catalog { flex: 1; min-height: 0; overflow-y: auto; padding: 40px clamp(24px, 3.5vw, 64px); scrollbar-gutter: stable; }
+.collection-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 0 0 32px; }
+.collection-heading h1 { margin: 8px 0 12px; font: 600 31px/1.2 var(--font-display, var(--font-ui)); letter-spacing: -.035em; }
+.collection-heading h1 > span { display: inline-block; margin-left: 8px; vertical-align: middle; font: 12px var(--font-ui); letter-spacing: 0; color: var(--fg-faint); }
+.collection-heading p { margin: 0; font-size: 13px; line-height: 1.8; color: var(--fg-dim); }
+.collection-tools { display: flex; align-items: center; gap: 10px; flex: none; }
+.collection-studio .studio-search { width: clamp(185px, 19vw, 290px); }
+.collection-studio a.studio-secondary { text-decoration: none; }
+.collection-tabs { display: flex; gap: 24px; overflow-x: auto; border-bottom: 1px solid var(--border); scrollbar-width: thin; flex: none; }
+.collection-studio .collection-tabs > .chip { display: inline-flex; align-items: center; gap: 7px; min-height: 43px; padding: 8px 0 13px; margin: 0; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; box-shadow: none; color: var(--fg-dim); font: 13px/1.5 var(--font-ui); white-space: nowrap; transform: none; }
+.collection-studio .collection-tabs > .chip.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.collection-tabs > .chip > small { color: var(--fg-faint); font: 10px var(--font-ui); margin-left: 2px; }
+.collection-tabs > .chip:hover { color: var(--fg); }
+.collection-tabs > .chip:focus-visible { outline-offset: -3px; }
+.collection-caption { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 23px 0 16px; color: var(--fg-dim); font-size: 12px; }
+.collection-caption > :last-child { color: var(--fg-faint); font-size: 11px; }
+.collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: 18px; align-items: stretch; }
+.collection-card { display: flex; flex-direction: column; align-items: stretch; gap: 0; min-width: 0; padding: 22px 24px 0; border: 1px solid var(--border); border-radius: 15px; background: color-mix(in srgb, var(--panel) 86%, var(--bg)); color: var(--fg); text-align: left; box-shadow: 0 3px 12px color-mix(in srgb, var(--fg) 2%, transparent); transition: border-color .18s, background .18s, box-shadow .18s; }
+.collection-card:hover { border-color: color-mix(in srgb, var(--accent) 48%, var(--border)); background: var(--panel); box-shadow: 0 6px 24px color-mix(in srgb, var(--accent) 9%, transparent); }
+.collection-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.collection-symbol { display: inline-flex; justify-content: center; align-items: center; width: 38px; height: 38px; border-radius: 11px; background: color-mix(in srgb, var(--accent) 8%, var(--panel)); color: var(--accent); flex: none; }
+.collection-symbol > svg { width: 21px; height: 21px; }
+.collection-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; background: color-mix(in srgb, var(--fg) 4%, transparent); color: var(--fg-dim); font: 10px/1.5 var(--font-ui); max-width: 100%; overflow-wrap: anywhere; }
+.collection-card-title { display: block; font: 600 17px/1.55 var(--font-ui); letter-spacing: -.02em; overflow-wrap: anywhere; }
+.collection-card-description { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 9px 0 21px; min-height: 3.5em; color: var(--fg-dim); font: 12px/1.75 var(--font-ui); overflow-wrap: anywhere; }
+.collection-card-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: auto; padding: 13px 0 15px; border-top: 1px solid color-mix(in srgb, var(--border) 65%, transparent); color: var(--fg-faint); font: 10px/1.5 var(--font-ui); }
+.collection-card-footer > svg { width: 15px; height: 15px; opacity: .6; }
+.collection-card:hover .collection-card-footer > svg { opacity: 1; color: var(--accent); }
+.collection-empty { grid-column: 1 / -1; text-align: center; padding: 70px 20px; color: var(--fg-dim); font-size: 15px; }
+.collection-empty > small { display: block; font-size: 12px; color: var(--fg-faint); margin-top: 12px; }
+.collection-detail, .agent-studio .agents-layout { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 0; padding: 24px clamp(24px, 3.5vw, 64px) 30px; overflow: hidden; }
+.collection-breadcrumb { display: flex; align-items: center; gap: 12px; min-width: 0; flex: none; margin-bottom: 24px; color: var(--fg-faint); font-size: 12px; }
+.collection-breadcrumb > button { display: inline-flex; align-items: center; gap: 8px; padding: 6px 0; border: 0; background: none; color: var(--fg-dim); white-space: nowrap; font-size: 12px; flex: none; }
+.collection-breadcrumb > button:hover { color: var(--accent); }
+.collection-breadcrumb > :last-child { min-width: 0; overflow-wrap: anywhere; }
+
+/* Memory: type is a colored dot; gold + a folder-tree symbol identifies a routing file.
+   Real path components and explicit depth remain readable without color perception. */
+.collection-studio .mem-dot { width: 7px; height: 7px; flex: none; border-radius: 50%; box-shadow: 0 0 0 1px color-mix(in srgb, var(--fg) 10%, transparent); }
+.memory-filterbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding: 22px 0 0; }
+.memory-directory-filter { display: flex; align-items: center; gap: 10px; width: 320px; min-width: 0; max-width: 100%; color: var(--fg-faint); }
+.memory-directory-filter > :last-child { flex: 1; min-width: 0; max-width: 100%; }
+.memory-directory-filter select.inp { font-size: 12px; border-radius: 8px; box-shadow: none; padding: 8px 12px; }
+.memory-directory-filter .hs-trigger { min-height: 36px; border-radius: 8px; font-size: 12px; box-shadow: none; }
+/* Directory paths need a reading surface, not a trigger-width list of ellipses.
+   The shared select still owns placement, viewport clamping, focus and change events. */
+.collection-studio.memory-studio .memory-directory-filter .hs-value { white-space: normal; overflow: visible; overflow-wrap: anywhere; text-overflow: clip; line-height: 1.5; }
+.collection-studio.memory-studio .memory-directory-filter .hs-menu { padding: 6px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); box-shadow: 0 10px 32px color-mix(in srgb, var(--fg) 12%, transparent); overflow-x: hidden; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--fg-faint) 30%, transparent) transparent; }
+.memory-directory-filter .hs-menu::-webkit-scrollbar { width: 5px; }
+.memory-directory-filter .hs-menu-heading { display: flex; flex-direction: column; gap: 4px; margin: 0 6px 5px; padding: 10px 6px 12px; border-bottom: 1px solid var(--border); }
+.memory-directory-filter .hs-menu-heading strong { color: var(--fg); font: 600 13px/1.5 var(--font-ui); }
+.memory-directory-filter .hs-menu-heading small { color: var(--fg-faint); font: 11px/1.6 var(--font-ui); }
+.collection-studio.memory-studio .memory-directory-filter .hs-option { grid-template-columns: minmax(0, 1fr) 14px; min-height: 52px; gap: 10px; padding: 10px 12px; border: 0; border-radius: 7px; background: transparent; font-weight: 500; }
+.memory-directory-filter .hs-option-copy { grid-column: 1; grid-row: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.memory-directory-filter .hs-check { grid-column: 2; grid-row: 1; }
+.collection-studio.memory-studio .memory-directory-filter .hs-option-text { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; color: var(--fg); font: 500 12px/1.6 var(--font-ui); }
+.memory-directory-filter .hs-option-description { color: var(--fg-faint); font: 10px/1.65 var(--font-mono); white-space: normal; overflow-wrap: anywhere; }
+.collection-studio.memory-studio .memory-directory-filter .hs-option:hover,
+.collection-studio.memory-studio .memory-directory-filter .hs-option:focus-visible { background: color-mix(in srgb, var(--fg) 4%, transparent); }
+.collection-studio.memory-studio .memory-directory-filter .hs-option[aria-selected="true"] { background: color-mix(in srgb, var(--accent) 9%, var(--panel)); }
+.collection-studio.memory-studio .memory-directory-filter .hs-option[aria-selected="true"] .hs-option-text { color: var(--accent); font-weight: 600; }
+.memory-kind-filter { display: flex; align-items: center; gap: 3px; padding: 3px; background: color-mix(in srgb, var(--fg) 4%, transparent); border-radius: 8px; }
+.memory-kind-filter > button { display: inline-flex; gap: 5px; align-items: center; min-height: 30px; padding: 5px 10px; border: 0; border-radius: 6px; background: transparent; font-size: 11px; color: var(--fg-dim); white-space: nowrap; }
+.memory-kind-filter > button > svg { width: 13px; height: 13px; color: var(--index-ink); }
+.memory-kind-filter > button[aria-pressed="true"] { background: var(--panel); color: var(--fg); box-shadow: 0 1px 4px color-mix(in srgb, var(--fg) 8%, transparent); }
+.memory-legend { display: inline-flex; align-items: center; gap: 6px; }
+.memory-legend > svg { width: 14px; height: 14px; color: var(--index-ink); }
+.memory-card.is-index { background: color-mix(in srgb, #b78e48 5%, var(--panel)); border-color: color-mix(in srgb, #b78e48 28%, var(--border)); }
+.memory-card.is-index .collection-symbol { background: color-mix(in srgb, #b78e48 12%, var(--panel)); color: var(--index-ink); }
+.memory-card.is-index .memory-role, .memory-role.is-index { color: var(--index-ink); }
+.memory-card.is-index:hover { border-color: var(--index-ink); }
+.memory-card-location { display: flex; flex-direction: column; gap: 9px; padding-bottom: 18px; margin-top: auto; }
+.memory-location-label { display: flex; align-items: center; gap: 8px; font: 10px/1.5 var(--font-ui); color: var(--fg-faint); }
+.memory-location-label > :last-child { padding-left: 8px; border-left: 1px solid var(--border); }
+.memory-role { display: inline-flex; align-items: center; gap: 5px; color: var(--fg-dim); }
+.memory-role > svg { width: 14px; height: 14px; }
+.memory-path { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 3px 6px; color: var(--fg-dim); font: 11px/1.65 var(--font-mono); overflow-wrap: anywhere; }
+.memory-path > span { min-width: 0; }
+.memory-path .memory-path-root, .memory-path .memory-path-separator { color: var(--fg-faint); }
+.memory-filename { overflow-wrap: anywhere; font-family: var(--font-mono); }
+.memory-detail-heading { flex: none; margin: 0 0 22px; }
+.memory-detail-heading h1 { margin: 12px 0 0; color: var(--fg); font: 600 27px/1.4 var(--font-display, var(--font-ui)); letter-spacing: -.035em; overflow-wrap: anywhere; }
+#memViewerMeta { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; color: var(--fg-faint); font-size: 11px; }
+.memory-workbench { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: var(--panel); }
+.memory-doc-toolbar { flex: none; margin: 0; padding: 14px 22px; border-bottom: 1px solid var(--border); min-height: 64px; gap: 16px; }
+.memory-file-label { display: flex; align-items: center; gap: 9px; color: var(--fg-dim); font: 12px var(--font-mono); min-width: 0; overflow-wrap: anywhere; }
+.memory-file-label > svg { width: 15px; height: 15px; opacity: .65; }
+.collection-studio .doc-toggle { display: inline-flex; gap: 2px; background: color-mix(in srgb, var(--fg) 5%, transparent); border-radius: 8px; padding: 3px; }
+.collection-studio .doc-toggle .chip { min-height: 28px; padding: 4px 11px; border: 0; border-radius: 6px; background: transparent; color: var(--fg-dim); font: 12px var(--font-ui); box-shadow: none; transform: none; white-space: nowrap; }
+.collection-studio .doc-toggle .chip.active { background: var(--panel); color: var(--fg); box-shadow: 0 1px 4px color-mix(in srgb, var(--fg) 9%, transparent); }
+.memory-studio .memory-document { flex: 1; min-height: 0; max-height: none; margin: 0; padding: 28px clamp(22px, 3.6vw, 60px) 36px; overflow: auto; border: 0; border-radius: 0; background: transparent; color: var(--fg-dim); font-size: 13px; line-height: 1.9; overflow-wrap: anywhere; scrollbar-gutter: stable; }
+.memory-studio pre.memory-document { white-space: pre-wrap; tab-size: 2; }
+.memory-document > :first-child { margin-top: 0; }
+.memory-studio .memory-document h1 { font-size: 24px; }
+.memory-studio .mem-file-git { padding: 12px 22px; margin: 0; flex: none; max-height: 35%; overflow: auto; border-top: 1px solid var(--border); }
+.memory-studio .mem-file-git > summary { cursor: pointer; font: 12px/1.5 var(--font-ui); color: var(--fg-dim); letter-spacing: 0; }
+.memory-studio .mem-file-git > summary > span { font-size: 10px; color: var(--fg-faint); margin-left: 8px; }
+.memory-studio .governed-editor { flex: 1; min-height: 0; gap: 0; overflow: auto; }
+.collection-editor-note { padding: 12px 22px; margin: 0; color: var(--fg-dim); font-size: 11px; line-height: 1.7; }
+.memory-studio textarea.governed-editor-text { border: 0; border-radius: 0; background: none; box-shadow: none; padding: 4px 22px 16px; min-height: 120px; }
+.memory-studio textarea.governed-editor-text:focus { outline-offset: -3px; }
+.memory-studio .governed-editor-foot { flex: none; grid-template-columns: minmax(100px, 1fr) auto auto; align-items: end; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--border); }
+.memory-studio .cap-reason > .inp { min-height: 34px; padding: 8px 10px; border-radius: 7px; font-size: 12px; box-shadow: none; }
+
+/* Agent details retain the existing config and file editors, without a second list rail. */
+.agent-studio .agents-detail-shell { flex: 1; min-height: 0; min-width: 0; }
+.agent-studio #agentsDetail { border: 0; border-radius: 0; padding: 0; background: none; box-shadow: none; }
+.agent-studio #agentsDetail:has(.fa-layout) { padding: 0; height: auto; }
+.agent-studio #agentsDetail > .editor-head { margin-bottom: 18px; padding-bottom: 0; border: 0; }
+.agent-studio .editor-head h3 { font: 600 24px/1.4 var(--font-display, var(--font-ui)); letter-spacing: -.025em; }
+.agent-studio .editor-head h3 .badge { font: 10px var(--font-ui); vertical-align: middle; margin-left: 8px; }
+.agent-studio .editor-head .editor-sub { font-size: 12px; margin-top: 6px; max-width: 76ch; white-space: normal; line-height: 1.7; overflow-wrap: anywhere; }
+.agent-studio .fa-agent-identity { display: flex; align-items: flex-start; gap: 14px; min-width: 0; }
+.fa-agent-identity > div { min-width: 0; }
+.fa-agent-mark { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; flex: none; color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
+.fa-agent-mark svg { width: 23px; height: 23px; }
+.agent-studio .fa-editor-actions { align-self: flex-start; padding-top: 3px; }
+.agent-studio .fa-editor-actions .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.agent-studio .fa-editor-actions svg { width: 15px; height: 15px; }
+.collection-studio.agent-studio .btn { min-height: 34px; padding: 7px 12px; border-width: 1px; border-radius: 8px; font: 12px/1.5 var(--font-ui); letter-spacing: 0; text-transform: none; box-shadow: none; transform: none; }
+.collection-studio.agent-studio .btn:hover { transform: none; }
+.collection-studio.agent-studio .hs-inp .hs-trigger { border-radius: 8px; border-width: 1px; box-shadow: none; font-weight: 500; }
+.collection-studio.memory-studio .memory-directory-filter .hs-trigger { border-radius: 8px; border-width: 1px; box-shadow: none; font-weight: 500; }
+.agent-studio .fa-workspace-tabs { gap: 24px; margin: 0 0 22px; padding: 0; border-bottom: 1px solid var(--border); }
+.agent-studio .fa-workspace-tabs .btn { border: 0; border-radius: 0; background: none; padding: 10px 2px 12px; font-size: 13px; }
+.agent-studio .fa-workspace-tabs .btn.active { box-shadow: inset 0 -2px var(--accent); }
+.agent-studio .fa-layout { gap: 0; grid-template-columns: 184px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--panel); }
+.agent-studio .fa-tree { border: 0; border-right: 1px solid var(--border); border-radius: 0; background: color-mix(in srgb, var(--bg) 50%, var(--panel)); padding: 18px 10px; gap: 24px; }
+.agent-studio .fa-file { padding: 8px 10px; border: 0; }
+.agent-studio .fa-file.active { box-shadow: none; background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.agent-studio .fa-group-head { font-size: 10px; letter-spacing: .03em; padding: 0 10px 9px; }
+.agent-studio .fa-main { border: 0; border-radius: 0; background: transparent; }
+.agent-studio .fa-filebar { background: none; border-bottom: 0; padding: 17px 22px 4px; }
+.agent-studio .fa-docs-head { padding: 10px 22px 14px; border-bottom: 1px solid var(--border); }
+.agent-studio .fa-docs { padding: 0; }
+.agent-studio .fa-doc { gap: 0; }
+.agent-studio .fa-doc .fa-ta, .agent-studio .fa-doc .fa-rend { border: 0; border-radius: 0; background: transparent; box-shadow: none; padding: 24px 28px; }
+.agent-studio .fa-doc .fa-hist { padding: 10px 22px; border-top: 1px solid var(--border); }
+.agent-studio .fa-foot { padding: 12px 22px; }
+.agent-studio .fa-settings { gap: 20px; flex: none; }
+.agent-studio .fa-settings > .agent-runtime-defaults { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px 24px; border-radius: 12px; background: var(--panel); padding: 20px 24px; }
+.agent-studio .ard-copy { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; }
+.agent-studio .ard-copy b { font-size: 14px; display: inline-flex; align-items: center; gap: 10px; }
+.agent-studio .ard-copy > span { font-size: 11px; color: var(--fg-dim); }
+.agent-studio .ard-copy .ard-policy, .agent-studio .ac-policy { font: 500 10px/1.6 var(--font-ui); padding: 2px 7px; border-radius: 5px; background: color-mix(in srgb, var(--accent) 8%, var(--panel)); color: var(--accent); vertical-align: middle; }
+.agent-studio .ac-policy { margin-left: 6px; color: var(--fg-dim); background: color-mix(in srgb, var(--fg) 5%, transparent); }
+.agent-studio .agent-runtime-defaults .mc-field { min-width: 0; gap: 6px; color: var(--fg); font-size: 12px; }
+.agent-studio .agent-runtime-defaults .mc-field > small { color: var(--fg-dim); font-size: 10.5px; line-height: 1.5; }
+.agent-studio .agent-runtime-defaults .hs-trigger { height: 40px; font-size: 13px; }
+.agent-studio .agent-runtime-defaults .hs-value { min-width: 0; text-overflow: ellipsis; }
+.agent-studio .ac-editor { border-radius: 12px; flex: none; overflow: visible; }
+.agent-studio .ac-toolbar { padding: 16px 24px; gap: 10px; }
+.agent-studio .ac-toolbar p { font-size: 11px; margin-top: 3px; }
+.agent-studio .ac-actions .btn { min-height: 34px; font-size: 12px; }
+.agent-studio .ac-status { padding: 10px 24px; border-bottom: 1px solid var(--border); color: var(--accent); font-size: 12px; }
+.agent-studio .ac-status.is-error { color: var(--danger); }
+.agent-studio .ac-scroll { padding: 0 24px 8px; flex: none; overflow: visible; overscroll-behavior: auto; }
+.agent-studio .ac-section { background: transparent; border: 0; border-radius: 0; margin: 0; overflow: visible; }
+.agent-studio details.ac-section { border-top: 1px solid var(--border); }
+.agent-studio .ac-section > summary { padding: 15px 0; background: transparent; align-items: center; gap: 16px; }
+.agent-studio .ac-section > summary div { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; min-width: 0; }
+.agent-studio .ac-section > summary h4 { font-size: 12px; font-weight: 600; }
+.agent-studio .ac-section > summary p { margin: 0; font-size: 11px; }
+.agent-studio .ac-section > summary::after { content: ''; flex: none; width: 6px; height: 6px; margin: 0 4px 3px auto; border-right: 1.5px solid var(--fg-dim); border-bottom: 1.5px solid var(--fg-dim); transform: rotate(45deg); }
+.agent-studio .ac-section[open] > summary::after { transform: rotate(225deg); margin-bottom: -3px; }
+.agent-studio .ac-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 28px; padding: 8px 0 24px; border: 0; }
+.agent-studio .ac-common .ac-grid { padding: 22px 0 24px; }
+.agent-studio .ac-field { gap: 6px; }
+.agent-studio .ac-field > label { font-size: 12px; font-weight: 600; }
+.agent-studio .ac-field > small { font-size: 10.5px; line-height: 1.6; color: var(--fg-dim); }
+.agent-studio .ac-field .inp, .agent-studio .ac-field .hs-trigger { padding: 9px 12px; min-height: 40px; border: 1px solid var(--border); border-radius: 8px; box-shadow: none; font: 13px/1.5 var(--font-ui); background: var(--bg-2); }
+.agent-studio .ac-field textarea.inp { min-height: 74px; }
+.agent-studio .ac-field textarea[spellcheck="false"] { font-family: var(--font-mono); }
+.agent-studio .ac-context-input { grid-template-columns: minmax(0, 1fr); gap: 7px; }
+.agent-studio .ac-context-input:has(input:not([hidden])) { grid-template-columns: minmax(0, 1fr) minmax(90px, .65fr); }
+.agent-studio .ac-advanced-label { padding: 3px 0 12px; color: var(--fg-dim); font: 500 11px/1.5 var(--font-ui); }
+.agent-studio .ac-footnote { padding: 14px 0; margin: 0; border-top: 1px solid var(--border); font-size: 11px; }
+/* Runtime configuration is a flowing page, not a nested scroll pane. Keep the
+   file workspace's bounded text editor independent of this settings layout. */
+.agent-studio .agents-layout:not(:has(.fa-layout:not([hidden]))) { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; }
+.agent-studio .agents-layout:not(:has(.fa-layout:not([hidden]))) > .agents-detail-shell { display: block; flex: none; }
+.agent-studio .agents-layout:not(:has(.fa-layout:not([hidden]))) #agentsDetail { height: auto; overflow: visible; }
+.agent-studio .agents-layout:not(.editor-focus) > .collection-breadcrumb, .agent-studio .agents-layout:not(.editor-focus) > .agents-detail-shell { width: 100%; max-width: 1120px; margin-left: auto; margin-right: auto; }
+.agent-studio .agents-layout:has(.fa-layout:not([hidden])) > .collection-breadcrumb { margin-bottom: 12px; }
+.agent-studio #agentsDetail:has(.fa-layout:not([hidden])) > .editor-head { margin-bottom: 10px; }
+.agent-studio #agentsDetail:has(.fa-layout:not([hidden])) > .fa-workspace-tabs { margin-bottom: 10px; }
+.agent-studio .ac-toolbar { position: sticky; top: 0; z-index: 2; background: var(--panel); border-radius: 11px 11px 0 0; box-shadow: 0 1px 0 var(--border); }
+.agent-studio .agents-layout.editor-focus { position: fixed; inset: 12px; z-index: 1200; padding: 20px 28px; background: var(--bg); border: 1px solid var(--border); border-radius: 16px; }
+.agent-studio .editor-focus > .collection-breadcrumb { margin-bottom: 14px; }
+@container agent-editor (max-width: 780px) {
+  .agent-studio .fa-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .agent-studio .fa-tree { flex-direction: row; align-items: center; height: 54px; box-sizing: border-box; padding: 8px; border-right: 0; border-bottom: 1px solid var(--border); gap: 5px; }
+  .agent-studio .fa-group { display: contents; }
+  .agent-studio .fa-group-head { display: none; }
+  .agent-studio .fa-file { width: auto; flex: none; }
+  .agent-studio .fa-filebar, .agent-studio .fa-docs-head, .agent-studio .fa-foot { padding-left: 14px; padding-right: 14px; }
+}
+@container agent-editor (max-width: 560px) {
+  .agent-studio .fa-settings > .agent-runtime-defaults { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  .agent-studio .ac-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .agent-studio .ac-toolbar { padding: 14px 16px; }
+  .agent-studio .ac-scroll { padding-left: 16px; padding-right: 16px; }
+  .agent-studio .ac-section > summary div { flex-direction: column; gap: 3px; }
+  .agent-studio .fa-agent-mark { display: none; }
+}
+@media (max-width: 1100px) {
+  .collection-heading { align-items: flex-start; flex-direction: column; gap: 24px; }
+  .collection-tools { width: 100%; }
+  .collection-studio .studio-search { flex: 1; width: auto; max-width: 340px; }
+  .collection-grid { gap: 14px; }
+  .collection-card { padding-left: 20px; padding-right: 20px; }
+}
+@media (max-width: 720px) {
+  .collection-catalog { padding: 26px 18px; }
+  .collection-heading h1 { font-size: 28px; }
+  .collection-heading p { font-size: 12px; }
+  .collection-heading { margin-bottom: 24px; }
+  .collection-tools { flex-wrap: wrap; gap: 8px; }
+  .collection-studio .studio-search { min-width: 160px; }
+  .collection-studio .studio-primary, .collection-studio .studio-secondary { padding: 9px 12px; font-size: 12px !important; }
+  .collection-tabs { gap: 20px; }
+  .collection-tabs > .chip { font-size: 12px; }
+  .collection-caption { align-items: flex-start; flex-direction: column; padding-top: 18px; }
+  .collection-grid { grid-template-columns: minmax(0, 1fr); }
+  .collection-detail, .agent-studio .agents-layout { padding: 16px 14px 18px; }
+  .collection-breadcrumb { margin-bottom: 18px; gap: 8px; font-size: 11px; }
+  .memory-detail-heading { margin-bottom: 16px; }
+  .memory-detail-heading h1 { font-size: 22px; }
+  .memory-doc-toolbar { flex-wrap: wrap; padding: 12px 14px; gap: 12px; }
+  .memory-doc-toolbar .doc-actions { margin-left: auto; }
+  .memory-studio .memory-document { padding: 22px 18px; }
+  .memory-studio .governed-editor-foot { grid-template-columns: 1fr auto; padding: 12px 14px; }
+  .memory-studio .cap-reason { grid-column: 1 / -1; }
+  .memory-studio .governed-editor-foot > button { justify-self: end; }
+  .agent-studio .fa-editor-head { flex-wrap: wrap; gap: 8px; }
+  .agent-studio .fa-editor-head > div:first-child { flex-basis: 100%; min-width: 0; }
+  .agent-studio .fa-editor-actions { margin-left: auto; }
+  .agent-studio .editor-head h3 { font-size: 21px; }
+  .agent-studio .editor-head .editor-sub { max-width: 100%; }
+  .agent-studio .fa-workspace-tabs { gap: 10px; }
+  .collection-studio.agent-studio .btn { padding: 6px 9px; font-size: 11px; }
+  .agent-studio .agents-layout.editor-focus { inset: 4px; padding: 14px 12px; }
+  .agent-studio #agentsDetail:not(:has(.fa-layout)) > .row { flex-wrap: wrap; }
+  .agent-studio #agentsDetail:not(:has(.fa-layout)) > .row > .field { width: 100% !important; flex: 1 1 100% !important; min-width: 0; }
+  .agent-studio #agentsDetail:not(:has(.fa-layout)) > .editor-head { flex-wrap: wrap; gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .collection-card { transition: none; } }

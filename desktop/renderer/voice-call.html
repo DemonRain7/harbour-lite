@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Harbour · 语音通话</title>
+  <link rel="stylesheet" href="./shared.css">
+  <link rel="stylesheet" href="./voice-call.css">
+  <link rel="stylesheet" href="../../web/voice-picker.css">
+</head>
+<body>
+  <main class="shell call-shell">
+    <header class="bar">
+      <span class="bar-mark">◉</span>
+      <div class="bar-copy"><small>Voice Companion</small><h1>语音通话</h1></div>
+      <span class="pill" id="connection">正在连接</span>
+    </header>
+    <section class="panel call-panel">
+      <div class="call-portrait" aria-hidden="true"><span id="portraitGlyph">E</span><i></i><i></i><i></i></div>
+      <label class="agent-picker">正在和
+        <select id="agent"><option value="main-elaina">Elaina</option><option value="main-aemeath">Aemeath</option></select>
+        通话
+      </label>
+      <div id="callVoicePicker" style="display:flex;justify-content:center"></div>
+      <p class="call-status" id="status">点一下开始说话，再点一下结束并发送</p>
+      <button class="call-button" id="record" type="button" aria-pressed="false"><span>🎙</span><b>开始说话</b></button>
+      <button class="btn danger stop-button" id="stop" type="button" hidden>停止当前回答</button>
+      <div class="transcript" id="transcript" aria-live="polite">
+        <div class="empty">通话转写与回答会出现在这里；声音由当前角色桌宠播放。</div>
+      </div>
+    </section>
+    <p class="tiny call-note">录音先经 Harbour 的 STT 转写，再进入同一套 Main 会话、Trace 与身份治理。这里不常驻监听，也不会把麦克风音频交给 Agent 猜测。</p>
+  </main>
+  <script src="./appearance.js"></script>
+  <script src="../../web/voice-picker.js"></script>
+  <script src="./voice-call.js"></script>
+</body>
+</html>

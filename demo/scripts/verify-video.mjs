@@ -6,7 +6,7 @@ import path from 'node:path';
 
 const demoRoot = fileURLToPath(new URL('..', import.meta.url));
 const mediaRoot = path.resolve(demoRoot, '..', 'docs', 'media');
-const video = path.join(mediaRoot, 'intro.mp4');
+const video = path.join(mediaRoot, 'intro-harbour.mp4');
 const qaRoot = path.join(demoRoot, 'qa', 'decoded');
 const ffmpeg = process.env.FFMPEG || 'ffmpeg';
 const ffprobe = process.env.FFPROBE || 'ffprobe';
@@ -41,20 +41,21 @@ run(ffmpeg, ['-nostdin', '-v', 'error', '-xerror', '-threads', '2', '-filter_thr
 
 // Both published PNGs are extracted from the encoded MP4, not a separate render.
 run(ffmpeg, ['-nostdin', '-v', 'error', '-threads', '2', '-filter_threads', '2', '-ss', '28', '-i', video,
-  '-frames:v', '1', '-threads', '2', '-update', '1', '-y', path.join(mediaRoot, 'poster.png')]);
+  '-frames:v', '1', '-threads', '2', '-update', '1', '-y', path.join(mediaRoot, 'intro-harbour-poster.png')]);
 const selection = [60, 210, 360, 510, 660, 840].map(frame => `eq(n,${frame})`).join('+');
 run(ffmpeg, ['-nostdin', '-v', 'error', '-threads', '2', '-filter_threads', '2', '-i', video,
-  '-vf', `select='${selection}',scale=640:360,tile=3x2:padding=12:margin=12:color=0xf6f5ef`,
-  '-frames:v', '1', '-threads', '2', '-update', '1', '-y', path.join(mediaRoot, 'contact-sheet.png')]);
+  '-vf', `select='${selection}',scale=640:360,tile=3x2:padding=12:margin=12:color=0xFAF3E6`,
+  '-frames:v', '1', '-threads', '2', '-update', '1', '-y', path.join(mediaRoot, 'intro-harbour-contact-sheet.png')]);
 
-// Additional visual QA: opening, both sides of every transition, and the final hold.
-const boundarySelection = [0, 15, 124, 131, 274, 281, 424, 431, 574, 581, 754, 761, 899].map(frame => `eq(n,${frame})`).join('+');
+// Additional visual QA: opening, one-second samples, and final hold.
+// Scene-specific transition frames are inspected separately from the storyboard.
+const boundarySelection = [0, 15, ...Array.from({length: 29}, (_, i) => (i + 1) * 30), 899].map(frame => `eq(n,${frame})`).join('+');
 run(ffmpeg, ['-nostdin', '-v', 'error', '-threads', '2', '-filter_threads', '2', '-i', video,
   '-vf', `select='${boundarySelection}'`, '-fps_mode', 'vfr',
   '-threads', '2', '-y', path.join(qaRoot, 'boundary-%02d.png')]);
 
 console.log(JSON.stringify({
-  video: 'docs/media/intro.mp4',
+  video: 'docs/media/intro-harbour.mp4',
   codec: stream.codec_name,
   width: stream.width,
   height: stream.height,
