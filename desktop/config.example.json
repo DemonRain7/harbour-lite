@@ -1,0 +1,12 @@
+{
+  "_说明": "复制为 config.json 后修改。开发版可放 desktop/config.json；公开版使用独立的 HarbourPublic 配置目录，不读取旧 Harbour 配置。也可通过 HARBOUR_CONFIG 指定绝对路径；环境变量优先级最高。",
+  "url": "http://localhost:7799",
+  "token": "",
+  "spawn": false,
+  "backendRoot": "",
+  "_backendRoot": "本机 Harbour 源码绝对路径：自动启动本机后端或提供 Cowork Browser helper 时填写。普通远程客户端可留空；远程服务 + 本机 Browser helper 时填写本机源码路径，但仍保持远程 url 与 spawn:false。这不是 Cowork 任务工作目录。",
+  "_语音": "Electron 只播放音频；TTS_URL、GPT-SoVITS/云端鉴权与声线均配置在 Harbour 后端的 .env。",
+  "pet": true,
+  "_桌宠": "pets 可并列启用多个角色；字符串 name 自动绑定 main-name。特殊命名也可写成 {\"id\":\"name\",\"agentName\":\"main-name\",\"displayName\":\"Name\"}。每个窗口只响应自己的 agent。",
+  "pets": [{ "id": "elaina", "agentName": "main-assistant", "displayName": "Assistant" }]
+}

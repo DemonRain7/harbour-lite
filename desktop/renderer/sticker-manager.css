@@ -1,0 +1,15 @@
+.sticker-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(155px,1fr)); gap: 12px; padding: 16px; }
+.sticker-card { position: relative; padding: 10px; border: 1px solid var(--border); border-radius: 18px; background: var(--elev); }
+.sticker-card.is-disabled { opacity: .45; filter: saturate(.4); }
+.sticker-card img { width: 100%; aspect-ratio: 4/3; display: block; object-fit: contain; border-radius: 12px; background: color-mix(in srgb,var(--bg) 75%,transparent); }
+.sticker-card strong { display: block; margin-top: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sticker-card small { display: block; min-height: 32px; color: var(--dim); font-size: 10px; line-height: 1.4; }
+.sticker-card .row { margin-top: 8px; }
+.toggle { margin-left: auto; accent-color: var(--accent); }
+dialog { width: min(420px,calc(100vw - 32px)); padding: 0; border: 0; border-radius: 24px; color: var(--fg); background: var(--panel); box-shadow: var(--shadow); }
+dialog::backdrop { background: rgba(10,8,14,.48); backdrop-filter: blur(8px); }
+.dialog-card { display: grid; gap: 12px; padding: 20px; }
+.dialog-card h2 { margin: 0; }
+.dialog-card label { display: grid; gap: 5px; color: var(--dim); font-size: 11px; }
+.dialog-card img { width: 150px; height: 112px; justify-self: center; object-fit: contain; border-radius: 16px; background: var(--elev); }
+.dialog-actions { justify-content: flex-end; }

@@ -1,0 +1,115 @@
+/* Main Chat: a quiet welcome and one bottom control rail. Presentation only;
+   the existing selects, run picker, intake, resize and session handlers own state. */
+.chat-stream.is-empty { display: flex; align-items: center; justify-content: center; }
+body[data-theme-cat] .chat-workbench .chat-welcome {
+  width: 100%; max-width: 680px; margin: 0; padding: 20px 12px 54px;
+  text-align: center; color: var(--fg-dim);
+}
+body[data-theme-cat] .chat-welcome .chat-welcome-mark {
+  display: inline-flex; padding: 0; margin: 0 0 20px; border: 0;
+  color: color-mix(in srgb, var(--accent) 54%, var(--fg-dim)); background: transparent;
+}
+.chat-welcome-mark svg { width: 54px; height: 54px; }
+body[data-theme-cat] .chat-welcome h1 {
+  margin: 0; font: 500 clamp(22px, 2.2vw, 32px)/1.5 var(--font-ui);
+  letter-spacing: .02em; text-wrap: balance; color: var(--fg);
+}
+body[data-theme-cat] .chat-workbench .chat-compose {
+  width: calc(100% - 48px); max-width: 900px; margin: 8px auto 24px;
+  padding: 14px 14px 10px; gap: 8px; border: 1px solid var(--border);
+  border-radius: 22px; background: var(--panel);
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--fg) 5%, transparent);
+}
+body[data-theme-cat] .chat-workbench .chat-compose:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.chat-workbench .chat-compose-row { display: block; min-width: 0; }
+.chat-workbench .chat-compose textarea.inp {
+  display: block; width: 100%; height: 80px; padding: 6px 8px 12px; margin: 0;
+  border: 0; border-radius: 0; background: transparent; box-shadow: none;
+  font: 400 var(--fs-body)/1.6 var(--font-ui);
+  scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--fg-dim) 25%, transparent) transparent;
+}
+.chat-workbench .chat-compose textarea.inp:focus-visible { outline: none; }
+.chat-workbench .chat-resize-handle > span { width: 30px; height: 3px; opacity: 0; box-shadow: none; }
+.chat-workbench .chat-resize-handle:hover > span,
+.chat-workbench .chat-resize-handle:focus-visible > span,
+.chat-workbench .chat-compose.is-resizing .chat-resize-handle > span { opacity: .7; }
+body[data-theme-cat] .chat-compose .chat-toolbar {
+  display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; min-width: 0;
+  width: 100%; padding: 0; margin: 0;
+}
+body[data-theme-cat] .chat-compose .chat-compose-actions {
+  display: flex; flex: none; flex-wrap: nowrap; align-items: center; gap: 4px;
+}
+body[data-theme-cat] .chat-compose .chat-compose-icon,
+body[data-theme-cat] .chat-compose .hs-chat-icon .hs-trigger,
+body[data-theme-cat] .chat-compose .rp-mode,
+body[data-theme-cat] .chat-compose .input-mode-menu > summary {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 32px; min-width: 32px; height: 34px; min-height: 34px; padding: 0;
+  border: 0; border-radius: 10px; background: transparent; color: var(--fg-dim);
+  box-shadow: none; cursor: pointer;
+}
+body[data-theme-cat] .chat-compose .chat-compose-icon[hidden] { display: none; }
+.chat-compose-icon > svg, .hs-chat-icon .hs-trigger > svg { width: 20px; height: 20px; flex: none; }
+body[data-theme-cat] .chat-compose .chat-compose-icon:hover,
+body[data-theme-cat] .chat-compose .hs-chat-icon .hs-trigger:hover,
+body[data-theme-cat] .chat-compose .hs-chat-icon.open .hs-trigger,
+body[data-theme-cat] .chat-compose .input-mode-menu[open] > summary {
+  color: var(--fg); background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+body[data-theme-cat] .chat-compose .chat-compose-icon:focus-visible,
+body[data-theme-cat] .chat-compose .hs-chat-icon .hs-trigger:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+body[data-theme-cat] .chat-compose .chat-compose-icon:disabled { cursor: default; opacity: .4; }
+body[data-theme-cat] .chat-compose .hs-chat-icon { flex: none; width: 32px !important; max-width: 32px; }
+body[data-theme-cat] .chat-compose .hs-chat-icon :is(.hs-prefix, .hs-value, .hs-caret),
+.chat-compose .rp-mode-label,
+.chat-compose .input-mode-menu > summary :is(span, i) { display: none; }
+.chat-compose .hs-chat-icon .hs-menu { min-width: 240px; }
+.chat-compose [data-hs-for="chatSkill"]:not(.hs-empty)::after {
+  content: ""; position: absolute; right: 3px; top: 4px; width: 5px; height: 5px;
+  background: var(--accent); border-radius: 50%; pointer-events: none;
+}
+.chat-compose #chatRunPicker { flex: 1 1 0; min-width: 0; gap: 4px; }
+.chat-compose #chatRunPicker .rp-model { margin-left: auto; max-width: 360px; min-width: 0; padding: 5px 7px; }
+.chat-compose .rp-model-label { text-overflow: ellipsis; mask-image: none; font-weight: 500; }
+.chat-compose .rp-mode[data-risk="high"] { color: var(--warn); }
+body[data-theme-cat] .chat-compose .chat-toolbar .ctx-wrap { flex: none; margin-left: 0; padding-left: 0; }
+.chat-compose .ctx-svg { width: 23px; height: 23px; }
+.chat-compose .ctx-txt {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+.chat-compose .ctx-wrap:not(:empty):not(:has(svg))::before {
+  content: ""; width: 18px; height: 18px; border: 2px solid var(--border-hi); border-radius: 50%;
+}
+/* Keep the lock announcement available without adding a second visible rail. */
+.chat-compose .chat-run-lock {
+  position: absolute; width: 1px; height: 1px; min-height: 0; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+body[data-theme-cat] .chat-compose #chatSend {
+  width: 36px; min-width: 36px; height: 36px; border-radius: 50%;
+  background: var(--accent); color: var(--on-accent); margin-left: 3px;
+}
+body[data-theme-cat] .chat-compose #chatSend:hover { background: color-mix(in srgb, var(--accent) 88%, var(--fg)); }
+body[data-theme-cat] .chat-compose #chatStop { color: var(--danger); }
+body[data-theme-cat] .chat-compose #chatMic.recording { color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); }
+.chat-compose :is(.chat-goal-bar, .chat-plan-bar, .chat-checkpoint-bar, .chat-asks):empty { display: none; }
+/* In narrow windows controls stay below the writing area and remain tappable. */
+@container (max-width: 470px) {
+  body[data-theme-cat] .chat-compose .chat-toolbar { display: flex; flex-wrap: wrap; gap: 4px; }
+  body[data-theme-cat] .chat-compose .chat-toolbar::after { content: ""; flex: 0 0 100%; height: 0; }
+  .chat-compose #chatRunPicker { display: contents; }
+  .chat-compose #chatRunPicker .rp-model { order: 1; flex: 1 1 0; max-width: 100%; margin-left: 0; }
+  body[data-theme-cat] .chat-compose .chat-toolbar .ctx-wrap { margin-left: auto; }
+  body[data-theme-cat] .chat-compose .chat-compose-actions { order: 1; margin-left: auto; }
+  .chat-compose .rp-effort-label { font-size: 11px; }
+}
+@media (max-width: 600px) {
+  body[data-theme-cat] .chat-workbench .chat-compose { width: calc(100% - 24px); margin-bottom: 14px; padding: 12px 10px 10px; border-radius: 18px; }
+  body[data-theme-cat] .chat-workbench .chat-welcome { padding-bottom: 24px; }
+}

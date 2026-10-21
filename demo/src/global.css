@@ -1,7 +1,9 @@
-* {
-  box-sizing: border-box;
+@font-face {
+  font-family: 'Harbour Hand';
+  src: url('../../web/fonts/wordmark/caveat-harbour.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: block;
 }
-
-body {
-  margin: 0;
-}
+* { box-sizing: border-box; }
+body { margin: 0; }

@@ -1,0 +1,37 @@
+/* The resting HUD is one small entry, not a dashboard over the scenery. */
+.town-header{position:absolute;top:max(18px,env(safe-area-inset-top));right:max(18px,env(safe-area-inset-right));z-index:6;pointer-events:none}
+.town-settings{position:relative;pointer-events:auto}
+#settings-toggle{display:flex;align-items:center;gap:7px;min-height:42px;padding:10px 13px;border-radius:14px;font-size:12px;background:#fffaf0d9;box-shadow:0 3px 16px #332e4410;transition:opacity .18s,background .18s}
+#settings-toggle svg{color:var(--accent)}
+.pointer-locked #settings-toggle{opacity:.32}
+#settings-toggle:hover,#settings-toggle:focus-visible,#settings-toggle[aria-expanded="true"]{opacity:1;background:#fff}
+.settings-panel{position:absolute;top:calc(100% + 12px);right:0;display:flex;flex-direction:column;width:344px;max-width:calc(100vw - 24px);height:min(620px,calc(100vh - 90px));height:min(620px,calc(100dvh - 90px));padding:22px 0 0;border:1px solid #fff;border-radius:22px;overflow:hidden;background:rgba(255,252,249,.98);box-shadow:0 20px 64px #30243930,0 4px 12px #30243912;animation:settings-reveal .15s ease-out}
+.settings-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 22px 19px;flex-shrink:0}
+.settings-heading h2{font-size:18px;letter-spacing:.7px;font-weight:600;margin:0 0 5px}.settings-heading p{font-size:11px;color:var(--muted);margin:0}
+#settings-close{background:transparent;border-color:transparent;border-radius:50%;width:34px;height:34px;padding:0;font-size:24px;color:var(--muted);line-height:1}
+#settings-close:hover{background:#ede7f1;color:var(--ink);box-shadow:none}
+.town-tabs{display:flex;gap:4px;padding:4px;margin:0 22px 8px;border-radius:12px;background:#eee8ef;flex-shrink:0}
+.town-tabs button{flex:1;border:0;background:transparent;padding:8px;font-size:12px;border-radius:9px;color:var(--muted)}
+.town-tabs button[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 2px 5px #6154670a}
+.town-tabpanel{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#c9bfce transparent;min-height:0;flex:1;padding:15px 22px 23px}
+.panel-intro{margin:0 0 11px;color:var(--muted);font-size:12px}
+.resident{display:flex;align-items:center;gap:12px;width:100%;border:0;background:transparent;padding:14px 10px;text-align:left;border-radius:13px}
+.resident:hover{background:#f0e9f1;box-shadow:none}.resident img{width:42px;height:42px;object-fit:cover;border-radius:50%;border:2px solid #fff}
+.resident strong{display:block;font-size:14px;font-weight:600}.resident small{display:block;font-size:11px;color:var(--muted);margin-top:4px}.resident .arrow{margin-left:auto;color:#aa98b7}
+.settings-group{border:0;border-top:1px solid #ded5e266;padding:13px 0 0;margin:0 0 22px;min-width:0}
+.settings-group legend{font-size:11px;color:#82718e;padding:0 9px 0 0;letter-spacing:.7px}
+.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.settings-grid label{font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:7px;min-width:0}
+.settings-panel select,.settings-panel .settings-grid button{width:100%;min-height:40px;padding:9px 10px;font-size:12px;border:1px solid #dcd4e2;border-radius:10px;background:#fff;color:var(--ink);white-space:nowrap}
+.settings-panel select{max-width:100%}.settings-panel .settings-grid button:hover{background:#f5f0f9;border-color:#bfb0ce;box-shadow:none}
+.settings-panel .settings-grid button[aria-pressed="true"]{color:#6e5885;background:#f0e9f6;border-color:#cab9db}
+.settings-wide{grid-column:1 / -1}#fullscreen:has(+ #popout[hidden]){grid-column:1 / -1}
+.settings-note{font-size:11px;line-height:1.8;color:var(--muted);margin:10px 0 0}
+.town-tabpanel h3{font-size:13px;font-weight:600;margin:0 0 17px}
+.town-controls{margin:0}.town-controls>div{display:grid;grid-template-columns:92px 1fr;gap:12px;padding:10px 0;font-size:11px;line-height:1.8}
+.town-controls dt,.town-controls dd{margin:0}.town-controls dd{color:var(--muted)}
+.town-about{border-top:1px solid #ded5e266;margin-top:22px;padding-top:16px;font-size:12px}.town-about summary{cursor:pointer}.town-about p{font-size:11px;line-height:1.8;color:var(--muted);overflow-wrap:anywhere}
+@keyframes settings-reveal{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.settings-panel{animation:none}#settings-toggle{transition:none}}
+@media(max-width:500px){.town-header{top:12px;right:12px}.settings-panel{height:min(620px,calc(100dvh - 80px))}}
+@media(max-height:560px){.town-header{top:10px}.settings-panel{height:calc(100dvh - 74px);padding-top:14px}.settings-heading{margin-bottom:12px}.settings-heading p{display:none}}

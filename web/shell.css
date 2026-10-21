@@ -1,0 +1,163 @@
+/* Dashboard chrome: quiet navigation, using the active theme's type and colors. */
+/* Tiny local subsets: branding must not depend on Google Fonts being reachable. */
+@font-face {
+  font-family: 'Harbour Hand'; src: url('/fonts/wordmark/caveat-harbour.woff2') format('woff2');
+  font-style: normal; font-weight: 400 700; font-display: swap;
+}
+@font-face {
+  font-family: 'Harbour Editorial'; src: url('/fonts/wordmark/cormorant-garamond-italic-harbour.woff2') format('woff2');
+  font-style: italic; font-weight: 300 700; font-display: swap;
+}
+body[data-theme-cat] .topbar {
+  gap: 24px; padding-inline: 20px; background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+}
+.topbar-identity { display: flex; align-items: center; gap: 8px; flex: none; }
+.nav-history { display: flex; align-items: center; gap: 2px; }
+.topbar .nav-history-button {
+  display: inline-grid; place-items: center; width: 32px; height: 36px; padding: 0;
+  border: 0; border-radius: 8px; background: transparent; color: var(--fg-dim);
+  box-shadow: none; transform: none; flex: none;
+}
+.topbar .nav-history-button:hover:not(:disabled) { color: var(--fg); background: var(--panel-2); }
+.topbar .nav-history-button:disabled { opacity: .28; cursor: default; }
+.topbar .nav-history-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.topbar .brand {
+  --brand-font: 'Harbour Editorial', Georgia, serif;
+  --brand-style: italic; --brand-size: 34px; --brand-x-height: .386;
+  position: relative; display: flex; align-items: center; flex: none;
+  width: 132px; height: 44px; padding: 0 6px 5px 2px; isolation: isolate;
+}
+body[data-theme-cat="anime"] .topbar .brand {
+  --brand-font: 'Harbour Hand', 'Segoe Print', cursive;
+  --brand-style: normal; --brand-size: 37px; --brand-x-height: .4;
+}
+body[data-theme-cat] .topbar .brand-name {
+  font-family: var(--brand-font); font-size: var(--brand-size); line-height: 1.1;
+  font-style: var(--brand-style); font-weight: 600; font-synthesis: none;
+  font-size-adjust: var(--brand-x-height); /* Keep fallback glyphs at the same visual scale. */
+  letter-spacing: -.035em; white-space: nowrap;
+  color: var(--fg); color: color-mix(in srgb, var(--fg) 92%, var(--accent));
+}
+.brand-flourish {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; color: var(--accent); overflow: visible;
+}
+.brand-tide { fill: none; stroke: currentColor; stroke-width: 1; stroke-linecap: round; opacity: .55; }
+.topbar .nav-toggle {
+  display: inline-grid; place-items: center; flex: 0 0 36px; width: 36px; height: 36px; padding: 0;
+  border: 1px solid transparent; border-radius: 10px;
+  background: transparent; box-shadow: none; color: var(--fg-dim);
+  transform: none; transition: color .15s ease, background .15s ease, border-color .15s ease;
+}
+.topbar .nav-toggle svg, .topbar .nav-history-button svg {
+  width: 19px; height: 19px; fill: none; stroke: currentColor;
+  stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+  pointer-events: none;
+}
+.topbar .nav-toggle:hover {
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg-2)); color: var(--fg);
+  border-color: var(--border); transform: none;
+}
+.topbar .nav-toggle[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-2)); color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 25%, var(--border));
+}
+.topbar .nav-toggle:active {
+  background: color-mix(in srgb, var(--accent) 15%, var(--bg-2)); transform: none;
+}
+.topbar .nav-toggle:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px; box-shadow: none;
+}
+body[data-theme-cat] .topbar-theme {
+  border: 0; border-radius: 0; background: none; box-shadow: none; padding: 0; min-width: 0;
+}
+
+#sidebar {
+  inset: 12px auto auto 12px; width: 236px; max-height: calc(100% - 24px); margin: 0; padding: 12px;
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 16px;
+  box-shadow: var(--shadow-md); backdrop-filter: none; -webkit-backdrop-filter: none;
+  scrollbar-width: thin; scrollbar-color: var(--border-hi) transparent;
+  overscroll-behavior: contain;
+}
+.nav-primary { display: grid; gap: 5px; }
+#sidebar .nav-item {
+  min-height: 44px; display: flex; align-items: center; gap: 13px;
+  margin: 0; padding: 10px 13px; border: 1px solid transparent; border-radius: 10px;
+  font-family: var(--font-ui); font-size: 14px; font-weight: 550; line-height: 1.4;
+  letter-spacing: 0; text-decoration: none; color: var(--fg-dim); background: transparent;
+  box-shadow: none; transform: none; counter-increment: none;
+  transition: color .15s ease, background .15s ease, border-color .15s ease;
+}
+#sidebar .nav-item::before { content: none; }
+#sidebar .nav-item:hover { color: var(--fg); background: var(--panel-2); }
+#sidebar .nav-item.active {
+  color: var(--fg); font-weight: 650;
+  background: color-mix(in srgb, var(--accent) 11%, var(--bg-2));
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+#sidebar .nav-item .ico {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; flex: none; opacity: 1; color: var(--fg-dim);
+}
+#sidebar .nav-item.active .ico { color: var(--accent); }
+.nav-item svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.nav-more { border-top: 1px solid var(--border); margin-top: 18px; padding-top: 12px; }
+.nav-more summary {
+  display: flex; align-items: center; gap: 13px; padding: 11px 14px; border-radius: 10px;
+  cursor: pointer; user-select: none; list-style: none;
+  color: var(--fg-dim); font: 550 13px/1.5 var(--font-ui);
+}
+.nav-more summary::-webkit-details-marker { display: none; }
+.nav-more summary:hover { color: var(--fg); background: var(--panel-2); }
+.nav-more.has-current > summary { color: var(--accent); }
+.nav-more-icon { width: 20px; text-align: center; font: 700 18px/1 var(--font-ui); letter-spacing: 0; }
+.nav-more-chevron { width: 15px; height: 15px; margin-left: auto; fill: none; stroke: currentColor; stroke-width: 1.6; transition: transform .15s ease; }
+.nav-more[open] .nav-more-chevron { transform: rotate(90deg); }
+.nav-secondary { display: grid; gap: 2px; padding-top: 7px; }
+#sidebar .nav-secondary .nav-item { min-height: 36px; padding-block: 8px; font-size: 12px; }
+#sidebar .nav-secondary .ico { font-size: 14px; }
+#sidebar .desktop-pet-quick {
+  width: 100%; margin-top: 9px; padding: 13px; border: 0; border-top: 1px solid var(--border);
+  border-radius: 0; background: none; color: var(--fg-dim); box-shadow: none;
+  font: 500 12px/1.5 var(--font-ui); letter-spacing: 0; transform: none; justify-content: flex-start;
+}
+#sidebar .desktop-pet-quick:hover { color: var(--accent); }
+#sidebar a:focus-visible, #sidebar button:focus-visible, #sidebar summary:focus-visible, .nav-toggle:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+@media (max-width: 1120px) {
+  /* Keep menus outside the header: a scrolling ancestor would clip their popups. */
+  body[data-theme-cat] .topbar-theme { flex: 1; overflow: visible; justify-content: flex-start; }
+  .topbar-theme .hs-theme { flex: 1 1 0; min-width: 0; }
+  .topbar-theme .hs-trigger { width: 100%; }
+  .topbar-theme .theme-label { display: none; }
+}
+@media (max-width: 760px) {
+  body[data-theme-cat] .topbar { gap: 8px; padding-inline: 10px; }
+  .topbar-identity { gap: 8px; }
+  .topbar .brand { --brand-size: 31px; width: 120px; height: 40px; padding-bottom: 5px; }
+  body[data-theme-cat="anime"] .topbar .brand { --brand-size: 34px; }
+  #sidebar { inset: 8px auto auto 8px; width: min(236px, calc(100vw - 32px)); max-height: calc(100% - 16px); }
+}
+@media (max-width: 600px) {
+  .topbar-identity { gap: 2px; }
+  .nav-history { gap: 0; }
+  .topbar .nav-history-button { width: 28px; }
+  .topbar .nav-toggle { width: 32px; flex-basis: 32px; }
+  .topbar .brand { --brand-size: 27px; width: 100px; }
+  body[data-theme-cat="anime"] .topbar .brand { --brand-size: 30px; }
+  /* Labels remain visible; the selected name is still in the trigger's title/menu. */
+  .topbar-theme { gap: 5px; }
+  .topbar-theme .hs-value, .topbar-theme .hs-caret { display: none; }
+  .topbar-theme .hs-trigger { justify-content: center; height: 40px; padding: 4px; gap: 0; }
+  .topbar-theme .hs-prefix { font: 600 10px/1 var(--font-ui); letter-spacing: 0; padding: 0; border: 0; background: none; }
+}
+@media (max-width: 380px) {
+  body[data-theme-cat] .topbar { gap: 6px; padding-inline: 8px; }
+  .topbar .brand { --brand-size: 25px; width: 90px; }
+  body[data-theme-cat="anime"] .topbar .brand { --brand-size: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-more-chevron, #sidebar, #sidebar .nav-item, .topbar .nav-toggle { transition: none; }
+}

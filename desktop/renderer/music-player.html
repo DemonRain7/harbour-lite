@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Harbour · 音乐陪伴</title>
+  <link rel="stylesheet" href="./shared.css">
+  <link rel="stylesheet" href="./music-player.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="bar">
+      <span class="bar-mark">♫</span>
+      <div class="bar-copy"><small>Companion Music</small><h1>音乐陪伴</h1></div>
+      <span class="spacer"></span>
+      <button class="btn" id="openQQMusic" hidden>打开 QQ 音乐</button>
+      <button class="btn" id="importMusic">＋ 导入音乐</button>
+    </header>
+    <section class="provider-panel" aria-label="音乐来源">
+      <div class="provider-copy"><small>PLAYBACK SOURCE</small><strong id="providerTitle">Harbour 本地曲库</strong><span id="providerHint">音频只保存在当前电脑</span></div>
+      <div class="provider-tabs" id="providerTabs">
+        <button class="provider-tab is-active" data-provider="local">⌂ 本地曲库</button>
+        <button class="provider-tab" data-provider="qqmusic"><span class="qq-dot">Q</span> QQ 音乐</button>
+      </div>
+    </section>
+    <section class="panel player">
+      <div class="now section">
+        <div class="disc" id="disc">♪</div>
+        <div class="grow"><small class="muted">NOW PLAYING</small><h2 id="nowTitle">还没有播放</h2><p id="nowArtist">把喜欢的歌留在本机，树莓派后端不会读取音频。</p></div>
+        <span class="provider-state" id="providerState"></span>
+      </div>
+      <div class="section controls">
+        <button class="btn icon" id="previous" title="上一首">‹</button>
+        <button class="btn primary play" id="toggle" title="播放/暂停">▶</button>
+        <button class="btn icon" id="next" title="下一首">›</button>
+        <span class="time" id="time">00:00 / 00:00</span>
+        <input class="range" id="progress" type="range" min="0" max="1000" value="0">
+        <span class="tiny volume-label">音量</span>
+        <input class="range volume" id="volume" type="range" min="0" max="100" value="70">
+      </div>
+      <div class="library-head section">
+        <input class="field" id="search" placeholder="搜索本机曲库">
+        <span class="pill" id="count">0 首</span>
+      </div>
+      <div class="list" id="trackList"></div>
+    </section>
+    <audio id="audio" preload="metadata"></audio>
+  </main>
+  <script src="./appearance.js"></script>
+  <script src="../../web/visual-activity.js"></script>
+  <script src="./music-player.js"></script>
+</body>
+</html>

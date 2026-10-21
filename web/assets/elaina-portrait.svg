@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 560" fill="none">
+  <!--
+    占位剪影（无五官，避免 uncanny）：女巫帽 + 飘发 + 长裙 + 扫帚 + 星月。
+    原创、零版权。仅作 anime 大类右侧占位。
+    想换成真图：把 web/assets/elaina.png（或 .jpg/.webp）放好即可自动顶替。
+  -->
+  <defs>
+    <linearGradient id="sil" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c6b5f4"/><stop offset="1" stop-color="#9a82df"/>
+    </linearGradient>
+    <linearGradient id="sil2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ac96e6"/><stop offset="1" stop-color="#856fca"/>
+    </linearGradient>
+    <radialGradient id="halo2" cx="50%" cy="42%" r="55%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.8"/>
+      <stop offset="68%" stop-color="#e9deff" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#e9deff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 柔光环 -->
+  <ellipse cx="220" cy="250" rx="200" ry="240" fill="url(#halo2)"/>
+
+  <!-- 弯月 -->
+  <path d="M356 96 a58 58 0 1 0 6 92 a44 44 0 1 1 -6 -92 Z" fill="#efe9ff" opacity="0.65"/>
+
+  <!-- 星点 -->
+  <g fill="#fff">
+    <circle cx="92" cy="150" r="2.6" opacity=".8"/>
+    <circle cx="150" cy="96" r="1.8" opacity=".6"/>
+    <circle cx="300" cy="210" r="2" opacity=".7"/>
+    <circle cx="372" cy="260" r="1.6" opacity=".55"/>
+    <circle cx="84" cy="320" r="1.8" opacity=".6"/>
+  </g>
+  <g fill="#ffe39a">
+    <path d="M118 250 l2.2 4.6 5 .7 -3.6 3.5 .9 5 -4.5-2.4 -4.5 2.4 .9-5 -3.6-3.5 5-.7 Z"/>
+    <path d="M330 320 l1.8 3.8 4.2.6 -3 2.9 .7 4.1 -3.7-2 -3.7 2 .7-4.1 -3-2.9 4.2-.6 Z" opacity=".85"/>
+  </g>
+
+  <!-- 扫帚（斜置于身后） -->
+  <g stroke="url(#sil2)" stroke-linecap="round">
+    <line x1="120" y1="500" x2="330" y2="300" stroke-width="9"/>
+    <g transform="translate(330 300) rotate(-43)" fill="url(#sil2)">
+      <path d="M0 -2 L54 -22 L54 22 L0 2 Z" opacity=".9"/>
+      <path d="M6 -6 L54 -22 M8 0 L56 0 M6 6 L54 22" stroke-width="3"/>
+    </g>
+  </g>
+
+  <!-- 长裙（钟形剪影） -->
+  <path d="M168 286 C150 372 132 470 120 528 Q 220 552 320 528 C 308 470 290 372 272 286 Q 220 318 168 286 Z" fill="url(#sil)"/>
+  <!-- 裙摆细节 -->
+  <path d="M120 528 Q 160 512 196 528 Q 220 540 244 528 Q 280 512 320 528 L320 528 Q 220 552 120 528 Z" fill="#8a73cf" opacity=".55"/>
+
+  <!-- 头与飘发（无五官） -->
+  <path d="M178 250 C150 250 146 198 178 176 C200 160 240 160 262 176 C294 198 290 250 262 256 C300 300 312 410 286 520 C284 430 270 360 250 322 C262 392 250 470 232 528 C236 430 224 350 220 300 C214 360 206 440 196 520 C186 420 188 330 206 280 C176 300 168 270 178 250 Z" fill="url(#sil2)"/>
+  <!-- 脸的留白（浅色面，无五官，柔和不诡异） -->
+  <ellipse cx="220" cy="214" rx="40" ry="44" fill="#f7f1ff" opacity=".9"/>
+  <!-- 腮红点缀（仅一点柔色，不画脸） -->
+  <circle cx="201" cy="226" r="6" fill="#ffc2d2" opacity=".7"/>
+  <circle cx="239" cy="226" r="6" fill="#ffc2d2" opacity=".7"/>
+
+  <!-- 女巫帽 -->
+  <g fill="url(#sil2)">
+    <path d="M214 176 C168 172 168 120 206 78 C224 56 248 30 262 20 C256 78 282 132 312 162 C300 184 268 180 214 176 Z"/>
+    <ellipse cx="220" cy="166" rx="134" ry="30"/>
+    <ellipse cx="220" cy="160" rx="134" ry="26" fill="#9a83dd"/>
+  </g>
+  <!-- 帽带 + 星扣 -->
+  <path d="M158 158 C188 178 258 178 296 152 C296 162 296 168 296 168 C258 188 188 186 158 168 Z" fill="#7d68c4"/>
+  <path d="M232 156 l3 6 6.4.9 -4.7 4.5 1.1 6.4 -5.8-3 -5.8 3 1.1-6.4 -4.7-4.5 6.4-.9 Z" fill="#ffe39a"/>
+</svg>

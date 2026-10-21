@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src blob:; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Harbour · 悬浮助手</title>
+  <link rel="stylesheet" href="orb-lyrics.css">
+  <link rel="stylesheet" href="shared.css"><link rel="stylesheet" href="orb.css"><link rel="stylesheet" href="orb-status.css"><link rel="stylesheet" href="orb-music.css"><link rel="stylesheet" href="orb-run-controls.css"><link rel="stylesheet" href="orb-resize.css">
+  <link rel="stylesheet" href="../../web/run-picker.css">
+  <link rel="stylesheet" href="../../web/voice-picker.css">
+  <script src="../../web/voice-picker.js"></script>
+  <script src="../../web/visual-activity.js"></script>
+</head>
+<body data-theme="anime-wisteria">
+  <svg class="symbols" aria-hidden="true"><defs>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="m9 3 6 0-1 6 4 4v2H6v-2l4-4-1-6Zm3 12v6"/></symbol>
+    <symbol id="i-open" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m6 11 6-6 6 6M12 5v15"/></symbol>
+    <symbol id="i-attach" viewBox="0 0 24 24"><path d="m8 12 6-6a3 3 0 0 1 4 4l-8 8a4 4 0 0 1-6-6l8-8M7 13l6-6"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M8 5 6 8H3v12h18V8h-3l-2-3Z"/><circle cx="12" cy="13" r="3"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+    <symbol id="i-tune" viewBox="0 0 24 24"><path d="M4 7h6m4 0h6M4 17h10m4 0h2"/><circle cx="12" cy="7" r="2"/><circle cx="16" cy="17" r="2"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 4v5h5M3 9a9 9 0 1 1 0 6M12 7v5l3 2"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="2"/><ellipse cx="18" cy="16" rx="3" ry="2"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="i-previous" viewBox="0 0 24 24"><path d="M5 5v14m14-14L8 12l11 7Z"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M19 5v14M5 5l11 7-11 7Z"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="m11 4-6 5H2v6h3l6 5ZM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="m11 4-6 5H2v6h3l6 5ZM16 9l6 6m0-6-6 6"/></symbol>
+    <symbol id="i-queue" viewBox="0 0 24 24"><path d="M4 5h16M4 11h16M4 17h8m5-2 4 3-4 3Z"/></symbol>
+    <symbol id="i-sequence" viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h16m-3-7 3 2-3 2"/></symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4M3 11V8a2 2 0 0 1 2-2h16M7 22l-4-4 4-4m14-1v3a2 2 0 0 1-2 2H3"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c5 0 7-12 12-12h3m-4-4 4 4-4 4"/></symbol>
+  </defs></svg>
+  <section id="panel" class="orb-panel" aria-label="Harbour 快捷对话" hidden>
+    <header class="orb-header">
+      <div class="brand"><span class="brand-glyph">h</span><div><strong>Harbour</strong><small id="connection">正在连接</small></div></div>
+      <div class="header-actions">
+        <button id="history" class="icon" aria-label="历史会话" title="历史会话"><svg><use href="#i-history"/></svg></button>
+        <button id="pin" class="icon" aria-label="固定展开" aria-pressed="false" title="固定展开"><svg><use href="#i-pin"/></svg></button>
+        <button id="alwaysOnTop" class="top-toggle" aria-label="窗口置顶" aria-pressed="true" title="保持在其他窗口上方；与固定展开独立">置顶</button>
+        <button id="open" class="icon" aria-label="在 Harbour 中查看完整会话" title="完整会话"><svg><use href="#i-open"/></svg></button>
+        <button id="collapse" class="icon" aria-label="收起面板" title="收起 · Esc"><svg><use href="#i-down"/></svg></button>
+      </div>
+    </header>
+    <div class="conversation-tools"><div id="agents" role="group" aria-label="选择角色"></div><button id="new" class="quiet" title="保留旧会话，新开一段对话"><svg><use href="#i-plus"/></svg>新对话</button></div>
+    <button id="currentSession" class="current-session" type="button" title="查看此角色的全部对话"><span id="sessionSource" class="session-source">Web</span><span id="sessionTitle">新对话</span><span id="sessionAccess"></span><svg><use href="#i-down"/></svg></button>
+    <div id="signals" class="companion-signals" aria-label="角色与音乐状态" hidden>
+      <button id="taskSignal" class="companion-signal" type="button" hidden><span class="signal-ring" aria-hidden="true"></span><span id="taskSignalText" class="signal-copy"></span><span class="signal-arrow" aria-hidden="true">↗</span></button>
+      <button id="musicSignal" class="companion-signal music-signal" type="button" hidden><span class="signal-music" aria-hidden="true"><i></i><i></i><i></i></span><span id="musicSignalText" class="signal-copy"></span><span class="signal-arrow" aria-hidden="true">↗</span></button>
+    </div>
+    <div id="conversation" class="conversation-scroll">
+      <div id="messages" class="messages" role="log" aria-label="当前对话" aria-live="polite"></div>
+      <div id="ask" class="ask" hidden></div>
+    </div>
+    <div id="notice" class="notice" role="status" hidden></div>
+    <div class="run-status" id="progress" hidden><span class="mini-ring"></span><span id="phase">正在处理</span><button id="stop" class="quiet">停止</button></div>
+    <form id="composer" class="composer">
+      <div class="run-controls">
+        <div id="runPicker" aria-label="当前对话运行配置"></div>
+        <div id="runContext" class="run-context" role="progressbar" tabindex="0" aria-label="当前会话上下文占用" aria-valuemin="0" aria-valuemax="100" aria-describedby="runContextTip" data-tone="unknown"><svg viewBox="0 0 24 24" aria-hidden="true"><circle class="context-track" cx="12" cy="12" r="9"/><circle id="runContextFill" class="context-fill" cx="12" cy="12" r="9" pathLength="100" stroke-dasharray="0 100"/></svg><span id="runContextTip" class="run-context-tip" role="tooltip">上下文暂未统计</span></div>
+      </div>
+      <div id="attachments" class="attachment-strip" aria-label="待发送附件" hidden></div>
+      <label class="sr-only" for="input">发给当前角色的消息</label>
+      <textarea id="input" rows="2" maxlength="24000" placeholder="想说什么，或想一起做什么？"></textarea>
+      <footer><div class="composer-actions">
+        <button id="attach" class="icon" type="button" aria-label="添加附件" title="添加附件 · 也可粘贴或拖入"><svg><use href="#i-attach"/></svg></button>
+        <button id="capture" class="icon" type="button" aria-label="选择窗口截图" title="选择窗口截图"><svg><use href="#i-camera"/></svg></button>
+        <button id="music" class="icon" type="button" aria-label="音乐陪伴" title="音乐陪伴 · 播放控制与 Folia"><svg><use href="#i-music"/></svg></button>
+        <div id="orbVoicePicker"></div>
+        <button id="more" class="icon" type="button" aria-label="更多功能" title="运行设置、剪贴板与快捷操作"><svg><use href="#i-more"/></svg></button>
+      </div><span id="composerHint" hidden></span><button id="send" class="send" type="submit" aria-label="发送消息或加入队列"><svg><use href="#i-send"/></svg></button></footer>
+      <input id="filePicker" type="file" multiple hidden>
+    </form>
+    <section id="drawer" class="orb-drawer" aria-label="悬浮助手功能" hidden>
+      <header><strong id="drawerTitle"></strong><button id="drawerClose" class="quiet" type="button" aria-label="返回对话">返回对话</button></header>
+      <div id="drawerBody" class="drawer-body"></div>
+    </section>
+    <dialog id="imageViewer" class="orb-image-viewer" aria-labelledby="imageTitle">
+      <header><strong id="imageTitle">图片预览</strong><button id="imageClose" class="quiet" type="button">关闭 · Esc</button></header>
+      <div class="image-viewport"><img id="imageOriginal" alt="" draggable="false"></div>
+      <footer><button id="imageZoom" class="quiet" type="button" aria-pressed="false">原尺寸</button><button id="imageFull" class="quiet" type="button">在完整会话查看 ↗</button></footer>
+    </dialog>
+  </section>
+  <div id="panelResize" class="panel-resize" aria-label="调整聊天框大小" hidden></div>
+  <button id="orb" class="orb" draggable="false" aria-label="展开 Harbour 悬浮助手" aria-description="点击展开或收起；悬停预览；拖动贴边">
+    <span class="orb-aura"></span><span class="orb-core"><img id="orbAvatar" alt="" draggable="false" hidden><span class="orb-breath"><span id="orbArt"><span id="orbExpression" class="orb-portrait" hidden></span><span id="orbExpressionPrevious" class="orb-portrait" hidden></span><span id="orbBlink" class="orb-portrait" hidden></span></span></span><span id="orbGlyph">h</span><span class="orb-wave"></span></span>
+    <svg class="orb-activity" viewBox="0 0 68 68" aria-hidden="true"><circle cx="34" cy="34" r="32"/></svg>
+    <span id="unread" class="unread" aria-hidden="true" hidden></span>
+    <span class="orb-music signal-music" aria-hidden="true"><i></i><i></i><i></i></span>
+  </button>
+  <button id="dock" class="dock-tab" draggable="false" aria-label="展开 Harbour 悬浮助手" aria-description="点击展开或收起；悬停预览；拖动贴边" aria-expanded="false" hidden>
+    <span class="dock-peek" aria-hidden="true"><span id="dockLiving" class="dock-living">
+      <span id="dockFallback" class="dock-fallback"></span>
+      <span id="dockPortrait" class="dock-portrait" hidden></span>
+      <span id="dockBlink" class="dock-portrait dock-blink" hidden></span>
+    </span></span>
+    <span class="dock-indicators" aria-hidden="true"><span class="signal-ring dock-ring"></span><span class="dock-status"></span><span class="signal-music"><i></i><i></i><i></i></span></span>
+  </button>
+  <aside id="lyricOverlay" class="lyric-overlay" aria-label="桌面歌词" hidden><button id="lyricOpen" class="lyric-open" type="button" aria-label="打开音乐与歌词"><small id="lyricSong"></small><strong id="lyricLine"></strong></button><button id="lyricClose" class="lyric-close" type="button" title="收起桌面歌词，可在音乐面板重新开启" aria-label="收起桌面歌词">×</button></aside>
+  <script src="../../web/run-picker.js"></script><script src="orb-expression.js"></script><script src="orb-peek-frames.js"></script><script src="orb-living.js"></script><script src="orb-status.js"></script><script src="orb-extras.js"></script><script src="orb-messages.js"></script><script src="orb-lyric-clock.js"></script><script src="orb-lyrics.js"></script><script src="orb-music.js"></script><script src="orb-run-controls.js"></script><script src="orb-resize.js"></script><script src="orb-state.js"></script><script src="orb-unread.js"></script><script src="orb.js"></script>
+</body>
+</html>

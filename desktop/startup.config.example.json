@@ -1,0 +1,10 @@
+{
+  "left": {
+    "file": "renderer/assets/startup/elaina-v1.webp",
+    "label": "左侧角色"
+  },
+  "right": {
+    "file": "renderer/assets/startup/aemeath-v6.webp",
+    "label": "右侧角色"
+  }
+}

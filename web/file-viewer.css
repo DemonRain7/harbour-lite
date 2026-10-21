@@ -1,0 +1,34 @@
+.attachment-reader {
+  box-sizing: border-box; width: min(1040px, calc(100vw - 48px)); height: min(780px, calc(100dvh - 64px));
+  max-width: none; max-height: none; padding: 0; border: 1px solid var(--border); border-radius: 20px;
+  color: var(--fg); background: var(--panel); box-shadow: 0 24px 90px #0003; overflow: hidden;
+}
+.attachment-reader[open] { display: flex; flex-direction: column; }
+.attachment-reader::backdrop { background: #16131e66; backdrop-filter: blur(5px); }
+.attachment-reader-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 26px; border-bottom: 1px solid var(--border); }
+.attachment-reader-identity { min-width: 0; }
+.attachment-reader-eyebrow { font-size: 11px; font-weight: 650; letter-spacing: .12em; color: var(--fg-dim); }
+.attachment-reader h2 { margin: 5px 0 7px; font-size: 19px; line-height: 1.4; overflow-wrap: anywhere; }
+.attachment-reader-meta { color: var(--fg-dim); font: 11px/1.5 var(--font-mono); }
+.attachment-reader-actions { display: flex; flex-shrink: 0; gap: 8px; align-items: center; }
+.attachment-reader-actions [hidden] { display: none; }
+.attachment-reader-actions .btn { font-size: 12px; padding: 7px 11px; text-decoration: none; white-space: nowrap; }
+.attachment-reader-body { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+.attachment-reader-code { margin: 0; padding: 20px 0 36px; font: 13px/1.85 var(--font-mono); tab-size: 4; }
+.attachment-reader-line { display: flex; min-width: max-content; }
+.attachment-reader-line:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.attachment-reader-number { box-sizing: border-box; width: 58px; flex-shrink: 0; padding-right: 18px; text-align: right; color: var(--fg-dim); opacity: .6; user-select: none; }
+.attachment-reader-text { white-space: pre; padding-right: 28px; }
+.attachment-reader-state { padding: 72px 32px 24px; text-align: center; color: var(--fg-dim); line-height: 1.8; }
+.attachment-reader-body > .btn { display: block; margin: 0 auto; }
+.attachment-reader-footer { padding: 12px 26px; border-top: 1px solid var(--border); font-size: 12px; color: var(--fg-dim); line-height: 1.6; }
+.att-media-external { display: block; margin: 5px 0; border: 0; background: transparent; color: var(--fg-dim); font: inherit; font-size: 11px; cursor: pointer; }
+.att-media-external:hover { color: var(--accent); }
+.media-viewer-native { font-size: 12px !important; width: auto !important; padding-inline: 12px !important; white-space: nowrap; }
+@media (max-width: 620px) {
+  .attachment-reader { width: calc(100vw - 20px); height: calc(100dvh - 28px); border-radius: 16px; }
+  .attachment-reader-head { align-items: flex-start; flex-direction: column; gap: 12px; padding: 18px; }
+  .attachment-reader-actions { width: 100%; }
+  .attachment-reader-actions > :last-child { margin-left: auto; }
+  .attachment-reader-number { width: 40px; padding-right: 12px; }
+}

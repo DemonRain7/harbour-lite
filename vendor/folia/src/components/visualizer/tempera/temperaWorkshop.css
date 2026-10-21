@@ -1,0 +1,33 @@
+/* src/components/visualizer/tempera/temperaWorkshop.css */
+.tempera-workshop-entry { display: flex; flex-direction: column; gap: 12px; width: 100%; border: 1px solid; border-radius: 20px; padding: 16px; text-align: left; transition: background-color .18s; }
+.tempera-workshop-panel { max-height: calc(100dvh - 32px); display: flex; flex-direction: column; }
+.tempera-workshop-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-gutter: stable; padding-right: 6px; }
+.tempera-workshop-body::-webkit-scrollbar { display: block; width: 6px; }
+.tempera-workshop-body::-webkit-scrollbar-thumb { background: #8886; border-radius: 6px; }
+.tempera-workshop-panel > :last-child { border-top: 1px solid #8883; padding-top: 14px; }
+.tempera-workshop-layout { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 24px; }
+.tempera-workshop-library { min-width: 0; }
+.tempera-workshop-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; max-height: 340px; overflow-y: auto; padding: 3px; scrollbar-gutter: stable; }
+.tempera-workshop-asset { min-width: 0; padding: 6px; border: 1px solid; border-radius: 12px; text-align: left; transition: border-color .15s, background-color .15s; }
+.tempera-workshop-asset img { width: 100%; height: 72px; object-fit: contain; }
+.tempera-workshop-stage { position: relative; width: 100%; height: clamp(200px, 34vh, 380px); overflow: hidden; border: 1px solid; border-radius: 16px; isolation: isolate; touch-action: none; }
+.tempera-workshop-stage img { position: absolute; width: auto; max-width: none; object-fit: contain; pointer-events: none; user-select: none; }
+.tempera-workshop-grid { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); z-index: 3; }
+.tempera-workshop-grid button { display: grid; place-items: center; border: 1px solid; cursor: crosshair; }
+.tempera-workshop-grid button:focus-visible { outline: 2px solid var(--text-primary); outline-offset: -3px; }
+.tempera-workshop-grid span { height: 7px; width: 7px; border-radius: 50%; border: 1px solid; }
+.tempera-workshop-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.tempera-workshop-pool { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, .8fr); align-items: center; gap: 20px; border-top: 1px solid; padding-top: 16px; }
+.tempera-workshop-panel button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+@media (max-width: 760px) {
+  .tempera-workshop-panel { padding: 16px !important; }
+  .tempera-workshop-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .tempera-workshop-gallery { grid-template-columns: repeat(4, minmax(0, 1fr)); max-height: 136px; }
+  .tempera-workshop-asset img { height: 48px; }
+  .tempera-workshop-stage { height: 230px; }
+  .tempera-workshop-pool { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+}
+@media (max-height: 700px) and (min-width: 761px) {
+  .tempera-workshop-stage { height: 200px; }
+  .tempera-workshop-gallery { max-height: 280px; }
+}

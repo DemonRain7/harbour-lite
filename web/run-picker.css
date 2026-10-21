@@ -1,0 +1,84 @@
+/* Shared session picker. Local theme tokens, no native select menus or remote UI. */
+.run-picker, .run-picker-popup { --rp-bg: var(--panel, var(--bg)); --rp-dim: var(--fg-dim, var(--dim)); --rp-font: var(--font-ui, var(--font, system-ui));
+  color: var(--fg); font: 13px/1.45 var(--rp-font); }
+.run-picker { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.run-picker button, .run-picker-popup button { font: inherit; cursor: pointer; -webkit-app-region: no-drag; }
+.run-picker svg, .run-picker-popup svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
+.run-picker .rp-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; min-width: 0; padding: 5px 9px;
+  border: 0; border-radius: 10px; background: transparent; color: var(--rp-dim); box-shadow: none; white-space: nowrap; }
+.run-picker .rp-trigger:hover, .run-picker .rp-trigger[aria-expanded="true"] { background: color-mix(in srgb, var(--accent) 9%, transparent); color: var(--fg); }
+.rp-model { flex: 0 1 auto; }
+.rp-model-label { min-width: 0; overflow: hidden; white-space: nowrap; mask-image: linear-gradient(to right, black 92%, transparent); color: var(--fg); font-weight: 600; }
+.rp-effort-label { flex: none; color: var(--rp-dim); font-size: .92em; }
+.rp-model > svg { width: 12px; height: 12px; opacity: .6; }
+.rp-mode { flex: none; }
+.run-picker .rp-mode[data-risk="high"], .rp-option[data-risk="high"] .rp-option-name { color: var(--warn, #bb8556); }
+.run-picker[data-locked="true"] .rp-trigger { opacity: .65; }
+.run-picker-popup { position: fixed; z-index: 10050; box-sizing: border-box; display: flex; flex-direction: column; padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 14%, var(--border)); border-radius: 20px;
+  background: var(--rp-bg); box-shadow: 0 12px 40px #211b291f, 0 2px 8px #211b2910; overflow: auto; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent; text-align: left; }
+.run-picker-popup[hidden] { display: none !important; }
+.run-picker-popup * { box-sizing: border-box; }
+.run-picker-popup button { text-transform: none; letter-spacing: normal; box-shadow: none; }
+.rp-trigger:focus-visible, .run-picker-popup button:focus-visible, .rp-search:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.rp-heading { flex: none; display: flex; align-items: center; gap: 4px; padding: 2px 3px 6px 9px; min-height: 32px; }
+.rp-heading-label { flex: 1; color: var(--rp-dim); font-size: 11px; font-weight: 500; letter-spacing: .03em; }
+.run-picker-popup .rp-icon { flex: none; display: grid; place-items: center; width: 28px; height: 28px; padding: 5px;
+  border: 0; border-radius: 8px; background: transparent; color: var(--rp-dim); }
+.run-picker-popup .rp-icon:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); color: var(--accent); }
+.run-picker-popup button:disabled { opacity: .45; cursor: default; }
+.rp-effort { padding: 0 10px 4px; }
+.rp-effort-top { display: grid; grid-template-columns: 28px 1fr 28px; align-items: center; gap: 8px; }
+.rp-bolt { display: grid; place-items: center; color: var(--rp-dim); opacity: .7; }
+.rp-effort-title { text-align: center; color: var(--accent); font-size: 21px; font-weight: 600; letter-spacing: -.02em; }
+.run-picker-popup .rp-model-link { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; padding: 4px 6px 8px;
+  border: 0; border-radius: 8px; background: transparent; color: var(--rp-dim); font-size: 12px; }
+.rp-model-link span { overflow-wrap: anywhere; }
+.rp-model-link svg { width: 12px; height: 12px; transform: rotate(-90deg); }
+.rp-model-link:hover { color: var(--accent); }
+.rp-effort-track { --rp-fill: 0%; position: relative; height: 32px; margin: 12px 0 0; border-radius: 99px; background: color-mix(in srgb, var(--rp-dim) 16%, transparent); }
+.rp-effort-track { background: linear-gradient(to right, color-mix(in srgb, var(--accent) 85%, var(--rp-bg)) var(--rp-fill), color-mix(in srgb, var(--rp-dim) 16%, transparent) var(--rp-fill)); }
+.rp-ticks { position: absolute; display: flex; align-items: center; justify-content: space-between; inset: 0 14px; pointer-events: none; }
+.rp-ticks i { width: 4px; height: 4px; border-radius: 50%; background: color-mix(in srgb, var(--fg) 35%, var(--rp-bg)); opacity: .55; }
+.run-picker-popup .rp-range { position: absolute; inset: 0; width: 100%; height: 32px; margin: 0; padding: 0; appearance: none; -webkit-appearance: none;
+  background: transparent; border: 0; cursor: pointer; outline: none; touch-action: pan-y; }
+.rp-range::-webkit-slider-runnable-track { height: 32px; background: transparent; }
+.rp-range::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 30px; height: 30px; margin-top: 1px; border: 2px solid #fff; border-radius: 50%; background: #fff; box-shadow: 0 1px 5px #241b342d; }
+.rp-range::-moz-range-thumb { width: 27px; height: 27px; border: 2px solid #fff; border-radius: 50%; background: #fff; box-shadow: 0 1px 5px #241b342d; }
+.rp-range:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 99px; }
+.rp-range:disabled { cursor: default; opacity: .55; }
+.rp-endpoints { display: flex; justify-content: space-between; margin: 5px 3px 0; color: var(--rp-dim); font-size: 10px; }
+.rp-effort-description { margin: 10px 0 0; min-height: 16px; color: var(--rp-dim); text-align: center; font-size: 11px; }
+.rp-options { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--border) transparent; padding: 1px 2px 3px; }
+.run-picker-popup .rp-option { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 38px; padding: 9px 11px; text-align: left;
+  border: 0; border-radius: 11px; background: transparent; color: var(--fg); }
+.run-picker-popup .rp-option:hover, .run-picker-popup .rp-option:focus-visible { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.run-picker-popup .rp-option[aria-selected="true"] { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.rp-option-copy { flex: 1; min-width: 0; }
+.rp-option-name { display: block; overflow-wrap: anywhere; font-weight: 550; }
+.rp-option-detail { display: block; margin-top: 2px; color: var(--rp-dim); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+.rp-check { flex: 0 0 16px; color: var(--accent); }
+.rp-check svg { display: block; }
+.rp-group { padding: 11px 11px 4px; color: var(--rp-dim); font-size: 10px; letter-spacing: .05em; }
+.run-picker-popup .rp-search { flex: none; width: calc(100% - 8px); margin: 0 4px 6px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; color: var(--fg); background: transparent; font: inherit; }
+.rp-note { flex: none; margin: 7px 9px 3px; color: var(--rp-dim); font-size: 10px; line-height: 1.55; }
+.rp-note[data-error="true"] { color: var(--warn, #ba6a70); }
+/* Replace the six bordered fields with two quiet capability buttons + a run rail. */
+select[data-run-picker-native] { display: none !important; }
+body[data-theme-cat] .chat-toolbar:has(.run-picker) { display: flex; flex-wrap: wrap; gap: 5px 9px; align-items: center; }
+body[data-theme-cat] .chat-toolbar:has(.run-picker) .hs-chat { flex: 0 1 auto; max-width: 195px; }
+body[data-theme-cat] .chat-toolbar:has(.run-picker) .hs-trigger { height: 30px; border: 0; border-radius: 8px; padding: 4px 24px 4px 8px; background: transparent; box-shadow: none; }
+body[data-theme-cat] .chat-toolbar:has(.run-picker) .hs-prefix { display: none; }
+body[data-theme-cat] .chat-toolbar:has(.run-picker) .hs-value { padding: 0; font-size: 12px; font-weight: 500; }
+body[data-theme-cat] .chat-toolbar:has(.run-picker) .spacer { display: none; }
+body[data-theme-cat] .chat-toolbar:has(.run-picker) .ctx-wrap { grid-column: auto; grid-row: auto; padding-left: 0; margin-left: auto; }
+#chatRunPicker { flex: 1 1 auto; }
+#chatRunPicker .rp-model { max-width: 360px; }
+@container (max-width: 600px) {
+  #chatRunPicker { flex-basis: 100%; justify-content: space-between; }
+  #chatRunPicker .rp-model { max-width: 70%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rp-trigger, .rp-option { transition: background .14s ease, color .14s ease; }
+}

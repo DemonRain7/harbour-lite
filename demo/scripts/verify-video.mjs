@@ -44,7 +44,7 @@ run(ffmpeg, ['-nostdin', '-v', 'error', '-threads', '2', '-filter_threads', '2',
   '-frames:v', '1', '-threads', '2', '-update', '1', '-y', path.join(mediaRoot, 'poster.png')]);
 const selection = [60, 210, 360, 510, 660, 840].map(frame => `eq(n,${frame})`).join('+');
 run(ffmpeg, ['-nostdin', '-v', 'error', '-threads', '2', '-filter_threads', '2', '-i', video,
-  '-vf', `select='${selection}',scale=640:360,tile=3x2:padding=12:margin=12:color=0xf6f5ef`,
+  '-vf', `select='${selection}',scale=640:360,tile=3x2:padding=12:margin=12:color=0xFAF3E6`,
   '-frames:v', '1', '-threads', '2', '-update', '1', '-y', path.join(mediaRoot, 'contact-sheet.png')]);
 
 // Additional visual QA: opening, both sides of every transition, and the final hold.

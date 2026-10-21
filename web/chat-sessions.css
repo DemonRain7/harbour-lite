@@ -1,0 +1,133 @@
+/* Conversation rail: source + title, one quiet line. No title truncation in JS. */
+@media (min-width: 1121px) {
+  .chat-layout.chat-layout-2 { grid-template-columns: 244px minmax(0, 1fr); }
+}
+.chat-sessions .chat-sessions-head { padding: 0 7px; margin-bottom: 10px; }
+body .chat-sessions .chat-sessions-title {
+  font: 650 13px/1.4 var(--font-ui); letter-spacing: .02em; color: var(--fg-dim); transform: none;
+}
+.chat-sessions :is(#chatNewSession, #chatNewWindow) {
+  width: 30px; height: 30px; min-height: 0; padding: 0; border: 0; border-radius: 9px;
+  background: transparent; color: var(--fg-dim); box-shadow: none; font-size: 22px;
+}
+.chat-sessions :is(#chatNewSession, #chatNewWindow):hover { color: var(--accent); background: var(--panel-2); }
+.chat-sessions :is(#chatNewSession, #chatNewWindow):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chat-sessions .source-filter-host { margin-bottom: 12px; }
+.chat-sessions .source-filter-trigger {
+  min-height: 33px; padding: 6px 8px; border-color: transparent; box-shadow: none; background: transparent;
+}
+.chat-sessions .source-filter-trigger:hover,
+.chat-sessions .source-filter-trigger[aria-expanded="true"] { background: var(--panel-2); }
+.chat-sessions .source-filter-total { background: transparent; }
+.chat-sessions .source-filter-all { border: 0; background: transparent; color: var(--fg-faint); }
+.chat-sessions .chat-session-list {
+  flex-direction: column; flex-wrap: nowrap; gap: 3px; padding: 2px;
+  scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--fg-faint) 28%, transparent) transparent;
+}
+body .chat-sessions .chat-session {
+  position: relative; display: flex; flex: none; width: 100%; min-width: 0; min-height: 38px;
+  gap: 0; padding: 0; border: 0; border-radius: 8px; background: transparent;
+  color: var(--fg-dim); box-shadow: none; transform: none;
+  transition: background .15s ease, color .15s ease;
+}
+body .chat-sessions .chat-session:hover,
+body .chat-sessions .chat-session:focus-within {
+  background: color-mix(in srgb, var(--accent) 6%, var(--panel)); color: var(--fg); box-shadow: none;
+}
+body .chat-sessions .chat-session.active {
+  background: color-mix(in srgb, var(--accent) 11%, var(--panel)); color: var(--fg);
+  box-shadow: none; transform: none;
+}
+.chat-sessions .cs-main {
+  position: relative; display: flex; flex-direction: row; align-items: center; gap: 8px;
+  flex: 1; min-width: 0; width: 100%; min-height: 38px; padding: 8px 23px 8px 8px;
+  border: 0; border-radius: inherit; background: transparent; color: inherit;
+  font-family: var(--font-ui); text-align: left; cursor: pointer;
+}
+.chat-sessions .cs-main:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.chat-sessions .cs-title {
+  display: block; flex: 1; min-width: 0; font: 500 12.5px/22px var(--font-ui);
+  white-space: nowrap; overflow: hidden; text-overflow: clip;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
+}
+.chat-sessions .active .cs-title { font-weight: 650; }
+.chat-sessions .cs-title > span { display: block; width: max-content; max-width: 100%; }
+.chat-sessions .cs-title.is-shortened > span {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 18px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 18px), transparent);
+}
+.source-badge.source-town { color: #c17c94; background: color-mix(in srgb, #d88ba6 12%, transparent); border-color: color-mix(in srgb, #d88ba6 40%, transparent); }
+.source-badge.source-cowork { color: #69a59b; background: color-mix(in srgb, #69a59b 12%, transparent); border-color: color-mix(in srgb, #69a59b 40%, transparent); }
+.source-badge.source-cron { color: #be9956; background: color-mix(in srgb, #be9956 12%, transparent); border-color: color-mix(in srgb, #be9956 40%, transparent); }
+/* Words, not color alone, identify each source. Keep their footprint consistent. */
+.chat-sessions .cs-channel {
+  display: block; width: 32px; min-width: 32px; max-width: 32px; padding: 4px 0;
+  border: 0; border-radius: 5px; text-align: center; overflow: hidden;
+  font: 650 9px/12px var(--font-ui); letter-spacing: 0;
+}
+.chat-sessions .source-web { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+body[data-theme-cat="anime"] .chat-sessions .source-qq { color: #347fba; }
+body[data-theme-cat="anime"] .chat-sessions .source-discord { color: #6773ba; }
+body[data-theme-cat="anime"] .chat-sessions .source-wecom { color: #3d8a61; }
+body[data-theme-cat="anime"] .chat-sessions .source-town { color: #a75975; }
+.chat-sessions .cs-state { position: absolute; right: 10px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.chat-sessions .cs-state-running { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 13%, transparent); }
+.chat-sessions .cs-state-interrupted { background: var(--warn, #c8a06b); }
+.chat-sessions .cs-state-goal { background: transparent; border: 1.5px solid var(--accent); }
+/* Unread is a separate, steady green dot; running keeps its existing theme-colored ring. */
+.chat-sessions .has-unread .cs-main { padding-right: 42px; }
+.chat-sessions .cs-unread {
+  position: absolute; right: 30px; top: 50%; transform: translateY(-50%);
+  width: 6px; height: 6px; border-radius: 50%; background: #38aa78;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #38aa78 12%, transparent);
+}
+.chat-sessions .has-unread .cs-title { font-weight: 650; color: var(--fg); }
+.chat-sessions .cs-actions {
+  position: absolute; right: 3px; top: 50%; transform: translateY(-50%); width: 24px; height: 26px;
+  opacity: 0; border-radius: 6px; pointer-events: none;
+}
+.chat-sessions .chat-session.active > .cs-actions { opacity: 0; }
+.chat-sessions .chat-session:is(:hover, :focus-within) > .cs-actions,
+.chat-sessions .chat-session > .cs-actions[aria-expanded="true"] { opacity: 1; pointer-events: auto; }
+.chat-sessions .chat-session:is(:hover, :focus-within) .cs-state,
+.chat-sessions .chat-session:has(.cs-actions[aria-expanded="true"]) .cs-state { visibility: hidden; }
+.chat-sessions .cs-actions:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
+body .chat-sessions .chat-session.renaming { padding: 4px; background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--accent); }
+.chat-sessions .chat-session.renaming .cs-main,
+.chat-sessions .chat-session.renaming > .cs-actions { display: none; }
+.chat-sessions .cs-rename-input { font-weight: 500; box-shadow: none; }
+@media (hover: none) {
+  .chat-sessions .chat-session > .cs-actions,
+  .chat-sessions .chat-session.active > .cs-actions { opacity: .65; pointer-events: auto; }
+  .chat-sessions .cs-main { padding-right: 34px; }
+  .chat-sessions .cs-state { right: 30px; }
+  .chat-sessions .has-unread .cs-main { padding-right: 54px; }
+  .chat-sessions .cs-unread { right: 43px; }
+}
+
+/* Body-level menu escapes the scrolling rail without adding a permanent toolbar. */
+.cs-menu {
+  position: fixed; z-index: 1000; width: 166px; padding: 5px;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--panel);
+  box-shadow: 0 8px 30px #0002; color: var(--fg); font-family: var(--font-ui);
+}
+.cs-menu button {
+  display: flex; align-items: center; gap: 9px; width: 100%; min-height: 36px; padding: 8px 10px;
+  border: 0; border-radius: 7px; box-shadow: none; background: transparent; color: inherit;
+  font: 500 12.5px/1.4 var(--font-ui); text-align: left; cursor: pointer;
+}
+.cs-menu button:hover, .cs-menu button:focus-visible { background: var(--panel-2); outline: none; }
+.cs-menu button:focus-visible { box-shadow: inset 0 0 0 1px var(--accent); }
+.cs-menu button.cs-menu-delete { color: var(--danger); }
+.cs-menu button[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+.cs-menu svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 1120px) {
+  .chat-sessions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: 32px minmax(0, 1fr); gap: 8px; }
+  .chat-sessions .chat-sessions-head, .chat-sessions .source-filter-host { margin: 0; }
+  .chat-sessions .chat-session-list { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  /* Leave the source filter a complete line even when the portrait is open. */
+  .chat-sessions { grid-template-columns: minmax(0, 1fr); grid-template-rows: 28px 30px minmax(0, 1fr); gap: 4px; }
+}

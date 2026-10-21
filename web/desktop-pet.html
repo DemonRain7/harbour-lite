@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Harbour Pet</title>
+  <link rel="stylesheet" href="./desktop-pet.css" />
+</head>
+<body>
+  <main class="desktop-pet" id="desktopPet" aria-label="Harbour 桌面宠物">
+    <section class="desktop-pet-activity" id="petActivity" aria-live="polite" hidden>
+      <header>
+        <span class="pet-activity-dot" aria-hidden="true"></span>
+        <b id="petActivityTitle">正在处理</b>
+        <span id="petActivityCount"></span>
+      </header>
+      <div class="pet-task-list" id="petTaskList"></div>
+    </section>
+
+    <aside class="desktop-pet-speech" id="petSpeech" aria-live="polite" hidden>
+      <button type="button" class="pet-speech-open" id="petSpeechOpen" aria-label="打开这条回复对应的会话">
+        <span class="pet-speech-heading"><span class="pet-speech-status"><i aria-hidden="true"></i>新回复</span><span id="petSpeechSource"></span></span>
+        <span class="pet-speech-text" id="petSpeechText"></span>
+      </button>
+      <button type="button" class="pet-speech-dismiss" id="petSpeechDismiss" aria-label="关闭这条通知" title="关闭通知（不会中止任务）">×</button>
+    </aside>
+
+    <div class="desktop-pet-controls">
+      <button type="button" id="petMusic" title="打开 Folia 音乐" aria-label="音乐陪伴" aria-pressed="false">♫</button>
+      <button type="button" id="petInteract" title="和角色互动" aria-label="和角色互动">✦</button>
+      <button type="button" id="petVoice" title="开启角色语音" aria-label="开启角色语音" aria-pressed="false">♩</button>
+      <button type="button" id="petOpen" title="打开 Harbour" aria-label="打开 Harbour">↗</button>
+      <button type="button" id="petHide" title="关闭桌宠并释放资源，可从托盘重新打开" aria-label="关闭桌宠">×</button>
+    </div>
+
+    <aside id="petMusicBar" class="pet-music-bar" aria-label="当前音乐" hidden>
+      <button type="button" class="pet-music-open" title="打开 Folia"><b class="pet-music-title"></b><small class="pet-music-subtitle"></small></button>
+      <button type="button" data-pet-music="toggle" aria-label="暂停" title="暂停">Ⅱ</button>
+      <button type="button" data-pet-music="next" aria-label="下一首" title="下一首">››</button>
+      <button type="button" class="pet-music-hide" aria-label="收起音乐条（不会停止播放）" title="收起音乐条（不会停止播放）">×</button>
+    </aside>
+
+    <button class="desktop-pet-stage" id="petStage" type="button" title="拖动身体移动；轻触头部互动">
+      <canvas class="desktop-pet-live2d" id="petLive2d" aria-hidden="true" hidden></canvas>
+      <span class="desktop-pet-sprite" id="petSprite" hidden></span>
+      <span class="desktop-pet-placeholder" id="petPlaceholder" hidden><b id="petPlaceholderName"></b><span id="petPlaceholderMessage">正在加载外观</span><small>拖动移动 · × 关闭</small></span>
+      <span class="desktop-pet-touch-effect" aria-hidden="true">✦</span>
+      <span class="desktop-pet-interaction-zone" id="petInteractionZone" title="轻触角色" aria-label="轻触角色互动"></span>
+      <span class="desktop-pet-work-prop" aria-hidden="true"></span>
+    </button>
+
+    <div class="desktop-pet-caption" id="petCaption">
+      <b id="petName">Harbour</b>
+      <span id="petState">正在加载</span>
+      <small id="petSource">WEB · Main Chat</small>
+    </div>
+  </main>
+  <script src="./pet-core.js"></script>
+  <script src="./visual-activity.js"></script>
+  <script src="./music-context.js"></script>
+  <script src="./pet-music.js"></script>
+  <script src="./live2d-host.js"></script>
+  <script src="./desktop-pet.js"></script>
+</body>
+</html>

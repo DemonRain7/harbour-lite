@@ -1,0 +1,163 @@
+/* ─────────────────────────────────────────────────────────────────
+   两层主题系统（两个大类是【两套完全不同的设计】，不是换皮）：
+
+     ① 大类 CATEGORY → body[data-theme-cat]
+        premium = PROJECTION 放映室：电影级深色控制台
+                  （影院黑 + 香槟金/钨光 + 片头字幕排版 + 胶片颗粒/暗角 + letterbox）
+        anime   = GRIMOIRE 魔女手账：奶油纸底 + 手绘描边 + 和纸胶带/缎带/蜡封 + 拍立得立绘
+        结构性差异（布局/卡片/导航/背景/立绘）由 styles.css 里 body[data-theme-cat] 段落实现。
+
+     ② 变体 VARIANT → body[data-theme]  只换调色板。
+
+   语义变量约定（不变）：
+     颜色 --bg/--bg-2/--panel/--panel-2/--elev/--fg/--fg-dim/--fg-faint
+          --accent/--accent-2/--on-accent/--danger/--warn/--ok/--border/--border-hi
+     效果 --radius/--radius-lg/--shadow-sm/--shadow-md/--ring/--panel-blur/--hi
+     字体 --font-display/--font-ui/--font-body/--font-mono（anime 附加 --font-hand）
+     刻度 --fs-*/--lh/--tracking/--sp-1..6
+
+   ★ 加变体：加 [data-theme="id"] 颜色块 + app.js 的 THEME_CATEGORIES 登记。
+   ★ 加大类：加 body[data-theme-cat="id"]{结构变量} + styles.css 对应结构段 + 顶层登记。
+   ───────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Marcellus&family=IBM+Plex+Mono:wght@400;500;600&family=Zen+Maru+Gothic:wght@500;700;900&family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Caveat:wght@600&display=swap');
+
+:root {
+  --speed: 180ms;
+  --sp-1: 6px; --sp-2: 10px; --sp-3: 14px; --sp-4: 20px; --sp-5: 28px; --sp-6: 40px;
+}
+
+/* ===================================================================
+   大类 ①：PREMIUM · PROJECTION —— 电影级深色控制台
+   排版三件套：Marcellus（片头字幕衬线）标题与大数字 / IBM Plex Mono
+   做数据、时码、场号与标签 / 系统 humanist 正文。动效整体放慢 250ms。
+   =================================================================== */
+body[data-theme-cat="premium"] {
+  --speed: 250ms;
+  --panel-blur: 0px;                       /* 无毛玻璃：胶片是实体的 */
+  --lh: 1.65; --tracking: .006em;
+  --font-display: 'Marcellus', 'STZhongsong', 'Songti SC', 'SimSun', serif;
+  --font-ui: -apple-system, system-ui, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: -apple-system, system-ui, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --fs-body: 14px; --fs-brand: 17px; --fs-h2: 21px; --fs-h3: 10px;
+  --fs-nav: 13px; --fs-label: 10px; --fs-badge: 9.5px; --fs-pill: 10.5px; --fs-btn: 11.5px; --fs-tile: 36px;
+}
+
+/* ── PREMIUM · 香槟 Champagne（默认，refined）：更深的纯黑 + 香槟金 + 银雾蓝副色 ── */
+:root,
+[data-theme="premium-champagne"] {
+  --bg: #070606; --bg-2: #0A0908;
+  --panel: #100F0D; --panel-2: #161411; --elev: #1C1915;
+  --fg: #F3EEE3; --fg-dim: #ABA495; --fg-faint: #6F6A5E;
+  --accent: #E2C285; --accent-2: #9FB0C4; --on-accent: #181104;
+  --danger: #DC7266; --warn: #CE9A45; --ok: #79B294;
+  --border: #221E17; --border-hi: #3D362A;
+  --radius: 8px; --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.55);
+  --shadow-md: 0 18px 50px -20px rgba(0,0,0,.8);
+  --ring: 0 0 0 3px rgba(226,194,133,.22); --hi: rgba(255,255,255,.05);
+}
+
+/* ── PREMIUM · 钨丝 Tungsten：暖近黑 + 放映机钨光琥珀（更暗房、更复古） ── */
+[data-theme="premium-tungsten"] {
+  --bg: #0A0908; --bg-2: #0D0C0A;
+  --panel: #121110; --panel-2: #191713; --elev: #201C17;
+  --fg: #EFEAE2; --fg-dim: #A69F93; --fg-faint: #6E6960;
+  --accent: #D9A45B; --accent-2: #8FA3B8; --on-accent: #171005;
+  --danger: #D96C5F; --warn: #C98A2E; --ok: #6FAE8C;
+  --border: #242019; --border-hi: #3B332A;
+  --radius: 6px; --radius-lg: 10px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.5);
+  --shadow-md: 0 12px 40px -18px rgba(0,0,0,.7);
+  --ring: 0 0 0 3px rgba(217,164,91,.22); --hi: transparent;
+}
+
+/* ===================================================================
+   大类 ②：ANIME · GRIMOIRE 魔女手账 —— 奶油纸 + 手绘描边 + 贴纸
+   圆体字照旧；新增 --font-hand（Caveat 手写体）做小标题/注记。
+   =================================================================== */
+body[data-theme-cat="anime"] {
+  --speed: 220ms;
+  --panel-blur: 8px;
+  --lh: 1.7; --tracking: .004em;
+  --radius: 14px; --radius-lg: 22px;
+  --font-display: 'Zen Maru Gothic', 'M PLUS Rounded 1c', system-ui, sans-serif;
+  --font-ui: 'M PLUS Rounded 1c', 'Zen Maru Gothic', system-ui, sans-serif;
+  --font-body: 'M PLUS Rounded 1c', 'Zen Maru Gothic', system-ui, sans-serif;
+  --font-mono: 'M PLUS Rounded 1c', ui-monospace, Consolas, monospace;
+  --font-hand: 'Caveat', 'Zen Maru Gothic', cursive;
+  --shadow-sm: 0 2px 6px rgba(120,95,60,.1);
+  --shadow-md: 0 10px 28px -12px rgba(120,95,60,.28);
+  --fs-body: 14.5px; --fs-brand: 18px; --fs-h2: 16px; --fs-h3: 14px;
+  --fs-nav: 13.5px; --fs-label: 11px; --fs-badge: 10px; --fs-pill: 11.5px; --fs-btn: 12.5px; --fs-tile: 34px;
+}
+
+/* ── ANIME · 薰衣草 Wisteria：奶油纸底 + 紫藤墨水 + 樱粉副色 ── */
+[data-theme="anime-wisteria"] {
+  --bg: #FAF3E6; --bg-2: #FFFBF2; --panel: #FFFEFA; --panel-2: #FBF6EB; --elev: #FFFFFF;
+  --fg: #4A3F5C; --fg-dim: #8B7F9E; --fg-faint: #B7ADC6;
+  --accent: #8A70E0; --accent-2: #F08FB0; --on-accent: #FFFFFF;
+  --danger: #F06F8E; --warn: #E8A63B; --ok: #58BE96;
+  --border: rgba(106,84,60,.28); --border-hi: rgba(106,84,60,.5);
+  --ring: 0 0 0 3px rgba(138,112,224,.22); --hi: rgba(255,255,255,.7);
+}
+
+/* ── ANIME · 晴空 Sky：薄荷纸底 + 天蓝墨水 + 紫藤副色 ── */
+[data-theme="anime-sky"] {
+  --bg: #EFF5F2; --bg-2: #F9FCFA; --panel: #FDFFFE; --panel-2: #F2F8F5; --elev: #FFFFFF;
+  --fg: #3D4F5C; --fg-dim: #7C919E; --fg-faint: #AEBEC8;
+  --accent: #5B9BE0; --accent-2: #8A70E0; --on-accent: #FFFFFF;
+  --danger: #F06F8E; --warn: #E8A63B; --ok: #58BE96;
+  --border: rgba(70,95,110,.28); --border-hi: rgba(70,95,110,.5);
+  --ring: 0 0 0 3px rgba(91,155,224,.22); --hi: rgba(255,255,255,.7);
+  --shadow-sm: 0 2px 6px rgba(60,95,120,.1);
+  --shadow-md: 0 10px 28px -12px rgba(60,95,120,.26);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ANIME / AEMEATH ——「众光航标」
+   底色是明亮、实体、被接住之后的暖 —— 不是幽灵感（那是过去式）。
+   隐藏一层：界面里所有装饰性的光都是「许多细小的光」汇成的
+   （光絮场 / 三连光点 / 借来的光渐变线 / 立绘脚下的光池，见 styles.css 角色段）。
+   三个变体 = 现在的她的三个时刻：
+     雪绒 Snowfleece = 舞台上（暖白纸底 + 粉 + 青蓝，默认，最「星星本身」）
+     星尘 Stardust   = 日常里（汽水蓝白 + 琥珀橙瞳色点睛，冷底暖光）
+     霓虹 Neon       = 街头（Y2K 粉 + 电紫，能量最高）
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── ANIME / AEMEATH · 雪绒 Snowfleece（默认）：舞台暖白 + 粉 + 青蓝羽 ── */
+[data-theme="anime-snowfleece"] {
+  --bg: #FAF3EF; --bg-2: #FFFAF6; --panel: #FFFFFF; --panel-2: #FBF4EF; --elev: #FFFFFF;
+  --fg: #46333E; --fg-dim: #7A6470; --fg-faint: #B3A2AC;
+  --accent: #EF5F9A; --accent-2: #45B5D8; --on-accent: #FFFFFF;
+  --danger: #E85D74; --warn: #E29A36; --ok: #43BB94;
+  --border: rgba(150,95,115,.26); --border-hi: rgba(150,95,115,.48);
+  --ring: 0 0 0 3px rgba(239,95,154,.22); --hi: rgba(255,255,255,.85);
+  --shadow-sm: 0 2px 8px rgba(165,100,115,.12);
+  --shadow-md: 0 12px 30px -14px rgba(165,100,115,.32);
+}
+
+/* ── ANIME / AEMEATH · 星尘 Stardust：日常汽水蓝白 + 琥珀橙（她的瞳色）── */
+[data-theme="anime-stardust"] {
+  --bg: #EEF4F9; --bg-2: #F8FBFE; --panel: #FFFFFF; --panel-2: #F1F6FB; --elev: #FFFFFF;
+  --fg: #303F58; --fg-dim: #5D6D87; --fg-faint: #9FACC2;
+  --accent: #429FD6; --accent-2: #EF9C3F; --on-accent: #FFFFFF;
+  --danger: #E8607A; --warn: #DF9530; --ok: #3FBB97;
+  --border: rgba(75,110,160,.26); --border-hi: rgba(75,110,160,.48);
+  --ring: 0 0 0 3px rgba(66,159,214,.24); --hi: rgba(255,255,255,.85);
+  --shadow-sm: 0 2px 8px rgba(70,105,155,.12);
+  --shadow-md: 0 12px 30px -14px rgba(70,105,155,.32);
+}
+
+/* ── ANIME / AEMEATH · 霓虹 Neon：Y2K 街头粉 + 电紫 ── */
+[data-theme="anime-neon"] {
+  --bg: #FBEEF4; --bg-2: #FFF6FA; --panel: #FFFFFF; --panel-2: #FCEFF5; --elev: #FFFFFF;
+  --fg: #392633; --fg-dim: #7A6070; --fg-faint: #B49EAB;
+  --accent: #EE3D96; --accent-2: #8B79F2; --on-accent: #FFFFFF;
+  --danger: #E84A66; --warn: #E89A2E; --ok: #3EBD9A;
+  --border: rgba(165,70,120,.25); --border-hi: rgba(165,70,120,.46);
+  --ring: 0 0 0 3px rgba(238,61,150,.22); --hi: rgba(255,255,255,.86);
+  --shadow-sm: 0 2px 8px rgba(170,70,120,.12);
+  --shadow-md: 0 12px 30px -14px rgba(170,70,120,.30);
+}

@@ -1,0 +1,22 @@
+.run-controls { display: flex; align-items: center; gap: 3px; min-width: 0; margin: -2px -2px 9px; }
+#runPicker { flex: 1; min-width: 0; gap: 2px; font-size: 11px; }
+#runPicker .rp-trigger { min-height: 26px; padding: 4px; gap: 4px; }
+#runPicker .rp-mode { max-width: 96px; }
+#runPicker .rp-mode > svg { width: 13px; height: 13px; }
+body > .run-picker-popup { --rp-bg: var(--bg); }
+.run-context { position: relative; flex: 0 0 24px; margin-left: auto; height: 24px; display: grid; place-items: center;
+  color: var(--accent); outline: none; border-radius: 50%; }
+.run-context:focus-visible { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--accent); }
+.run-context svg { width: 23px; height: 23px; fill: none; stroke-width: 2.2; }
+.context-track { stroke: color-mix(in srgb, var(--dim) 19%, transparent); }
+.context-fill { stroke: currentColor; stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+.run-context[data-tone="warm"] { color: #b39056; }
+.run-context[data-tone="compact"], .run-context[data-tone="full"] { color: #c17f91; }
+.run-context[data-tone="unknown"] .context-track { stroke-dasharray: 2 4; }
+.run-context-tip { display: none; position: absolute; z-index: 5; bottom: calc(100% + 8px); right: -2px; width: 214px; max-width: 65vw;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 11px; background: var(--bg); color: var(--fg);
+  font: 11px/1.65 var(--font); box-shadow: 0 5px 20px #24152e18; pointer-events: none; }
+.run-context:hover .run-context-tip, .run-context:focus-visible .run-context-tip { display: block; }
+@media (prefers-reduced-motion: no-preference) {
+  .context-fill { transition: stroke-dasharray .3s ease, stroke .3s ease; }
+}

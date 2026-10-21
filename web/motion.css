@@ -1,0 +1,161 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Harbour 动效层 MOTION v1 —— 纯新增文件，不改 styles.css / themes.css 任何既有规则。
+   挂载：index.html 在 styles.css 之后
+     <link rel="stylesheet" href="/motion.css" />
+   体系：
+     · 一条缓动贯穿全部：cubic-bezier(.16,1,.3,1)（近 easeOutExpo，快起柔尾）
+     · 三档时长：180ms 微反馈 / 420ms 进场 / 600ms 主题交接
+     · 位移一律 ≤ 14px；animation-fill-mode: backwards（不闪不归位；用 backwards 不用 both——both 会保留 to 帧的 transform:none=身份矩阵，制造层叠上下文/fixed 包含块陷阱）
+   减弱动态效果：styles.css 末尾的全局 * 规则已覆盖本文件全部 CSS 动画；
+   文件底部再补跑马灯/光斑层的显式降级（避免 fill 停在半程帧）。
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --hb-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --hb-t1: .18s; --hb-t2: .42s; --hb-t3: .6s;
+}
+
+/* ── 关键帧（to 帧 transform:none —— 播完不留 stacking context / containing block）── */
+@keyframes hbRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes hbFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hbMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes hbGlowDrift { from { transform: translate3d(-1.5%, -1%, 0); } to { transform: translate3d(1.5%, 1.6%, 0); } }
+
+/* ── ① 面板切换进场瀑布 ──
+   面板是整体 innerHTML 重渲染（PANELS[x].render(root)），切换天然重播，
+   零 JS：root 直接子元素依次 rise，手调延迟 70ms 步进、封顶 .28s。 */
+#content > * { animation: hbRise var(--hb-t2) var(--hb-ease) backwards; }
+/* The native opening already supplies the entrance. Measuring a translating
+   panel here would give the morph a transient (and therefore wrong) endpoint. */
+body[data-chat-landing="true"] #content > * { animation: none; }
+#content > *:nth-child(2) { animation-delay: .07s; }
+#content > *:nth-child(3) { animation-delay: .14s; }
+#content > *:nth-child(4) { animation-delay: .21s; }
+#content > *:nth-child(n+5) { animation-delay: .28s; }
+
+/* ── ③ 消息进场 ──
+   消息流也是整体重渲染（app.js:906），逐条加动画会让全部历史每次重播。
+   对策：只有 motion.js 标了 .hb-in 的（本轮真正新增的最后 1–3 条）才播。 */
+.chat-msg.hb-in, .chat-notice.hb-in { animation: hbRise .38s var(--hb-ease) backwards; }
+.chat-welcome { animation: hbRise var(--hb-t2) var(--hb-ease) backwards; }
+/* ④ 切会话 / 新建 / 载入历史：整条消息流一次轻淡入（不逐条，历史不跳） */
+.chat-stream.hb-swap { animation: hbFadeIn .32s ease backwards; }
+
+/* ── ② 主题三层切换交接（motion.js 驱动）──
+   换主题瞬间用旧 --bg 色蒙一层软纱盖住硬切，再 .6s 溶掉露出新皮肤。 */
+.hb-theme-veil { position: fixed; inset: 0; z-index: 9990; pointer-events: none; opacity: 0; }
+.hb-theme-veil.on { opacity: 1; }
+.hb-theme-veil.fading { transition: opacity var(--hb-t3) ease; }
+/* 立绘交接：淡出 → 换图 → 载入后淡入。只动 opacity——transform 被
+   float / floatTilt / aemFloat 呼吸动画占用，动了会打架。 */
+.harbour-hero { transition: opacity .26s ease; }
+.harbour-hero.hb-heroswap { opacity: 0; }
+
+/* ── ⑤ 按下微反馈：全站可点元素统一轻缩（hover 反馈沿用各主题已有的）── */
+.btn:active, .btn-mini:active, .chip:active, .seg-btn:active,
+.nav-item:active, .chat-session:active, .agent-row:active, .mem-card:active,
+.settings-nav-item:active, .dash-scope-item:active, .rail-tick:active,
+.bgp-btn:active, .flip-front:active { transform: scale(.965); }
+/* 弹层进场（cron 表单 / 日报 / 登录复用同一批类）：轻纱 + 卡片上浮 */
+.md-modal, .login-overlay { animation: hbFadeIn .22s ease backwards; }
+.md-modal .md-card, .login-overlay .login-card { animation: hbRise .34s var(--hb-ease) backwards; }
+
+/* ── ⑥ 跑马灯：MAIN CHAT 对话卡顶缘一条状态带（in-flow，不遮挡任何内容）──
+   容器 overflow:hidden + 半透明底 + blur；内层双份内容 translateX(0→-50%)。 */
+.hb-marquee {
+  flex: none; overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-2) 55%, transparent);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.hb-marquee-track { display: flex; width: max-content; animation: hbMarquee 46s linear infinite; }
+.hb-marquee:hover .hb-marquee-track { animation-play-state: paused; }
+.hb-marquee-seg {
+  display: flex; align-items: center; white-space: nowrap; padding: 6px 0;
+  font-family: var(--font-ui); font-size: 11px; font-weight: 600;
+  letter-spacing: .05em; color: var(--fg-faint);
+}
+.hb-marquee-seg > span { margin-right: 38px; }
+.hb-marquee-seg > span:first-child { margin-left: 20px; }
+body[data-theme-cat="premium"] .hb-marquee-seg { font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: .16em; }
+body[data-theme-cat="anime"] .hb-marquee-seg { font-size: 11.5px; }
+
+/* ── ⑦ 动态背景 ──
+   premium  = canvas「放映机光路里的浮尘」（金/银雾，motion.js 绘制）
+   aemeath  = canvas「上升的光絮」（金/粉/青 =「许多人借来的光」在缓缓升起）
+   elaina   = 纯 CSS「午后书桌光斑」：两团大而淡的暖光整层缓慢漂移（零 JS 成本）。 */
+#hbBgCanvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+#hbBgGlow {
+  position: fixed; inset: -12%; z-index: 0; pointer-events: none; display: none;
+  background:
+    radial-gradient(42% 34% at 24% 20%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%),
+    radial-gradient(36% 30% at 74% 70%, color-mix(in srgb, var(--accent-2) 8%, transparent), transparent 70%);
+}
+body[data-theme-cat="anime"][data-theme-persona="elaina"] #hbBgGlow {
+  display: block; animation: hbGlowDrift 48s ease-in-out infinite alternate;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOTION v2 —— 高级感增强层。只用能安全叠加的属性（box-shadow / 伪元素 /
+   opacity / filter），【绝不新增 transform 到本就有 transform 动画的元素】
+   （立绘呼吸 float*、anime 的 .btn:hover 旋转都不能碰）。全部走同一条 expo 缓动。
+   =================================================================== */
+
+/* ⑦ 主按钮流光：hover 时一道 45° 高光扫过。伪元素 ::after 独立于按钮自身 transform，
+   与 anime 的按钮旋转不打架。一次性、不循环 —— 克制才显贵。 */
+.btn.primary { position: relative; overflow: hidden; isolation: isolate; }
+.btn.primary::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(105deg, transparent 32%, color-mix(in srgb, #fff 50%, transparent) 48%, transparent 60%);
+  transform: translateX(-130%); transition: transform .62s var(--hb-ease);
+}
+.btn.primary:hover::after { transform: translateX(130%); }
+
+/* ⑧ 键盘焦点环随出现而扩张（可达性 + 高级感）。只用 box-shadow，不占 transform。
+   forwards 保持到失焦；失焦即无 :focus-visible，环自然消失。 */
+@keyframes hbRing { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent); }
+                    to   { box-shadow: var(--ring); } }
+.btn:focus-visible, .btn-mini:focus-visible, .chip:focus-visible, .nav-item:focus-visible,
+.seg-btn:focus-visible, .dash-scope-item:focus-visible, .theme-select:focus-visible,
+input.inp:focus-visible, select.inp:focus-visible, textarea.inp:focus-visible {
+  outline: none; animation: hbRing .3s var(--hb-ease) forwards;
+}
+
+/* ⑨ 卡片悬浮的极轻景深（只在 premium 大类 —— 它就是「高级」那一款；
+   premium 卡片无 transform 动画，只加深 box-shadow，安全）。 */
+body[data-theme-cat="premium"] .card,
+body[data-theme-cat="premium"] .dash-card,
+body[data-theme-cat="premium"] .proposal,
+body[data-theme-cat="premium"] .agents-detail {
+  transition: box-shadow var(--hb-t2) var(--hb-ease), border-color var(--hb-t2) var(--hb-ease);
+}
+body[data-theme-cat="premium"] .card:hover,
+body[data-theme-cat="premium"] .dash-card:hover {
+  box-shadow: 0 24px 64px -30px rgba(0,0,0,.9);
+  border-color: var(--border-hi);
+}
+
+/* ⑩ 弹层卡片「聚焦成形」：从 .985 缩放起 + 上浮，比单纯上浮更贵。
+   覆盖 v1 第 57 行的 hbRise（同选择器、后定义者胜，是刻意升级）。md-card 无 transform，安全。 */
+@keyframes hbCardIn { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+.md-modal .md-card, .login-overlay .login-card { animation: hbCardIn .4s var(--hb-ease) backwards; }
+
+/* ⑪ 列表行 hover：左缘一道 accent 细线亮起。用 inset box-shadow 画，
+   不撑布局、不改 padding（避免因基础 padding 不一而跳动）、不占 transform。 */
+.agent-row, .chat-session, .mem-card, .settings-nav-item {
+  transition: background var(--hb-t1) var(--hb-ease), box-shadow var(--hb-t2) var(--hb-ease),
+              border-color var(--hb-t1) var(--hb-ease);
+}
+.agent-row:hover, .chat-session:hover, .mem-card:hover, .settings-nav-item:hover {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* ── 减弱动态效果补丁（全局 * 规则之外的显式处理）──
+   跑马灯若被压成 .01ms 会停在 -50% 的半程帧：直接停动画 + 隐去第二份拷贝。
+   canvas 不受 CSS 约束，由 motion.js 里 matchMedia 判定降级为一帧静态。 */
+@media (prefers-reduced-motion: reduce) {
+  .hb-marquee-track { animation: none !important; }
+  .hb-marquee-seg.hb-copy { display: none; }
+  #hbBgGlow { animation: none !important; }
+  /* v2：流光扫过停掉，只留静态按钮（焦点环/行左线是静态 box-shadow，本就无动可减） */
+  .btn.primary::after { display: none; }
+}

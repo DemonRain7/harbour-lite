@@ -1,8 +1,8 @@
 import {Composition, Folder} from 'remotion';
-import {AgentScene, CharacterScene, ClosingScene, DataScene, HarbourLiteIntro, ModelScene, WelcomeScene} from './Intro';
+import {AgentScene, CharacterScene, ClosingScene, DataScene, HarbourIntro, ModelScene, WelcomeScene} from './Intro';
 
 export const RemotionRoot = () => <>
-  <Composition id="HarbourLiteIntro" component={HarbourLiteIntro} durationInFrames={900} fps={30} width={1920} height={1080} />
+  <Composition id="HarbourIntro" component={HarbourIntro} durationInFrames={900} fps={30} width={1920} height={1080} />
   <Folder name="Scenes">
     <Composition id="Welcome" component={WelcomeScene} durationInFrames={135} fps={30} width={1920} height={1080} />
     <Composition id="Connect" component={ModelScene} durationInFrames={165} fps={30} width={1920} height={1080} />

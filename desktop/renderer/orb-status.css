@@ -1,0 +1,63 @@
+/* Quiet signals, not another speech bubble. The native hit area never moves. */
+body { --signal-green: #50b28c; --signal-amber: #dba759; --signal-rose: #d37a8e; }
+.orb-aura { opacity: .38; }
+body[data-pinned="true"] .orb-aura { opacity: .65; }
+button.orb > .orb-activity { position: absolute; inset: 0; width: 100%; height: 100%;
+  fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; opacity: 0; transform: rotate(-90deg); }
+.orb-activity circle { stroke-dasharray: 44 157; }
+body[data-task-busy="true"] .orb-activity { opacity: .95; }
+body[data-task-state="waiting"] .orb-activity { stroke: var(--signal-amber); }
+body[data-task-state="waiting"] .orb-activity circle { stroke-dasharray: 2 9; }
+.unread { width: 8px; height: 8px; top: 2px; right: 4px; background: var(--signal-green); border: 1.5px solid var(--bg); z-index: 4; }
+.dock-status { display: none; flex: 0 0 auto; width: 6px; height: 6px; background: var(--signal-green);
+  border: 1px solid #fffc; border-radius: 50%; }
+body:not([data-signal-alert="none"]) .dock-status { display: block; }
+body[data-signal-alert="waiting"] :is(.unread,.dock-status) { background: var(--signal-amber); }
+body[data-signal-alert="failed"] :is(.unread,.dock-status) { background: var(--signal-rose); border-radius: 2px; transform: rotate(45deg); }
+body[data-signal-alert="unknown"] :is(.unread,.dock-status) { background: var(--bg); border-color: var(--dim); }
+.signal-music { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; gap: 2px; width: 12px; height: 12px; color: var(--signal-green); }
+.signal-music i { display: block; width: 2px; height: 9px; border-radius: 2px; background: currentColor; transform: scaleY(.45); }
+.signal-music i:nth-child(2) { height: 12px; transform: scaleY(.8); }
+.signal-music i:nth-child(3) { height: 7px; transform: scaleY(.6); }
+.orb-music { position: absolute; right: 1px; bottom: 0; width: 19px; height: 19px; z-index: 4;
+  border-radius: 50%; background: var(--bg); border: 1px solid color-mix(in srgb,var(--signal-green) 20%,transparent); box-shadow: 0 1px 4px #35253f16; }
+body[data-music="none"] :is(.orb-music,.dock-indicators .signal-music) { display: none; }
+body[data-music="paused"] .signal-music { color: var(--dim); opacity: .6; }
+.signal-ring { display: block; flex: 0 0 auto; width: 11px; height: 11px; border: 1.5px solid color-mix(in srgb,var(--accent) 22%,transparent); border-top-color: var(--accent); border-right-color: var(--accent); border-radius: 50%; }
+body[data-task-state="waiting"] .signal-ring { border-color: var(--signal-amber); border-style: dotted; }
+body[data-task-state="reply"] .signal-ring { border-color: var(--signal-green); background: color-mix(in srgb,var(--signal-green) 18%,transparent); }
+body[data-task-state="failed"] .signal-ring { border-color: var(--signal-rose); border-radius: 3px; transform: rotate(45deg); }
+body[data-task-state="unknown"] .signal-ring { border-color: var(--dim); border-style: dashed; }
+.dock-indicators { position: absolute; right: 4px; bottom: 5px; display: flex; align-items: center; gap: 4px; min-height: 12px;
+  filter: drop-shadow(0 0 1px #ffffffa0); }
+.dock-ring { width: 8px; height: 8px; display: none; }
+body[data-task-busy="true"] .dock-ring { display: block; }
+body[data-edge="right"] .dock-indicators { right: auto; left: 4px; }
+body[data-edge="top"] .dock-indicators { right: 9px; bottom: 2px; }
+/* Bottom peeks expose the face at the screen edge; use the clear space above the head. */
+body[data-edge="bottom"] .dock-indicators { top: 4px; bottom: auto; left: 50%; right: auto; transform: translateX(-50%); }
+body[data-docked="false"] .dock-indicators { display: none; }
+.companion-signals { flex-shrink: 0; padding: 7px 19px 4px; display: grid; gap: 1px; }
+.companion-signal { display: flex; align-items: center; gap: 9px; min-height: 27px; width: 100%; padding: 4px 0;
+  border: 0; background: transparent; color: var(--dim); font-size: 11px; line-height: 1.5; text-align: left; }
+.signal-copy { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; mask-image: linear-gradient(to right,black 88%,transparent); }
+.signal-arrow { opacity: 0; color: var(--accent); padding: 0 3px; }
+.companion-signal:is(:hover,:focus-visible) { color: var(--fg); }
+.companion-signal:is(:hover,:focus-visible) .signal-arrow { opacity: 1; }
+.companion-signal:disabled { opacity: .7; }
+.companion-signal:disabled .signal-arrow { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .orb-activity { transition: opacity .3s ease; }
+  .signal-arrow { transition: opacity .15s ease; }
+  body[data-visual-motion="true"][data-task-busy="true"]:not([data-task-state="waiting"]) .orb-activity { animation: signal-orbit 3.8s linear infinite; }
+  body[data-visual-motion="true"][data-task-state="working"] .signal-ring { animation: signal-orbit 3.8s linear infinite; }
+  body[data-visual-motion="true"][data-task-busy="true"]:not([data-task-state="waiting"]) .dock-ring { animation: signal-orbit 3.8s linear infinite; }
+  body[data-visual-motion="true"][data-music="playing"] .signal-music i { animation: signal-note 1.35s ease-in-out infinite; }
+  body[data-visual-motion="true"][data-music="playing"] .signal-music i:nth-child(2) { animation-delay: -.5s; }
+  body[data-visual-motion="true"][data-music="playing"] .signal-music i:nth-child(3) { animation-delay: -.9s; }
+  /* Offscreen pieces never continue looping behind their visible counterpart. */
+  body[data-docked="true"] .orb *, body[data-preview="false"] .companion-signals * { animation-play-state: paused !important; }
+  body[data-docked="false"] .dock-indicators * { animation-play-state: paused !important; }
+  @keyframes signal-orbit { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
+  @keyframes signal-note { 0%,100% { transform: scaleY(.35); } 45% { transform: scaleY(.95); } 70% { transform: scaleY(.6); } }
+}

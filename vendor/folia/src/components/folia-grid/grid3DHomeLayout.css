@@ -1,0 +1,22 @@
+/* src/components/folia-grid/grid3DHomeLayout.css */
+
+/* Query the actual Folia host, not the screen: a docked view loses height to
+   Harbour's chrome. Keep the original desktop spacing at 900px and above. */
+[data-folia-home] {
+    container: folia-home / size;
+}
+
+[data-folia-home-player-space] {
+    /* The collapsed player is 48px tall, 32px from the bottom, plus clearance. */
+    flex: 0 0 clamp(88px, calc(20cqh - 52px), 128px);
+}
+
+[data-folia-home] [data-grid3d-caption][data-floating-player="true"] {
+    padding-top: clamp(8px, calc(3.334cqh - 14px), 16px);
+}
+
+@media (min-width: 768px) {
+    [data-folia-home-header] {
+        padding-block: clamp(16px, calc(6.667cqh - 28px), 32px);
+    }
+}
