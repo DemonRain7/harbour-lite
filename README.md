@@ -1,5 +1,9 @@
 # Harbour
 
+[![Harbour 介绍片：点击观看](docs/media/harbour-story-poster.png)](docs/media/harbour-story.mp4)
+
+▶ **[观看介绍片](docs/media/harbour-story.mp4)**（39 秒 · 1080p · 有声，中英双语） · [关键帧](docs/media/harbour-story-contact-sheet.png) · [制作记录](demo/STORY-NOTES.md)
+
 可自行配置角色、模型与工具的本地 Agent 工作台。
 
 这个公开分支保留原 Harbour 的 **Electron 界面、Web 面板、主题、聊天布局和开屏动画**，只剥离个人数据与私人能力包，不是另一个精简客户端。
@@ -20,7 +24,7 @@
 
 这是交给 Agent 的任务说明，不是需要粘贴到终端执行的命令。普通网页聊天若没有本地工具，只能指导你操作，不能替你安装。当前恢复版尚未推送；上面加入了版本检查，远端旧版不会被误当成当前版本安装。本地验收时把仓库地址替换为当前副本路径即可。
 
-## 30 秒介绍
+## 30 秒短版
 
 [![Harbour 介绍视频](docs/media/intro-harbour-poster.png)](docs/media/intro-harbour.mp4)
 
