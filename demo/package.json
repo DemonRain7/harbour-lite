@@ -7,6 +7,7 @@
     "studio": "remotion studio src/index.ts --no-open",
     "typecheck": "tsc --noEmit",
     "render": "remotion render src/index.ts HarbourIntro ../docs/media/intro-harbour.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --color-space=bt709 --concurrency=2 --overwrite",
+    "render:story": "remotion render src/index.ts HarbourStory ../docs/media/harbour-story.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --color-space=bt709 --concurrency=2 --overwrite",
     "verify": "node scripts/verify-video.mjs"
   },
   "dependencies": {
