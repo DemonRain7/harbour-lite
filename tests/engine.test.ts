@@ -106,3 +106,29 @@ test('restart marks unfinished receipt interrupted without replay and retains id
   assert.equal((await f.store.readRun(runId))?.fingerprint, 'abc');
   assert.equal((await f.store.session(id)).pendingRun, undefined);
 });
+
+test('long histories keep a valid user-led context and preserve full local history', async (t) => {
+  const f = await fixture();
+  let messages: { role: string; content: string }[] = [];
+  const engine = new Engine(f.store, async (input) => {
+    messages = input.messages;
+    return { content: 'done', calls: [] };
+  });
+  t.after(async () => {
+    await engine.close();
+    await f.cleanup();
+  });
+  const session = await engine.createSession('assistant');
+  session.messages = Array.from({ length: 24 }, (_, i) => ({
+    role: i % 2 ? ('assistant' as const) : ('user' as const),
+    content: `history ${i}`,
+    createdAt: new Date().toISOString(),
+  }));
+  await f.store.saveSession(session);
+  const run = await engine.start(session.id, { content: 'new question', requestId: randomUUID() });
+  await waitFor(async () => (await f.store.readRun(run.id))?.status === 'completed');
+  assert.equal(messages[0]?.role, 'user');
+  assert.equal(messages.at(-1)?.content, 'new question');
+  assert.ok(messages.length <= 24);
+  assert.equal((await f.store.session(session.id)).messages.length, 26);
+});

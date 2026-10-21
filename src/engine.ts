@@ -123,6 +123,8 @@ export class Engine {
           return remaining >= 0;
         })
         .reverse();
+      // Truncation must not leave an orphan assistant message at the start of a request.
+      while (selected[0]?.role === 'assistant') selected.shift();
       if (selected.length < history.length)
         await trace(
           'context',
