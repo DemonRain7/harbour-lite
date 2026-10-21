@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "creationRoute": "Harbour createRuntime → runAgent → Codex App Server → mounted Remotion skill and governed tools",
+  "isolation": "Separate local public-copy runtime; production Harbour and preview settings unchanged",
+  "mock": false,
+  "model": "gpt-6-astra",
+  "reasoningEffort": "max",
+  "nativeSandbox": "read-only",
+  "automaticModelFallback": false,
+  "skill": {
+    "name": "remotion-best-practices",
+    "resources": [
+      "SKILL.md",
+      "remotion-create/REFERENCE.md",
+      "remotion-markup/REFERENCE.md",
+      "remotion-render/REFERENCE.md",
+      "remotion-create/video-layout.md",
+      "remotion-markup/multi-scene-video.md",
+      "remotion-interactivity/timeline-structure.md",
+      "remotion-markup/compositions.md",
+      "remotion-markup/transitions.md",
+      "remotion-markup/images.md",
+      "remotion-markup/cropping.md",
+      "remotion-markup/local-fonts.md"
+    ]
+  },
+  "completedToolCalls": 44,
+  "imageDeliveries": 10,
+  "sourceHashFormat": "UTF-8 text with CRLF normalized to LF; source docs were path-sanitized during integration",
+  "sources": [
+    {
+      "file": "demo/src/Intro.tsx",
+      "sha256": "1c371fc59db7da747e35a367494e320db71d13d63eca95a50ad99f63bb2b7299"
+    },
+    {
+      "file": "demo/src/Root.tsx",
+      "sha256": "4c8127e83adfc5be5fadd867f4796c645661e801fd80200ee4139746f43c6bb4"
+    },
+    {
+      "file": "demo/src/theme.ts",
+      "sha256": "9d0517739287a97cfbcb926e5181136d4a36a939d2e28920df825ca62c1701ba"
+    },
+    {
+      "file": "demo/src/global.css",
+      "sha256": "b6bb10155a6368c35696f0d4ae1cd92036d673ac33b8fa1fedee60bbbfaf0153"
+    },
+    {
+      "file": "demo/STORYBOARD.md",
+      "sha256": "848a91bfc6115291abda7dfcf690dc5e60bae515a864e0f27ff747b58c1f850a"
+    }
+  ],
+  "output": {
+    "file": "docs/media/intro-harbour.mp4",
+    "sha256": "75d55a5e3a7116450966341fd759c2b6f8c0c9eb1be4da0918eaafec836a053a",
+    "bytes": 6183152
+  },
+  "scope": "Harbour agent authored and built the video; this is not a test of normal Main Chat automatic skill routing or product end-to-end installation.",
+  "privacy": "Whitelisted summary only. Raw traces, host names, local absolute paths, account data and authentication are excluded."
+}

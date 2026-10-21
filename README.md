@@ -8,19 +8,31 @@
 
 ![恢复后的原版聊天界面](docs/media/original-main-chat.png)
 
+## 让你的 Agent 帮你装好
+
+不用自己研究一堆配置。**复制下面这一行，发给有本地文件和终端能力的编码 Agent**（例如 Codex、Claude Code）。它会先阅读仓库里的交接说明，保留原界面、启动演示，再帮你接入自己的模型和助手。
+
+```text
+请帮我部署 Harbour 外壳：https://github.com/DemonRain7/harbour-lite 。先读取仓库的 AGENTS.md、README.md 和 docs/AGENT-SETUP.md，按交接说明在独立目录安装，保留原 Electron/Web 界面与开屏动画，不重写 UI、不覆盖我已有的 Harbour 或配置；先验证演示模式，再让我选择自己的模型和 Agent，密钥只在本机配置，不能发进聊天或提交 Git。交接文件不存在时请停止并说明版本不匹配，不要按旧版猜着安装。
+```
+
+[查看完整的 Agent 交接 Prompt →](docs/AGENT-SETUP.md) · [自行安装 ↓](#启动)
+
+这是交给 Agent 的任务说明，不是需要粘贴到终端执行的命令。普通网页聊天若没有本地工具，只能指导你操作，不能替你安装。当前恢复版尚未推送；上面加入了版本检查，远端旧版不会被误当成当前版本安装。本地验收时把仓库地址替换为当前副本路径即可。
+
 ## 30 秒介绍
 
-[![Harbour 介绍视频](docs/media/poster.png)](docs/media/intro.mp4)
+[![Harbour 介绍视频](docs/media/intro-harbour-poster.png)](docs/media/intro-harbour.mp4)
 
-用 Codex + Remotion 制作；视频中的界面示意不代表云服务已经接通。可编辑源码和重渲染说明在 [demo/VIDEO-NOTES.md](demo/VIDEO-NOTES.md)。
+这版由隔离的 **Harbour 运行实例调用 GPT-6 Astra（Max）并加载 Remotion Skill** 制作，包含真实公开版界面截图与 Agent 安装交接入口。30 秒 / 1080p / 静音；视频不是产品功能验收或云服务接通证明。[下载 MP4](docs/media/intro-harbour.mp4) · [六张关键帧](docs/media/intro-harbour-contact-sheet.png) · [制作记录、源码与复现](demo/VIDEO-NOTES.md)
 
 ## 启动
 
-需要 Node.js 22.12 或更新版本。
+建议 Node.js 24+；仅核心 Web / Electron 的最低要求为 Node.js 22.12。音乐子项目 Folia 及完整公开版回归需要 Node.js 24+。先在独立目录取得本仓库，再执行：
 
 ```powershell
 npm ci
-Copy-Item .env.example .env
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
 npm run serve
 ```
 
