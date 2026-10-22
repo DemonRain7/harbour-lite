@@ -2,7 +2,7 @@
 
 [![Harbour 介绍片：点击观看](docs/media/harbour-story-poster.png)](docs/media/harbour-story.mp4)
 
-▶ **[观看介绍片](docs/media/harbour-story.mp4)**（39 秒 · 1080p · 有声，中英双语） · [关键帧](docs/media/harbour-story-contact-sheet.png) · [制作记录](demo/STORY-NOTES.md)
+▶ **[观看介绍片](docs/media/harbour-story.mp4)**（78 秒 · 1080p · 有声，中英双语） · [关键帧](docs/media/harbour-story-contact-sheet.png) · [制作记录](demo/STORY-NOTES.md)
 
 可自行配置角色、模型与工具的本地 Agent 工作台。
 

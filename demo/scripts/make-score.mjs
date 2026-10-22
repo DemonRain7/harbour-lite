@@ -1,7 +1,8 @@
 // HarbourStory 的配乐与音效：全部在本地用代码合成（加法合成 + 滤波噪声 + 混响），
 // 不下载素材、不调用模型或任何外部服务；固定随机种子，每次输出相同的音频。
-// 时间轴照抄 src/Story.tsx 的 STORY_SCENES 与各场景里的入场时刻。剪辑踩在 120 BPM 上：每次换场，
-// 灯塔光束扫过画面中线（场景起点 + 0.25 秒）正好是一拍，鼓、和弦、旋律都对着这些拍点写。
+// 时间轴照抄 src/Story.tsx 的 STORY_SCENES 与各场景里的入场时刻，同样按「拍格秒」书写（一拍 = 0.5），
+// 落到采样上时再乘 TEMPO：剪辑踩在 100 BPM 上，一拍 0.6 秒。每次换场，灯塔光束扫过画面中线
+// （场景起点 + 0.25 拍格秒）正好是一拍，鼓、和弦、旋律都对着这些拍点写。
 // 那边改了时长或延迟，要同步这里的 SCENES / 事件表，再重新生成。
 //
 //   npm --prefix demo run score                 写入 public/story/score.m4a（用 Remotion 自带的 ffmpeg 编码 AAC）
@@ -19,17 +20,21 @@ const SR = 48000;
 const TARGET_LUFS = -16;
 const CEILING = 10 ** (-1.8 / 20);
 
-/* ── 时间轴（秒）：与 src/Story.tsx 一致 ─────────────────────────── */
-const SCENES = [4.5, 4.5, 5.5, 4.5, 4.5, 4.5, 4.5, 5.5, 5];
+/* ── 时间轴（拍格秒）：与 src/Story.tsx 一致 ───────────────────────── */
+// 开场、01–12 十二章、片尾；03 陪伴角色，05 执行进度，07 悬浮助手，08 Folia 音乐。
+const SCENES = [4.5, 4.5, 5.5, 5.5, 4.5, 6.5, 4.5, 5.5, 6.5, 4.5, 4.5, 4.5, 5.5, 5];
 const FADE = 0.5;
 const S = SCENES.map((_, i) => SCENES.slice(0, i).reduce((sum, sec) => sum + sec - FADE, 0)); // 各场景在成片里的起点
 const DURATION = S.at(-1) + SCENES.at(-1);
-assert.equal(DURATION, 39);
-const BEAT = 0.5; // 120 BPM，拍点 = 0.25 + k × 0.5
+assert.equal(DURATION, 65);
+const TEMPO = 1.2; // 一拍格秒 = 1.2 秒（100 BPM）
+const BEAT = 0.5; // 拍点 = 0.25 + k × 0.5
 const HIT = S.slice(1).map(s => s + FADE / 2); // 光束扫过画面中线的一刻：换和弦、落鼓
+const END = HIT.at(-1); // 片尾的那一拍
 const on8th = t => Math.abs((t - 0.25) / (BEAT / 2) - Math.round((t - 0.25) / (BEAT / 2))) < 1e-9;
 assert.ok(HIT.every(on8th), '换场时刻要落在拍点上');
-const N = Math.round(DURATION * SR);
+assert.ok(HIT.every(t => Number.isInteger(t - HIT[0])), '换场时刻要落在强拍（1、3 拍）上');
+const N = Math.round(DURATION * TEMPO * SR);
 
 /* ── 基础工具 ─────────────────────────────────────────────────── */
 let seed = 0x48b0a7;
@@ -77,8 +82,9 @@ const bus = () => [new Float32Array(N), new Float32Array(N)];
 const stem = () => ({dry: bus(), verb: bus(), echo: bus()});
 const stems = {pad: stem(), bass: stem(), drums: stem(), pulse: stem(), music: stem(), sfx: stem(), ambience: stem()};
 
+// t0 是拍格秒；声音本身的长度（mono）是真实采样，不随拍速伸缩。
 function place(target, t0, mono, {gain = 1, pan = 0, verb = 0.3, echo = 0} = {}) {
-  const i0 = Math.round(t0 * SR);
+  const i0 = Math.round(t0 * TEMPO * SR);
   const panAt = typeof pan === 'function' ? pan : () => pan;
   for (let k = 0; k < mono.length; k++) {
     const i = i0 + k;
@@ -183,9 +189,9 @@ function tap(t, {gain = 1, pan = 0, tone = 1600}) {
   place(stems.sfx, t, out, {gain: 0.4 * gain, pan, verb: 0.15});
 }
 
-// 气流声：两路独立白噪声过带通，中心频率按指数从 f0 扫到 f1，包络在 peak 处最大。
+// 气流声：两路独立白噪声过带通，中心频率按指数从 f0 扫到 f1，包络在 peak 处最大。dur 是拍格秒，跟着画面动作伸缩。
 function whoosh(target, t0, dur, {f0, f1, q = 0.9, peak = 0.5, curve = 1, gain = 1, pan = [0, 0], width = 0.5, verb = 0.35}) {
-  const n = Math.round(dur * SR), freq = i => f0 * (f1 / f0) ** (i / n);
+  const n = Math.round(dur * TEMPO * SR), freq = i => f0 * (f1 / f0) ** (i / n);
   for (const side of [-1, 1]) {
     const out = svf(Float32Array.from({length: n}, noise), freq, q, 'bp');
     for (let i = 0; i < n; i++) {
@@ -198,7 +204,7 @@ function whoosh(target, t0, dur, {f0, f1, q = 0.9, peak = 0.5, curve = 1, gain =
 
 // 海浪：棕噪声低通随浪涌开合，再叠一点浪尖的沙沙声；左右声道相位错开。
 function ocean(t0, t1, {gain, fadeIn, fadeOut}) {
-  const n = Math.round((t1 - t0) * SR), len = t1 - t0;
+  const len = (t1 - t0) * TEMPO, n = Math.round(len * SR);
   for (const [pan, offset] of [[-0.65, 0], [0.65, 0.41]]) {
     const swell = i => { const x = (i / SR / 6.2 + offset) % 1; return x < 0.62 ? smooth(x / 0.62) : smooth((1 - x) / 0.38); };
     const brown = new Float32Array(n);
@@ -214,12 +220,12 @@ function ocean(t0, t1, {gain, fadeIn, fadeOut}) {
   }
 }
 
-// 持续音（铺底和低音）：带限波表 + 轻微失谐的几路振荡器 + 缓慢起伏。
+// 持续音（铺底和低音）：带限波表 + 轻微失谐的几路振荡器 + 缓慢起伏。t0 / t1 是拍格秒，attack / release 是真实秒数。
 function sustain(target, t0, t1, f, {attack, release, gain, voices = [[-6, -0.45], [0, 0], [6, 0.45]], tilt = 1.7, maxHarmonic = 24, verb = 0.6}) {
   const SIZE = 4096, table = new Float32Array(SIZE + 1);
   for (let h = 1; h <= maxHarmonic && h * f < 9000; h++) for (let i = 0; i <= SIZE; i++) table[i] += Math.sin(2 * Math.PI * h * i / SIZE) / h ** tilt;
   const peak = table.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
-  const n = Math.round((t1 + release - t0) * SR), hold = t1 - t0;
+  const hold = (t1 - t0) * TEMPO, n = Math.round((hold + release) * SR);
   for (const [cents, pan] of voices) {
     const inc = f * 2 ** (cents / 1200) * SIZE / SR, lfo = 0.06 + 0.08 * rand(), lfoPhase = rand() * 2 * Math.PI;
     const out = new Float32Array(n);
@@ -234,19 +240,28 @@ function sustain(target, t0, t1, f, {attack, release, gain, voices = [[-6, -0.45
   }
 }
 
-/* ── 和声：光束扫过的一刻换和弦，D 大调 I–vi–IV–I⁶–ii–IV–vi–IV–V–I ── */
+/* ── 和声：光束扫过的一刻换和弦，D 大调，中段在 ii–iii–IV–V 之间推进，片尾回到主和弦 ── */
 const CHORDS = [
-  {at: 0, bass: 'D2', pad: ['D3', 'A3', 'E4', 'F#4'], arp: ['D5', 'E5', 'F#5', 'A5']},           // 开场 D add9
-  {at: HIT[0], bass: 'B1', pad: ['D3', 'F#3', 'A3', 'C#4'], arp: ['B4', 'D5', 'F#5', 'C#6']},     // 01 Bm9
-  {at: HIT[1], bass: 'G1', pad: ['D3', 'G3', 'B3', 'F#4'], arp: ['G4', 'B4', 'D5', 'F#5']},       // 02 Gmaj7
-  {at: HIT[2], bass: 'F#2', pad: ['D3', 'A3', 'D4', 'E4'], arp: ['F#4', 'A4', 'D5', 'E5']},       // 03 D/F#
-  {at: HIT[3], bass: 'E2', pad: ['D3', 'G3', 'B3', 'F#4'], arp: ['E4', 'G4', 'B4', 'F#5']},       // 04 Em9
-  {at: HIT[4], bass: 'G1', pad: ['D3', 'B3', 'E4', 'A4'], arp: ['G4', 'B4', 'E5', 'A5']},         // 05 G6/9
-  {at: HIT[5], bass: 'B1', pad: ['D3', 'F#3', 'A3', 'E4'], arp: ['B4', 'D5', 'E5', 'F#5']},       // 06 Bm11
-  {at: HIT[5] + 2, bass: 'G1', pad: ['D3', 'G3', 'B3', 'F#4'], arp: ['G4', 'B4', 'D5', 'F#5']},   // 06 第二套主题之后：Gmaj7
-  {at: HIT[6], bass: 'A1', pad: ['D3', 'E3', 'A3', 'B3'], arp: ['A4', 'B4', 'D5', 'E5']},         // 07 Asus4 add9
-  {at: S[7] + 1.75, bass: 'A1', pad: ['C#3', 'E3', 'A3', 'B3'], arp: ['A4', 'B4', 'C#5', 'E5']},  // 07 三步出现：A add9
-  {at: HIT[7], bass: 'D2', pad: ['D3', 'A3', 'C#4', 'E4', 'F#4'], arp: null},                     // 片尾 Dmaj9，回到主和弦
+  {at: 0, bass: 'D2', pad: ['D3', 'A3', 'E4', 'F#4'], arp: ['D5', 'E5', 'F#5', 'A5']},              // 开场 D add9
+  {at: HIT[0], bass: 'B1', pad: ['D3', 'F#3', 'A3', 'C#4'], arp: ['B4', 'D5', 'F#5', 'C#6']},        // 01 Bm9
+  {at: HIT[1], bass: 'G1', pad: ['D3', 'G3', 'B3', 'F#4'], arp: ['G4', 'B4', 'D5', 'F#5']},          // 02 Gmaj7
+  {at: HIT[2], bass: 'E2', pad: ['D3', 'G3', 'B3', 'F#4'], arp: ['E4', 'G4', 'B4', 'F#5']},          // 03 Em9，陪伴角色这一场放轻
+  {at: S[3] + 2.75, bass: 'F#2', pad: ['E3', 'A3', 'C#4', 'F#4'], arp: ['F#4', 'A4', 'C#5', 'E5']},  // 03 切到 MEMORY.md：F#m7
+  {at: HIT[3], bass: 'F#2', pad: ['D3', 'A3', 'D4', 'E4'], arp: ['F#4', 'A4', 'D5', 'E5']},          // 04 D/F#
+  {at: HIT[4], bass: 'G1', pad: ['D3', 'B3', 'E4', 'A4'], arp: ['G4', 'B4', 'E5', 'A5']},            // 05 G6/9
+  {at: S[5] + 2.75, bass: 'A1', pad: ['C#3', 'E3', 'A3', 'B3'], arp: ['A4', 'B4', 'C#5', 'E5']},     // 05 第二次更新计划：A add9，往前推
+  {at: HIT[5], bass: 'B1', pad: ['D3', 'F#3', 'A3', 'E4'], arp: ['B4', 'D5', 'E5', 'F#5']},          // 06 Bm11
+  {at: HIT[6], bass: 'G1', pad: ['D3', 'G3', 'B3', 'F#4'], arp: ['G4', 'B4', 'D5', 'F#5']},          // 07 Gmaj7
+  {at: S[7] + 3.25, bass: 'A1', pad: ['D3', 'E3', 'A3', 'B3'], arp: ['A4', 'B4', 'D5', 'E5']},       // 07 面板收起、桌面歌词：Asus4 add9
+  {at: HIT[7], bass: 'F#2', pad: ['E3', 'A3', 'C#4', 'F#4'], arp: ['F#4', 'A4', 'C#5', 'E5']},       // 08 F#m7，听歌这一场换个更柔的颜色
+  {at: S[8] + 3.75, bass: 'B1', pad: ['D3', 'F#3', 'A3', 'C#4'], arp: ['B4', 'D5', 'F#5', 'C#6']},   // 08 切到 Partita：Bm9
+  {at: HIT[8], bass: 'E2', pad: ['D3', 'G3', 'B3', 'E4'], arp: ['E4', 'G4', 'B4', 'D5']},            // 09 Em7
+  {at: HIT[9], bass: 'G1', pad: ['D3', 'B3', 'E4', 'A4'], arp: ['G4', 'B4', 'E5', 'A5']},            // 10 G6/9
+  {at: HIT[10], bass: 'B1', pad: ['D3', 'F#3', 'A3', 'E4'], arp: ['B4', 'D5', 'E5', 'F#5']},         // 11 Bm11
+  {at: HIT[10] + 2, bass: 'G1', pad: ['D3', 'G3', 'B3', 'F#4'], arp: ['G4', 'B4', 'D5', 'F#5']},     // 11 第二套主题之后：Gmaj7
+  {at: HIT[11], bass: 'A1', pad: ['D3', 'E3', 'A3', 'B3'], arp: ['A4', 'B4', 'D5', 'E5']},           // 12 Asus4 add9
+  {at: S[12] + 1.75, bass: 'A1', pad: ['C#3', 'E3', 'A3', 'B3'], arp: ['A4', 'B4', 'C#5', 'E5']},    // 12 三步出现：A add9
+  {at: END, bass: 'D2', pad: ['D3', 'A3', 'C#4', 'E4', 'F#4'], arp: null},                          // 片尾 Dmaj9，回到主和弦
 ];
 assert.ok(CHORDS.slice(1).every(chord => on8th(chord.at)));
 const chordAt = t => CHORDS.findLast(chord => chord.at <= t + 1e-9);
@@ -257,21 +272,21 @@ for (const [k, chord] of CHORDS.entries()) {
   sustain(stems.bass, t0, t1, hz(chord.bass), {attack: k ? 0.15 : 2.6, release: 1.2, gain: 0.1, voices: [[0, 0]], tilt: 2.4, maxHarmonic: 4, verb: 0.12});
 }
 // 铺底的“天色”：开场由暗转亮，越往后越亮一点，片尾收暗。
-const padCutoff = ramp([[0, 260], [3.6, 1700], [HIT[0], 2000], [HIT[6], 2500], [HIT[7] + 1.2, 2900], [DURATION - 1.6, 2200], [DURATION, 700]]);
-for (const b of [stems.pad.dry, stems.pad.verb]) for (let ch = 0; ch < 2; ch++) b[ch] = svf(b[ch], i => padCutoff(i / SR) * (1 + 0.1 * Math.sin(2 * Math.PI * i / SR / 9)), 0.75, 'lp');
+const padCutoff = ramp([[0, 260], [3.6, 1700], [HIT[0], 2000], [HIT[11], 2500], [END + 1.2, 2900], [DURATION - 1.4, 2200], [DURATION, 700]]);
+for (const b of [stems.pad.dry, stems.pad.verb]) for (let ch = 0; ch < 2; ch++) b[ch] = svf(b[ch], i => padCutoff(i / SR / TEMPO) * (1 + 0.1 * Math.sin(2 * Math.PI * i / SR / 9)), 0.75, 'lp');
 
-/* ── 节奏：01 起底鼓走半拍子（1、3 拍），03 起改为每拍一下 + 2、4 拍的刷子；片尾前一秒抽掉 ── */
-for (let t = HIT[0]; t < HIT[7] - 1 - 1e-9; t += BEAT) {
+/* ── 节奏：01 起底鼓走半拍子（1、3 拍），04 起改为每拍一下 + 2、4 拍的刷子；片尾前两拍抽掉 ── */
+for (let t = HIT[0]; t < END - 1 - 1e-9; t += BEAT) {
   const strong = Math.abs((t - HIT[0]) - Math.round(t - HIT[0])) < 1e-9;
   if (strong) kick(t, 1);
-  else if (t > HIT[2]) { kick(t, 0.5); brush(t, 0.85 + 0.3 * rand(), 0.2); }
+  else if (t > HIT[3]) { kick(t, 0.5); brush(t, 0.85 + 0.3 * rand(), 0.2); }
 }
 // 琶音：八分音符，从开场的最后一小节淡入；片尾前一小节变成十六分，推进片尾。
 const ARP_STEPS = [0, 1, 2, 3, 2, 1, 2, 3];
-const arpBright = ramp([[2.25, 1300], [HIT[0], 2200], [HIT[4], 3000], [HIT[7], 3400]]);
-const arpLevel = ramp([[2.25, 0.2], [HIT[0] - 0.05, 0.75], [HIT[0], 0.85], [HIT[7] - 2, 0.95], [HIT[7], 0.8]]);
-for (let k = 0, t = 2.25; t < HIT[7] - 1e-9; k++) {
-  const sixteenth = t >= HIT[7] - 2 - 1e-9, chord = chordAt(t);
+const arpBright = ramp([[2.25, 1300], [HIT[0], 2200], [HIT[7], 3000], [END, 3400]]);
+const arpLevel = ramp([[2.25, 0.2], [HIT[0] - 0.05, 0.75], [HIT[0], 0.85], [END - 2, 0.95], [END, 0.8]]);
+for (let k = 0, t = 2.25; t < END - 1e-9; k++) {
+  const sixteenth = t >= END - 2 - 1e-9, chord = chordAt(t);
   const onBeat = Math.abs((t - 0.25) / BEAT - Math.round((t - 0.25) / BEAT)) < 1e-9;
   pluck(t, chord.arp[ARP_STEPS[k % 8]], arpLevel(t) * (onBeat ? 1 : sixteenth ? 0.55 : 0.72) * (0.92 + 0.16 * rand()), k % 2 ? 0.28 : -0.28, arpBright(t));
   t += sixteenth ? BEAT / 4 : BEAT / 2;
@@ -280,7 +295,7 @@ for (let k = 0, t = 2.25; t < HIT[7] - 1e-9; k++) {
 function duck(target, depth) {
   const g = new Float32Array(N).fill(1);
   for (const [t, vel] of kicks) {
-    const i0 = Math.round(t * SR);
+    const i0 = Math.round(t * TEMPO * SR);
     for (let k = 0; k < 0.6 * SR && i0 + k < N; k++) {
       const s = k / SR;
       g[i0 + k] = Math.min(g[i0 + k], 1 - depth * vel * Math.min(1, s / 0.01) * Math.exp(-s / 0.16));
@@ -307,8 +322,9 @@ whoosh(stems.sfx, 3.25, 1.05, {f0: 250, f1: 1700, q: 0.8, peak: 0.95, curve: 2, 
 // 每次换场：光束从左扫到右，气流声的声像跟着光束走，最亮处落在拍点上
 for (const t of HIT) whoosh(stems.sfx, t - 0.3, 0.65, {f0: 450, f1: 1900, q: 0.8, peak: 0.46, curve: 1.6, gain: 0.32, pan: [-0.8, 0.8], width: 0.4});
 
-// 各场景标题（主标题 + 英文副标题）落在换场那一拍和后半拍，逐场向上走
-const TITLE = [['F#4', 'C#5'], ['G4', 'D5'], ['A4', 'E5'], ['B4', 'F#5'], ['D5', 'A5'], ['E5', 'B5'], ['E5', 'A5']];
+// 各场景标题（主标题 + 英文副标题）落在换场那一拍和后半拍，大致逐场向上走
+const TITLE = [['F#4', 'C#5'], ['G4', 'D5'], ['B4', 'F#5'], ['A4', 'E5'], ['B4', 'E5'], ['B4', 'F#5'], ['D5', 'F#5'], ['C#5', 'A5'], ['D5', 'B5'], ['D5', 'A5'], ['E5', 'B5'], ['E5', 'A5']];
+assert.equal(TITLE.length, HIT.length - 1);
 TITLE.forEach(([zh, en], i) => { keys(HIT[i], zh, 0.36, -0.35); keys(HIT[i] + 0.25, en, 0.26, -0.2); });
 
 // 01 是什么：三枚标签
@@ -318,47 +334,92 @@ TITLE.forEach(([zh, en], i) => { keys(HIT[i], zh, 0.36, -0.35); keys(HIT[i] + 0.
 [346, 755, 1165, 1574].forEach((x, i) => keys(S[2] + 1 + i * 0.25, ['G4', 'B4', 'D5', 'F#5'][i], 0.36, (x - 960) / 1200));
 bell(S[2] + 2.25, 'D5', 0.25);
 
-// 03 能力：Skill / Workflow / MCP 三行依次挂载
-[0.75, 1, 1.25].forEach((d, i) => { drop(S[3] + d, {pan: -0.5}); keys(S[3] + d, ['D5', 'E5', 'A5'][i], 0.3, -0.45); });
-
-// 04 不止聊天：三张局部截图依次上浮
-[[0.5, 'E5', -0.47], [0.75, 'G5', 0], [1, 'B5', 0.47]].forEach(([d, note, pan]) => {
-  whoosh(stems.sfx, S[4] + d - 0.12, 0.4, {f0: 1200, f1: 450, q: 0.8, peak: 0.3, gain: 0.22, pan: [pan, pan], width: 0.3});
-  keys(S[4] + d, note, 0.3, pan);
+// 03 陪伴角色：四份文件的标签依次浮上；每次切到下一份文件（隔一个二分音符），一口短气 + 一声电钢，声像在右边的截图上
+['E5', 'G5', 'B5', 'D6'].forEach((note, i) => pip(S[3] + 0.95 + i * 0.08, note, 0.36, -0.66 + i * 0.12));
+[[1.75, 'B4'], [2.75, 'C#5'], [3.75, 'E5']].forEach(([d, note], i) => {
+  whoosh(stems.sfx, S[3] + d - 0.18, 0.3, {f0: 800, f1: 1600, q: 1, peak: 0.8, curve: 1.5, gain: 0.13, pan: [0.15, 0.45], width: 0.5});
+  keys(S[3] + d, note, 0.34 + 0.04 * i, 0.35);
 });
 
-// 05 用量：金线扫出曲线。按 soft 缓动反算金线经过每个音的时刻，D 大调五声音阶向上，声像跟着金线走
+// 04 能力：Skill / Workflow / MCP 三行依次挂载
+[0.75, 1, 1.25].forEach((d, i) => { drop(S[4] + d, {pan: -0.5}); keys(S[4] + d, ['D5', 'E5', 'A5'][i], 0.3, -0.45); });
+
+// 05 执行进度：录屏里的运行事件本来就踩在拍点上（同 Story.tsx 的 TRACE_EVENTS）。计划更新一声软钟，派出子 Agent 一声挂载，
+// 调用工具一声轻的提示音，拿到回执两声；声像在右边的卡片上
+const TRACE = [[0.75, 'plan', 'D5'], [1.25, 'sub', 'B4'], [1.75, 'call', 'D6'], [2.25, 'result', 'E5'], [2.75, 'plan', 'E5'],
+  [3.25, 'sub', 'C#5'], [3.75, 'result', 'A5'], [4.25, 'plan', 'A5'], [4.75, 'result', 'C#6']];
+['D5', 'G5', 'B5'].forEach((note, i) => pip(S[5] + 0.95 + i * 0.08, note, 0.34, -0.66 + i * 0.12));
+for (const [d, kind, note] of TRACE) {
+  const t = S[5] + d;
+  if (kind === 'plan') bell(t, note, 0.34, 0.3);
+  else if (kind === 'sub') { drop(t, {pan: 0.35, gain: 0.9}); keys(t, note, 0.28, 0.3); }
+  else if (kind === 'call') pip(t, note, 0.32, 0.4);
+  else { pip(t, note, 0.42, 0.25); pip(t + 0.125, hz(note) < hz('B5') ? 'B5' : 'E6', 0.32, 0.45); }
+}
+
+// 06 不止聊天：三张局部截图依次上浮
+[[0.5, 'E5', -0.47], [0.75, 'G5', 0], [1, 'B5', 0.47]].forEach(([d, note, pan]) => {
+  whoosh(stems.sfx, S[6] + d - 0.12, 0.4, {f0: 1200, f1: 450, q: 0.8, peak: 0.3, gain: 0.22, pan: [pan, pan], width: 0.3});
+  keys(S[6] + d, note, 0.3, pan);
+});
+
+// 07 悬浮助手：小球弹出一声，变忙时一声软钟（随着那圈金光），悬停展开一口往上的气 + 两声提示音，收起一口往下的气，
+// 桌面歌词滑出时两声软钟；声像在右下角的小球上（同 Story.tsx 的 ORB_AT）
+const ORB = {in: 0.75, busy: 1.25, open: 1.75, close: 3.25, lyric: 3.5};
+['G5', 'B5', 'D6'].forEach((note, i) => pip(S[7] + 0.95 + i * 0.08, note, 0.32, -0.66 + i * 0.12));
+keys(S[7] + ORB.in, 'D5', 0.3, 0.6); pip(S[7] + ORB.in, 'G5', 0.3, 0.65);
+bell(S[7] + ORB.busy, 'D5', 0.36, 0.6);
+whoosh(stems.sfx, S[7] + ORB.open - 0.1, 0.45, {f0: 500, f1: 1600, q: 1, peak: 0.35, gain: 0.2, pan: [0.65, 0.35], width: 0.4});
+pip(S[7] + ORB.open, 'F#5', 0.4, 0.45); pip(S[7] + ORB.open + 0.125, 'B5', 0.34, 0.4);
+whoosh(stems.sfx, S[7] + ORB.close - 0.05, 0.3, {f0: 1400, f1: 500, q: 0.9, peak: 0.3, gain: 0.15, pan: [0.4, 0.65], width: 0.3});
+bell(S[7] + ORB.lyric, 'E5', 0.34, 0.4); bell(S[7] + ORB.lyric + 0.25, 'A5', 0.3, 0.3);
+
+// 08 音乐：四枚可视化标签依次浮上；每次切换可视化（隔一个二分音符）一口短气 + 一声软钟，切到 Partita 时和弦落到 Bm9；
+// 聊天页的「音乐陪伴」小窗浮上来时，两声提示音
+['F#5', 'A5', 'C#6', 'E6'].forEach((note, i) => pip(S[8] + 1 + i * 0.08, note, 0.4, -0.66 + i * 0.12));
+[[1.75, 'C#5'], [2.75, 'E5'], [3.75, 'F#5']].forEach(([d, note], i) => {
+  whoosh(stems.sfx, S[8] + d - 0.2, 0.3, {f0: 600, f1: 1700, q: 1, peak: 0.85, curve: 1.5, gain: 0.16, pan: [0.1, 0.45], width: 0.5});
+  bell(S[8] + d, note, 0.4 + 0.06 * i, 0.3);
+});
+whoosh(stems.sfx, S[8] + 4.1, 0.4, {f0: 1100, f1: 500, q: 0.8, peak: 0.3, gain: 0.18, pan: [-0.2, -0.2], width: 0.3});
+pip(S[8] + 4.25, 'B5', 0.5, -0.2); pip(S[8] + 4.375, 'F#5', 0.42, -0.15);
+
+// 09 空间：八张作品卡片一个八分音符落一张，Em7 琶音向上；声像跟着卡片所在的列
+const CARD_PAN = [-0.45, -0.28, -0.1, 0.07];
+['E4', 'G4', 'B4', 'D5', 'E5', 'G5', 'B5', 'D6'].forEach((note, i) => keys(S[9] + 0.75 + i * 0.25, note, 0.3 - 0.012 * i, CARD_PAN[i % 4]));
+
+// 10 用量：金线扫出曲线。按 soft 缓动反算金线经过每个音的时刻，D 大调五声音阶向上，声像跟着金线走
 const softEase = bezier(0.45, 0, 0.2, 1);
 const SHIMMER = ['D5', 'E5', 'F#5', 'A5', 'B5', 'D6'];
 SHIMMER.forEach((note, j) => {
   const x = j / (SHIMMER.length - 1);
-  bell(S[5] + 0.75 + 1.5 * softEase.timeAt(x), note, 0.3 + 0.1 * Math.sin(Math.PI * x), -0.68 + 1.36 * x);
+  bell(S[10] + 0.75 + 1.5 * softEase.timeAt(x), note, 0.3 + 0.1 * Math.sin(Math.PI * x), -0.68 + 1.36 * x);
 });
-whoosh(stems.sfx, S[5] + 0.75, 1.6, {f0: 500, f1: 1700, q: 1, peak: 0.7, gain: 0.16, pan: [-0.65, 0.65]});
+whoosh(stems.sfx, S[10] + 0.75, 1.6, {f0: 500, f1: 1700, q: 1, peak: 0.7, gain: 0.16, pan: [-0.65, 0.65]});
 
-// 06 外观：三次主题划过（附点四分音符的切分），金线过中线时落一声软钟
+// 11 外观：三次主题划过（附点四分音符的切分），金线过中线时落一声软钟
 [[1.25, 'D5'], [2, 'F#5'], [2.75, 'A5']].forEach(([d, note]) => {
-  whoosh(stems.sfx, S[6] + d - 0.22, 0.48, {f0: 600, f1: 1800, q: 1, peak: 0.45, gain: 0.26, pan: [0, 0.85]});
-  bell(S[6] + d, note, 0.42, 0.45);
+  whoosh(stems.sfx, S[11] + d - 0.22, 0.48, {f0: 600, f1: 1800, q: 1, peak: 0.45, gain: 0.26, pan: [0, 0.85]});
+  bell(S[11] + d, note, 0.42, 0.45);
 });
 
-// 07 上手：Prompt 打字落在十六分音符上（声像随行从左到右），然后三步依次出现
-for (let t = S[7] + 0.625; t < S[7] + 2.35; t += BEAT / 4) {
+// 12 上手：Prompt 打字落在十六分音符上（声像随行从左到右），然后三步依次出现
+for (let t = S[12] + 0.625; t < S[12] + 2.35; t += BEAT / 4) {
   if (rand() < 0.15) continue;
-  const u = (t - S[7] - 0.55) / 1.8;
+  const u = (t - S[12] - 0.55) / 1.8;
   tap(t + 0.006 * rand(), {gain: 0.5 + 0.5 * rand(), pan: -0.5 + ((u * 2.3) % 1), tone: 1400 + 600 * rand()});
 }
-[[1.75, 'C#5', -0.49], [2, 'E5', 0], [2.25, 'A5', 0.5]].forEach(([d, note, pan]) => keys(S[7] + d, note, 0.34, pan));
+[[1.75, 'C#5', -0.49], [2, 'E5', 0], [2.25, 'A5', 0.5]].forEach(([d, note, pan]) => keys(S[12] + d, note, 0.34, pan));
 
-// 片尾：前一秒鼓抽掉、琶音变密，一口长气推进来；光束扫过的一刻落主和弦，灯再亮，字标再写一次，仓库地址一声软钟
-whoosh(stems.sfx, HIT[7] - 1, 1.1, {f0: 250, f1: 2000, q: 0.8, peak: 0.92, curve: 2.2, gain: 0.34, width: 1});
-thump(HIT[7]); bell(HIT[7], 'A4', 0.6, -0.15); bell(HIT[7] + 0.01, 'D5', 0.5, 0.15);
-ocean(HIT[7], DURATION, {gain: 0.26, fadeIn: 1.5, fadeOut: 0.1});
-whoosh(stems.ambience, S[8] + 0.1, 1.3, {f0: 280, f1: 1000, q: 0.8, peak: 0.6, gain: 0.26, pan: [-0.7, 0.7], width: 0.6});
+// 片尾：前两拍鼓抽掉、琶音变密，一口长气推进来；光束扫过的一刻落主和弦，灯再亮，字标再写一次，仓库地址一声软钟
+whoosh(stems.sfx, END - 1, 1.1, {f0: 250, f1: 2000, q: 0.8, peak: 0.92, curve: 2.2, gain: 0.34, width: 1});
+thump(END); bell(END, 'A4', 0.6, -0.15); bell(END + 0.01, 'D5', 0.5, 0.15);
+ocean(END, DURATION, {gain: 0.26, fadeIn: 1.25, fadeOut: 0.1});
+whoosh(stems.ambience, S[13] + 0.1, 1.3, {f0: 280, f1: 1000, q: 0.8, peak: 0.6, gain: 0.26, pan: [-0.7, 0.7], width: 0.6});
 const endReveal = t => beamReveal(keyframes(t, [0.1, 1.2, 5], [-70, 60, 72], SWING), 160, 512); // 同 StoryEnd
-['D5', 'F#5', 'A5', 'D6'].forEach((note, i) => keys(S[8] + timeWhen(endReveal, 0.1, 1.2, 0.1 + i * 0.27), note, 0.36 - i * 0.03, -0.35 + i * 0.23));
-keys(S[8] + 1, 'F#4', 0.28, -0.1); keys(S[8] + 1, 'A4', 0.24, 0.1);
-bell(S[8] + 1.5, 'D6', 0.36); bell(S[8] + 1.52, 'A5', 0.24, 0.1);
+['D5', 'F#5', 'A5', 'D6'].forEach((note, i) => keys(S[13] + timeWhen(endReveal, 0.1, 1.2, 0.1 + i * 0.27), note, 0.36 - i * 0.03, -0.35 + i * 0.23));
+keys(S[13] + 1, 'F#4', 0.28, -0.1); keys(S[13] + 1, 'A4', 0.24, 0.1);
+bell(S[13] + 1.5, 'D6', 0.36); bell(S[13] + 1.52, 'A5', 0.24, 0.1);
 
 /* ── 效果与母带 ───────────────────────────────────────────────── */
 // Freeverb（Schroeder–Moorer 结构）：8 路梳状 + 4 路全通，左右声道错开 23 个采样。
@@ -390,8 +451,8 @@ function freeverb([inL, inR], {room = 0.86, damp = 0.45, predelay = 0.02} = {}) 
   return out;
 }
 
-// 左右交替的回声（附点八分音符），回授路径里带一点低通。
-function pingPong([inL, inR], {time = [0.375, 0.375], feedback = 0.35, tone = 2200} = {}) {
+// 左右交替的回声（附点八分音符，100 BPM 下 0.45 秒），回授路径里带一点低通。
+function pingPong([inL, inR], {time = [0.375 * TEMPO, 0.375 * TEMPO], feedback = 0.35, tone = 2200} = {}) {
   const dl = Math.round(time[0] * SR), dr = Math.round(time[1] * SR), a = Math.exp(-2 * Math.PI * tone / SR), [yL, yR] = bus();
   let lpL = 0, lpR = 0;
   for (let i = 0; i < N; i++) {
@@ -461,7 +522,7 @@ function writeWav(file, [L, R]) {
 
 const rendered = Object.fromEntries(Object.entries(stems).map(([name, s]) => [name, render(s)]));
 const master = bus();
-const fadeOut = i => 1 - smooth((i / SR - (DURATION - 1.6)) / 1.6);
+const fadeOut = i => 1 - smooth((i / SR / TEMPO - (DURATION - 1.4)) / 1.4);
 for (const out of Object.values(rendered)) for (let ch = 0; ch < 2; ch++) {
   out[ch] = svf(out[ch], 28, 0.707, 'hp');
   for (let i = 0; i < N; i++) { out[ch][i] *= fadeOut(i); master[ch][i] += out[ch][i]; }
@@ -471,7 +532,7 @@ for (let ch = 0; ch < 2; ch++) { const hi = svf(master[ch], 5500, 0.707, 'hp'); 
 const before = loudness(master), gain = 10 ** ((TARGET_LUFS - before) / 20);
 for (const out of [master, ...Object.values(rendered)]) for (const x of out) for (let i = 0; i < N; i++) x[i] *= gain;
 const minGain = limit(master, CEILING);
-const report = {seconds: DURATION, sampleRate: SR, lufs: Number(loudness(master).toFixed(2)), limiterMaxReductionDb: Number((20 * Math.log10(minGain)).toFixed(2))};
+const report = {seconds: Number((DURATION * TEMPO).toFixed(3)), sampleRate: SR, lufs: Number(loudness(master).toFixed(2)), limiterMaxReductionDb: Number((20 * Math.log10(minGain)).toFixed(2))};
 
 const stemsDir = arg('--stems');
 if (stemsDir) {
