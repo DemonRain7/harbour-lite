@@ -12,7 +12,7 @@ export const RemotionRoot = () => <>
     <Composition id="AgentHandoff" component={HandoffScene} durationInFrames={195} fps={30} width={1920} height={1080} />
     <Composition id="Closing" component={ClosingScene} durationInFrames={150} fps={30} width={1920} height={1080} />
   </Folder>
-  {/* 双语长版介绍片（放映室主题），约 58 秒，剪辑踩 100 BPM；短版 HarbourIntro 保持不变。 */}
+  {/* 双语长版介绍片（放映室主题），78 秒，剪辑踩 100 BPM；短版 HarbourIntro 保持不变。 */}
   <Composition id="HarbourStory" component={HarbourStory} durationInFrames={storyDurationInFrames(30)} fps={30} width={1920} height={1080} />
   <Folder name="StoryScenes">
     {STORY_SCENES.map(({seconds, component}, i) => (
