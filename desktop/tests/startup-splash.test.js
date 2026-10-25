@@ -201,7 +201,7 @@ test("Dashboard loads concurrently but never reveals an HTTP/offline page before
       closeGuard: { quitting: mode === "quitting", register() {} },
       cfg: { token: "fixture", url: "http://localhost:7788", petEnabled: false },
       APP_ICON_PATH: "", PET_CATALOG: {}, path, __dirname: "/fixture", encodeURIComponent,
-      initCompanionRuntime() {}, startRemoteCompanionBridge() {}, removeWindowMenu() {}, conversationLink: {},
+      initCompanionRuntime() {}, startRemoteCompanionBridge() {}, removeWindowMenu() {}, conversationLink: {}, openDashboardLink: () => ({ action: 'deny' }),
       BrowserWindow: class extends EventEmitter {
         constructor(config) { super(); options = config; win = this; this.visible = config.show;
           this.webContents = Object.assign(new EventEmitter(), { setWindowOpenHandler() {} }); }

@@ -52,7 +52,7 @@ function fixture() {
   f.chat.running = true; await f.ctx.setChatModel("provider/big"); assert.equal(f.calls.length, 3);
   f.chat.inspection = { id: "A" }; f.ctx.updateChatContextRing();
   assert.match(f.controls["#chatCtx"].innerHTML, /模型 32K/, "preview uses the viewed session's window");
-  assert.match(source("executeChat"), /state\.chat\.modelSaving/);
+  assert.match(source("executeChat"), /chat\.modelSaving/);
   const restored = fixture();
   restored.controls['#chatModel'].options = [];
   restored.controls['#chatModel'].insertAdjacentHTML = (_position, html) => { restored.controls['#chatModel'].innerHTML = html; };

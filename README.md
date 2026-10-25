@@ -1,20 +1,27 @@
 # Harbour
 
-[![Harbour 介绍片：点击观看](docs/media/harbour-story-poster.png)](docs/media/harbour-story.mp4)
+**给自己的 AI 一个工作台。** 接入你的模型与 Agent，在同一套桌面界面里聊天、查看任务进度、管理工具与资料。
 
-▶ **[观看介绍片](docs/media/harbour-story.mp4)**（78 秒 · 1080p · 有声，中英双语） · [关键帧](docs/media/harbour-story-contact-sheet.png) · [制作记录](demo/STORY-NOTES.md)
+Harbour Lite 是 Harbour 的公开框架版：保留原来的 **Electron / Web 界面、主题、聊天布局和开屏动画**，不附带原用户的账号、记忆、私人角色或能力包。
 
-可自行配置角色、模型与工具的本地 Agent 工作台。
+[![Harbour 介绍片预览，点击打开播放器](docs/media/harbour-story-poster.png)](https://demonrain7.github.io/harbour-lite/)
 
-这个公开分支保留原 Harbour 的 **Electron 界面、Web 面板、主题、聊天布局和开屏动画**，只剥离个人数据与私人能力包，不是另一个精简客户端。
+[▶ 在线观看介绍片](https://demonrain7.github.io/harbour-lite/) · [下载 MP4](https://demonrain7.github.io/harbour-lite/media/harbour-story.mp4) · [制作说明与源码](demo/STORY-NOTES.md)
 
-> 当前处于脱敏验收阶段，尚未把本次恢复推送到公开仓库。离线预览不会调用付费模型。
+78 秒 · 1080p · 有声 · 中英双语。播放器在独立展示页打开，不需要登录；点击播放才会出声。视频包含公开界面与演示任务，不代表所有外部服务已经接通。
 
-![恢复后的原版聊天界面](docs/media/original-main-chat.png)
+## 你可以用它做什么
+
+- **聊天与任务**：多会话、独立窗口、附件、执行进度和可恢复的任务记录。
+- **自己的助手**：自行配置 Agent 的规则、模型、权限，以及 Skill / Workflow / MCP。
+- **自己的外观**：切换主题，更换聊天立绘、头像和开屏角色；展示图片与 Agent 人设分开。
+- **按需连接**：模型、语音、音乐、日历等由你选择和配置，没有预装私人账号。
+
+![Harbour 聊天界面](docs/media/original-main-chat.png)
 
 ## 让你的 Agent 帮你装好
 
-不用自己研究一堆配置。**复制下面这一行，发给有本地文件和终端能力的编码 Agent**（例如 Codex、Claude Code）。它会先阅读仓库里的交接说明，保留原界面、启动演示，再帮你接入自己的模型和助手。
+**复制下面这一行，发给有本地文件和终端能力的编码 Agent**，例如 Codex 或 Claude Code。它会按仓库交接说明安装现有外壳，先运行演示，再协助配置你的模型与助手。
 
 ```text
 请帮我部署 Harbour 外壳：https://github.com/DemonRain7/harbour-lite 。先读取仓库的 AGENTS.md、README.md 和 docs/AGENT-SETUP.md，按交接说明在独立目录安装，保留原 Electron/Web 界面与开屏动画，不重写 UI、不覆盖我已有的 Harbour 或配置；先验证演示模式，再让我选择自己的模型和 Agent，密钥只在本机配置，不能发进聊天或提交 Git。交接文件不存在时请停止并说明版本不匹配，不要按旧版猜着安装。
@@ -22,38 +29,42 @@
 
 [查看完整的 Agent 交接 Prompt →](docs/AGENT-SETUP.md) · [自行安装 ↓](#启动)
 
-这是交给 Agent 的任务说明，不是需要粘贴到终端执行的命令。普通网页聊天若没有本地工具，只能指导你操作，不能替你安装。当前恢复版尚未推送；上面加入了版本检查，远端旧版不会被误当成当前版本安装。本地验收时把仓库地址替换为当前副本路径即可。
-
-## 30 秒短版
-
-[![Harbour 介绍视频](docs/media/intro-harbour-poster.png)](docs/media/intro-harbour.mp4)
-
-这版由隔离的 **Harbour 运行实例调用 GPT-6 Astra（Max）并加载 Remotion Skill** 制作，包含真实公开版界面截图与 Agent 安装交接入口。30 秒 / 1080p / 静音；视频不是产品功能验收或云服务接通证明。[下载 MP4](docs/media/intro-harbour.mp4) · [六张关键帧](docs/media/intro-harbour-contact-sheet.png) · [制作记录、源码与复现](demo/VIDEO-NOTES.md)
+这是给 Agent 的任务说明，**不是终端命令**。没有本地工具的网页聊天只能指导操作，不能替你安装。
 
 ## 启动
 
-建议 Node.js 24+；仅核心 Web / Electron 的最低要求为 Node.js 22.12。音乐子项目 Folia 及完整公开版回归需要 Node.js 24+。先在独立目录取得本仓库，再执行：
+推荐 **Node.js 24+、Git**。仅核心 Web / Electron 最低为 Node.js 22.12；Folia 音乐子项目与完整回归需要 Node.js 24+。
+
+以下为 Windows PowerShell 命令，请在新的独立目录安装：
 
 ```powershell
+git clone https://github.com/DemonRain7/harbour-lite.git
+cd harbour-lite
 npm ci
 if (!(Test-Path .env)) { Copy-Item .env.example .env }
 npm run serve
 ```
 
-浏览器打开 `http://127.0.0.1:7799/`。初始 `MOCK_LLM=true` 只显示明确标注的演示回答，不是假装接通真实模型。
+打开 **http://127.0.0.1:7799/**。默认 `MOCK_LLM=true`，回答会明确标为演示，不调用付费模型。其他平台的安装与依赖说明见 [Agent 交接文档](docs/AGENT-SETUP.md)。
 
-桌面端另装依赖：
+需要桌面窗口时，另开一个终端，在仓库目录运行：
 
 ```powershell
 npm --prefix desktop ci
 npm run desktop
 ```
 
-公开版使用独立的数据目录、应用标识和端口；不自动迁移旧 Harbour 的数据。
+公开版使用独立端口、数据目录和桌面应用标识，不自动迁移旧 Harbour 的数据。当前以源码启动为准，历史 Lite 安装包不代表此版本。
 
 ## 配置自己的助手
 
-在 `agents/<名称>/CLAUDE.md` 写 frontmatter 与角色规则，或从 Agent 页面编辑。默认只有无私人设定的 `main-assistant`。模型、语音、日历、Skill / Workflow / MCP 的配置界面仍使用原实现，由用户自行连接。
+| 想改什么 | 在哪里改 |
+| --- | --- |
+| 模型与连接 | 设置页；真实密钥仅保存在本机 `.env`。配置完成后关闭演示模式 |
+| Agent 的规则和权限 | Agent 页面，或 `agents/<名称>/CLAUDE.md`；默认只有通用 `main-assistant` |
+| 技能、工作流与 MCP | 对应管理页与挂载索引；自行安装，不默认附送私人能力包 |
+| 聊天外观 | 原界面的「聊天外观」：更换头像、立绘与背景 |
+| 开屏角色 | 复制 `desktop/startup.config.example.json` 为 `desktop/startup.config.json` |
 
 密钥只保存在本机 `.env`；聊天、上传、运行记录与模型配置不入 Git。公开服务需要认证及安全的反向代理，不应裸露管理端口。
 
@@ -70,10 +81,23 @@ npm run desktop
 - 保留通用代码、主题样式、字体与图标；模型、音乐和本机下载的资源不随仓库附送。
 - 保留的角色装饰图只用于展示；不代表附带角色人设、音色或 Live2D 模型授权。
 
-本次恢复中的代码与素材仍需完成发布清单及第三方授权检查，暂不把旧 Lite 版的发布包当作本版安装包。
+“本机工作台”不等于“完全离线”：连接云模型或第三方服务后，相应请求会发送给你选择的服务商。框架许可证不覆盖第三方素材；Folia、字体、图标、Remotion 与角色素材须分别遵守各自条款。详见 [公开版清单](docs/PUBLIC-EXPORT.md)。
 
-## 本地检查
+<details>
+<summary>开发与验证</summary>
 
-`npm run audit:public` 检查导出路径、常见凭据特征与装饰图片元数据；它不能替代人工隐私和授权审核。
+```powershell
+npm --prefix vendor/folia ci
+npm run audit:public
+npm run test:public
+npm run test:chat-sessions-ui
+npm run test:desktop-refresh
+```
 
-`npm run test:public` 运行类型检查、独立数据目录、开屏自定义、未读状态和聊天工具栏回归。界面测试依赖 Folia 开发依赖中的 jsdom，请先执行 `npm --prefix vendor/folia ci`（该子项目要求 Node.js 24+）。启动演示后端后，可运行 `npm run test:public-ui`，用隐藏的独立 Electron 窗口检查原界面，不调用真实模型。
+`audit:public` 检查导出路径、常见凭据特征与图片元数据，不能替代人工隐私或授权审核。`test:public` 包含类型、隔离配置、开屏、聊天和文档回归；两个桌面测试使用隐藏窗口和模拟服务，不调用真实模型。
+
+启动演示后端后，可用 `npm run test:public-ui` 检查完整界面。介绍页与视频可运行 `npm run test:showcase` 验证。
+
+[本轮同步范围](docs/SYNC-NOTES.md) · [Agent 安装交接](docs/AGENT-SETUP.md) · [介绍片制作说明](demo/STORY-NOTES.md)
+
+</details>

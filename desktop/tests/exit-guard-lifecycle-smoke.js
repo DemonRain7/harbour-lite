@@ -10,7 +10,7 @@ const path = require("node:path");
 const { createServer } = require("node:http");
 const { createCloseGuard } = require("../companion/close-guard");
 
-app.setPath("userData", fs.mkdtempSync(path.join(os.tmpdir(), "harbour-exit-guard-")));
+app.setPath("userData", fs.mkdtempSync(path.join(process.env.HARBOUR_CHAT_TEST_ROOT || os.tmpdir(), "harbour-exit-guard-")));
 app.disableHardwareAcceleration();
 app.commandLine.appendSwitch("disable-background-networking");
 app.on("window-all-closed", () => {});

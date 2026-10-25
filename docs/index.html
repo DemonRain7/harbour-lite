@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Harbour：给自己的 AI 一个工作台。观看介绍，接入自己的模型、Agent 与工具。">
+  <meta name="color-scheme" content="light">
+  <title>Harbour · 产品介绍</title>
+  <link rel="stylesheet" href="showcase.css">
+  <script src="showcase.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="wordmark" href="#main" aria-label="Harbour 首页">Harbour<span>✧</span></a>
+    <a class="repo-link" href="https://github.com/DemonRain7/harbour-lite">GitHub 仓库 <span aria-hidden="true">↗</span></a>
+  </header>
+  <main id="main">
+    <section class="intro" aria-labelledby="title">
+      <p class="eyebrow">YOUR AGENTS, YOUR SPACE</p>
+      <h1 id="title">给自己的 AI，<br class="mobile-break">一个工作台。</h1>
+      <p class="lede">保留熟悉的桌面外壳，把模型、角色与工具交给你来选择。</p>
+    </section>
+    <section class="film" aria-label="Harbour 介绍视频">
+      <div class="player-frame">
+        <video id="film" controls playsinline preload="metadata" poster="media/harbour-story-poster.png" aria-label="Harbour 介绍片，中英双语画面文案，配乐无旁白">
+          <source src="media/harbour-story.mp4" type="video/mp4">
+          你的浏览器不支持视频播放。请使用下方的下载入口。
+        </video>
+        <button id="play-film" class="play-overlay" type="button" aria-label="播放介绍片"><span aria-hidden="true">▶</span><span>播放介绍片</span></button>
+      </div>
+      <div class="film-caption">
+        <div><strong>Meet Harbour</strong><span>78 秒 / 1080p / 中英双语</span></div>
+        <a href="media/harbour-story.mp4" download="harbour-introduction.mp4">下载视频 <span aria-hidden="true">↓</span></a>
+      </div>
+      <p id="player-status" class="status" role="status" aria-live="polite">点击播放器中的播放按钮开始；不会自动播放声音。</p>
+      <div id="player-error" class="player-error" hidden>
+        <p>视频暂时没能加载。可以重试，或下载后用本地播放器观看。</p>
+        <button id="retry" type="button">重新加载</button>
+        <a href="https://github.com/DemonRain7/harbour-lite/raw/refs/heads/main/docs/media/harbour-story.mp4">GitHub 原始文件 ↗</a>
+      </div>
+    </section>
+    <section class="details" aria-label="产品概览">
+      <div><span class="number">01</span><h2>一个熟悉的外壳</h2><p>桌面与 Web、多会话和任务进度，沿用 Harbour 原界面，不用从零搭工作台。</p></div>
+      <div><span class="number">02</span><h2>接入自己的助手</h2><p>自行设置模型、Agent 规则和权限，按需添加技能与工具。演示模式可先体验界面。</p></div>
+      <div><span class="number">03</span><h2>留出你的风格</h2><p>切换主题、替换聊天立绘和开屏角色。显示素材、人设与私有数据彼此分开。</p></div>
+    </section>
+    <section class="setup" aria-labelledby="setup-title">
+      <div><p class="eyebrow">MAKE IT YOURS</p><h2 id="setup-title">让你的 Agent 帮你装好。</h2><p>复制安装说明，交给有本地终端与文件能力的编码 Agent。<br>先验证演示模式，再配置你的模型；不要把密钥发进聊天。</p></div>
+      <div class="setup-actions">
+        <button class="primary" id="copy-prompt" type="button">复制安装 Prompt <span aria-hidden="true">⧉</span></button>
+        <a href="https://github.com/DemonRain7/harbour-lite#启动">自己安装 →</a>
+        <span id="copy-status" role="status" aria-live="polite"></span>
+      </div>
+      <details id="prompt-details"><summary>查看完整 Prompt</summary><pre id="install-prompt">请帮我部署 Harbour 外壳：https://github.com/DemonRain7/harbour-lite 。先读取仓库的 AGENTS.md、README.md 和 docs/AGENT-SETUP.md，按交接说明在独立目录安装，保留原 Electron/Web 界面与开屏动画，不重写 UI、不覆盖我已有的 Harbour 或配置；先验证演示模式，再让我选择自己的模型和 Agent，密钥只在本机配置，不能发进聊天或提交 Git。交接文件不存在时请停止并说明版本不匹配，不要按旧版猜着安装。</pre></details>
+    </section>
+  </main>
+  <footer><span>Harbour Lite · 自己的 AI，自己的空间</span><p>影片含公开界面与模拟任务，不是全部服务已接通的证明。云模型、账号和素材授权由用户自行配置。</p><a href="https://github.com/DemonRain7/harbour-lite/blob/main/demo/STORY-NOTES.md">制作说明与源码 ↗</a></footer>
+</body>
+</html>

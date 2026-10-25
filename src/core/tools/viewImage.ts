@@ -52,6 +52,33 @@ async function imagePath(input: unknown, ctx: ToolContext, uploadDir: string): P
   return realFile;
 }
 
+/** Shared bounded, permission-checked read; callers still enforce their own grant/identity. */
+export async function readLocalImageBytes(input: string, ctx: ToolContext, uploadDir: string): Promise<{ file: string; bytes: Buffer }> {
+  ctx.signal?.throwIfAborted();
+  const file = await imagePath(input, ctx, uploadDir);
+  const before = await fs.stat(file);
+  if (!before.isFile() || !before.size || before.size > MAX_SOURCE_BYTES) throw new ImageInputError("图片必须是 1 字节至 20MB 的普通文件");
+  const handle = await fs.open(file, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
+  try {
+    const stat = await handle.stat();
+    if (!stat.isFile() || !stat.size || stat.size > MAX_SOURCE_BYTES || stat.dev !== before.dev || stat.ino !== before.ino) {
+      throw new ImageInputError("图片读取前已变化或不是有效普通文件");
+    }
+    const bytes = Buffer.alloc(stat.size + 1);
+    let offset = 0;
+    while (offset < bytes.length) {
+      ctx.signal?.throwIfAborted();
+      const read = await handle.read(bytes, offset, bytes.length - offset, offset);
+      if (!read.bytesRead) break;
+      offset += read.bytesRead;
+    }
+    const after = await handle.stat();
+    if (offset !== stat.size || after.size !== stat.size || after.mtimeMs !== stat.mtimeMs) throw new ImageInputError("图片在读取过程中变化，请重新查看");
+    ctx.signal?.throwIfAborted();
+    return { file, bytes: bytes.subarray(0, offset) };
+  } finally { await handle.close(); }
+}
+
 /** Explicit one-image read. No filesystem search, model call, upload, or regeneration. */
 export function createViewImageTool(options: { uploadDir?: string } = {}): ToolDef {
   return {
@@ -71,29 +98,7 @@ export function createViewImageTool(options: { uploadDir?: string } = {}): ToolD
       checkTool(ctx.agent, "view_image", true);
       if (ctx.imageOutputSupported !== true) throw new ImageInputError("当前模型或后端不支持图像工具回传，未读取图片；请在当前会话选择支持视觉的模型后再查看，不能据文件名猜图");
       ctx.signal?.throwIfAborted();
-      const file = await imagePath(args.path, ctx, options.uploadDir ?? process.env.UPLOAD_DIR ?? "assets/uploads");
-      // Check before opening (FIFO/device files may block), then bind validation to the handle.
-      const before = await fs.stat(file);
-      if (!before.isFile() || !before.size || before.size > MAX_SOURCE_BYTES) throw new ImageInputError("图片必须是 1 字节至 20MB 的普通文件");
-      const handle = await fs.open(file, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
-      let bytes: Buffer;
-      try {
-        const stat = await handle.stat();
-        if (!stat.isFile() || !stat.size || stat.size > MAX_SOURCE_BYTES || stat.dev !== before.dev || stat.ino !== before.ino) {
-          throw new ImageInputError("图片读取前已变化或不是有效普通文件");
-        }
-        bytes = Buffer.alloc(stat.size + 1);
-        let offset = 0;
-        while (offset < bytes.length) {
-          ctx.signal?.throwIfAborted();
-          const read = await handle.read(bytes, offset, bytes.length - offset, offset);
-          if (!read.bytesRead) break;
-          offset += read.bytesRead;
-        }
-        const after = await handle.stat();
-        if (offset !== stat.size || after.size !== stat.size || after.mtimeMs !== stat.mtimeMs) throw new ImageInputError("图片在读取过程中变化，请重新查看");
-        bytes = bytes.subarray(0, offset);
-      } finally { await handle.close(); }
+      const { file, bytes } = await readLocalImageBytes(args.path as string, ctx, options.uploadDir ?? process.env.UPLOAD_DIR ?? "assets/uploads");
       const image = await validateAndNormalizeImage(bytes, { verifyPixels: true, staticImage: true });
       ctx.signal?.throwIfAborted();
       const budget = ctx.runState?.get("view_image:budget") as { count: number; bytes: number } | undefined;

@@ -1797,6 +1797,7 @@ async function route() {
   window.HarbourChatHero?.unmount();
   disposeChatUnread?.(); disposeChatUnread = null;
   disposeChatIntake?.(); disposeChatIntake = null;
+  disposeChatDrop?.(); disposeChatDrop = null;
   chatRunPicker?.destroy(); chatRunPicker = null;
   chatVoicePicker?.destroy(); chatVoicePicker = null;
   window.HarbourVoiceLibrary?.destroy();
@@ -1987,6 +1988,7 @@ let disposeCronPanel = null;
 let disposeChatMusic = null;
 let disposeChatUnread = null;
 let disposeChatIntake = null;
+let disposeChatDrop = null;
 let chatRunPicker = null;
 let chatVoicePicker = null;
 async function requestVoiceChoice(action, payload, signal) {
@@ -2268,7 +2270,7 @@ PANELS.chat = {
             <span class="chat-sessions-title">会话</span>
             <div class="chat-session-create-actions">
               <button class="btn ghost icon" id="chatNewWindow" type="button" title="在新窗口开始对话 · 可同时运行独立任务" aria-label="在新窗口开始对话"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h7v7m0-7-10 10M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg></button>
-              <button class="btn ghost icon" id="chatNewSession" title="新建会话 · 运行中会在新窗口打开">＋</button>
+              <button class="btn ghost icon" id="chatNewSession" title="新建会话" aria-label="在当前页面新建会话">＋</button>
             </div>
           </div>
           <div class="source-filter-host" id="chatSourceTabs" aria-label="会话来源筛选"></div>
@@ -2296,6 +2298,7 @@ PANELS.chat = {
             <button type="button" class="chat-scroll-bottom" id="chatScrollBottom" aria-label="回到聊天底部" title="回到聊天底部" aria-controls="chatStream" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15m-6-6 6 6 6-6"/></svg></button>
           </div>
           <div class="chat-compose">
+            <div class="chat-drop-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m-4 4 4-4 4 4M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg><span>松开以添加图片或文件</span></div>
             <div class="chat-inspection-bar" id="chatInspectionBar" hidden role="status" aria-live="polite"></div>
             <div class="chat-input-status" id="chatInputStatus" aria-live="polite" hidden></div>
             <div class="chat-resize-handle" id="chatResizeHandle" role="separator" tabindex="0" aria-orientation="horizontal" aria-controls="chatInput" aria-label="调整消息输入框高度" title="上下拖动调整高度；双击恢复默认（↑↓调整，Home恢复）"><span aria-hidden="true"></span></div>
@@ -2310,7 +2313,7 @@ PANELS.chat = {
               <textarea class="inp" id="chatInput" aria-label="消息" placeholder=""></textarea>
             </div>
             <div class="chat-toolbar">
-              <button class="btn ghost icon chat-compose-icon" id="chatAttach" type="button" aria-label="添加附件" title="添加图片 / 视频 / 语音 / 文件（也可 Ctrl+V 粘贴）">${chatComposerIcon("add")}</button>
+              <button class="btn ghost icon chat-compose-icon" id="chatAttach" type="button" aria-label="添加附件" title="添加图片 / 视频 / 语音 / 文件（支持拖入或 Ctrl+V 粘贴）">${chatComposerIcon("add")}</button>
               <select class="chat-tool" id="chatAgent" data-hs-icon="agent" data-hs-label="AGENT" data-hs-menu-title="选择 Agent" aria-label="选择 Agent" title="选择 Agent">${agentOptionsHtml(agents)}</select>
               <select class="chat-tool" id="chatSkill" data-hs-icon="skill" data-hs-label="SKILL" data-hs-menu-title="选择 Skill" aria-label="选择 Skill" title="选择 Skill"><option value="">自动选择技能</option></select>
               <select id="chatModel" data-run-picker-native hidden aria-hidden="true" tabindex="-1"><option value="">自动模型</option></select>
@@ -2383,7 +2386,7 @@ PANELS.chat = {
     disposeChatIntake = window.HarbourChatIntake?.mount({ api, session: () => state.chat.inspection ? null : state.chat.sessionId,
       localRunning: () => state.chat.running, reload: id => loadConversationMessages(id), toast,
       mediaUrl: withToken, canEdit: canEditQueuedMessage, restoreDraft: restoreQueuedMessage,
-      changed: busy => { state.chat.intakeRunning = busy; setChatSendMode(state.chat.running); syncChatControlLocks(); } });
+      changed: busy => { state.chat.intakeRunning = busy || Object.values(state.chat.channelRuns || {}).some(run => run.sessionId === state.chat.sessionId); setChatSendMode(state.chat.running); syncChatControlLocks(); } });
     let chatComposing = false;
     $("#chatInput").addEventListener("compositionstart", () => { chatComposing = true; });
     $("#chatInput").addEventListener("compositionend", () => { chatComposing = false; });
@@ -2396,6 +2399,14 @@ PANELS.chat = {
     $("#chatAttach").addEventListener("click", () => $("#chatFile").click());
     $("#chatFile").addEventListener("change", (e) => handleFilesPicked([...e.target.files]).then(() => { e.target.value = ""; }));
     document.querySelector(".chat-compose")?.addEventListener("paste", handleChatPaste);
+    disposeChatDrop = window.HarbourChatDrop?.mount({
+      composer: document.querySelector(".chat-compose"), input: $("#chatInput"), filesFromTransfer: chatClipboardFiles,
+      imageFromElement: target => {
+        const image = copyableChatImage(target);
+        return image ? { src: chatImageOriginalUrl(image), name: image.alt || "" } : null;
+      },
+      blockedReason: chatAttachmentBlockedReason, onFiles: handleFilesPicked, onImage: handleChatImageDrop, toast,
+    });
     $("#chatMic").addEventListener("click", toggleRecording);
     renderChatAttachments();
     syncChatControlLocks();
@@ -2776,7 +2787,7 @@ function syncChatControlLocks() {
   syncChatRunPicker();
 }
 
-// 浏览游标与执行会话分开：运行时仅 GET 其它会话，绝不替换 chat 的执行状态、草稿或 abort。
+// 通知的只读浏览游标与执行会话分开；普通侧栏切换另走独立运行状态的交接。
 function viewedChatSessionId() {
   return state.chat.inspection?.id || state.chat.sessionId;
 }
@@ -2893,7 +2904,7 @@ function chatDraftKey() {
 
 function saveChatDraft() {
   const drafts = state.chat.drafts ||= new Map();
-  drafts.set(chatDraftKey(), { text: $("#chatInput")?.value || "", attachments: (state.chat.attachments || []).slice(), skill: state.chat.skill, goalArmed: state.chat.goalArmed });
+  drafts.set(chatDraftKey(), { text: $("#chatInput")?.value || "", attachments: (state.chat.attachments || []).slice(), skill: state.chat.skill, goalArmed: state.chat.goalArmed, inputRequest: state.chat.inputRequest || null });
 }
 
 function restoreChatDraft() {
@@ -2904,6 +2915,7 @@ function restoreChatDraft() {
   state.chat.skill = draft?.skill || "";
   if ($("#chatSkill")) $("#chatSkill").value = state.chat.skill;
   state.chat.goalArmed = !!draft?.goalArmed && !isOpenChatGoal();
+  state.chat.inputRequest = draft?.inputRequest || null;
   renderChatAttachments();
   renderChatGoal();
 }
@@ -3459,6 +3471,7 @@ function applySessionDetail(session) {
   state.chat.goalArmed = false;
   state.chat.goalEditor = null;
   state.chat.cowork = coworkBindingForSession(session);
+  state.chat.intakeRunning = Object.values(state.chat.channelRuns || {}).some(run => run.sessionId === session.id);
   // Read-only channel mirrors still display their own configuration. Only
   // editing is locked; retaining the previous Web selection mislabels QQ/DC.
   // An unavailable/late catalog cannot turn a saved choice into "follow Agent".
@@ -3498,9 +3511,42 @@ async function loadConversationMessages(id) {
   } catch { /* ignore */ }
 }
 
+/** Leave only the view. The original executeChat closure keeps its own state and
+ * observation signal; channelRuns projects that same run when it is revisited. */
+function detachChatExecutionView() {
+  const chat = state.chat;
+  stopVisualTimer(chat.durationTicker);
+  if (chat.missingRunTimer) clearTimeout(chat.missingRunTimer);
+  chat.durationTicker = null;
+  chat.missingRunTimer = null;
+  if (chat.running && chat.activeRunId) {
+    const pending = chat.messages.findLast(message => message.pending && !message.externalEphemeral);
+    const run = {
+      id: chat.activeRunId, agent: chat.agent, sessionId: chat.sessionId,
+      sessionKey: chat.selectedSessionKey || chat.sessionKey, source: { platform: 'web' },
+      phase: chat.stopping ? 'stopping' : 'running', canStop: true, stopping: chat.stopping,
+      input: chat.messages.at(-2)?.content || '', attachments: chat.messages.at(-2)?.attachments || [],
+      trace: chat.trace, subagents: chat.subagents, startedAt: pending?.runStartedAt || Date.now(),
+      activity: pending?.activity || '任务正在后台执行…',
+    };
+    Object.defineProperty(run, 'localChat', { value: chat });
+    chat.backgroundRun = run;
+    (chat.channelRuns ||= {})[run.id] = run;
+  }
+  // A new object is the ownership boundary for all outstanding local callbacks.
+  // Shared catalogs, drafts and the run registry remain shared; execution and
+  // composer state do not. Never abort a task as a navigation side effect.
+  state.chat = { ...chat, running: false, stopping: false, intakeRunning: false,
+    activeRunId: '', abort: null, durationTicker: null, missingRunTimer: null, backgroundRun: null,
+    messages: [], trace: [], subagents: {}, plan: null, planDone: {}, checkpoint: null,
+    displayedReply: null, goal: null, goalArmed: false, goalEditor: null, goalActionPending: null,
+    goalReloadSessionId: null, inputSending: false, inputRequest: null, inspection: null };
+  if (state.runningSurface === 'chat') { state.runningAgent = null; state.runningSurface = null; }
+}
+
 async function newChatSession() {
-  if (state.chat.running || state.chat.intakeRunning) return openChatWindow();
   if (state.chat.modelSaving || state.chat.coworkSaving || state.chat.switchingMode || state.chat.switchingSession) return toast("当前配置已锁定；请先等待完成再新开会话。", true);
+  if (state.chat.inputSending) return toast("消息正在送达，请稍后新开会话；不会打开新窗口。", true);
   if (chatDraftBusy()) return toast("请等待附件上传或语音处理结束后再新开会话。", true);
   if (state.chat.inspection) closeChatInspection();
   const requestSeq = ++state.chat.detailRequestSeq;
@@ -3515,7 +3561,10 @@ async function newChatSession() {
       body: JSON.stringify({ key: requestedKey, channel: "web", agentName: requestedAgent }),
     });
     if (requestSeq !== state.chat.detailRequestSeq || currentSessionKey() !== requestedKey || state.chat.agent !== requestedAgent) return;
+    if (!session?.id || session.key !== requestedKey || session.agentName !== requestedAgent) throw new Error("新会话归属不匹配，未切换原会话");
+    detachChatExecutionView();
     state.chat.sessionId = session.id;
+    state.chat.sessions = [session, ...state.chat.sessions.filter(row => row.id !== session.id)];
     state.chat.sourceFilter = state.chat.mode === "cowork" ? "cowork" : "web";
     state.chat.landing = false;
     pinChatWindow();
@@ -3538,6 +3587,9 @@ async function newChatSession() {
     renderChatPlan();
     renderChatCheckpoint();
     renderChatGoal();
+    setChatSendMode(false);
+    renderSessionList();
+    window.HarbourChatIntake?.refresh?.();
     // 详情提交后原子释放切换锁；列表刷新不参与锁的生命周期。
     void refreshSessionList();
     toast("已开启新会话");
@@ -3553,7 +3605,7 @@ async function newChatSession() {
 
 async function switchChatSession(id, enter = false) {
   if (state.chat.deletingSessionId === id || state.chat.deletedSessionIds?.has(id)) return;
-  if (state.chat.coworkSaving || state.chat.switchingMode) return toast("配置正在保存，请稍后切换会话。", true);
+  if (state.chat.modelSaving || state.chat.coworkSaving || state.chat.switchingMode || state.chat.inputSending) return toast("配置或消息正在保存，请稍后切换会话。", true);
   if (!id) return;
   if (id === state.chat.sessionId) {
     if (state.chat.inspection) closeChatInspection();
@@ -3567,7 +3619,7 @@ async function switchChatSession(id, enter = false) {
     else if (window.HarbourChatUnread?.hasUnread(state.chat.sessions.find(s => s.id === id))) void loadConversationMessages(id);
     return;
   }
-  if (state.chat.running || (state.chat.inspection && !enter)) return inspectChatSession(id);
+  if (state.chat.inspection && !enter) return inspectChatSession(id);
   if (chatDraftBusy()) return toast("附件上传或语音处理尚未结束，请稍后切换；运行中仍可只读查看其它会话。", true);
   const requestSeq = ++state.chat.detailRequestSeq;
   state.chat.switchingSession = true;
@@ -3584,10 +3636,12 @@ async function switchChatSession(id, enter = false) {
       : await api(`/api/conversations/${encodeURIComponent(id)}`);
     if (requestSeq !== state.chat.detailRequestSeq || session.id !== id || state.chat.deletedSessionIds?.has(id)) return;
     if (session.agentName !== state.chat.agent || session.key !== summary.key) throw new Error("会话归属不匹配，已阻止切换");
-    state.chat.inspection = null;
+    detachChatExecutionView();
     state.chat.sessionId = session.id;
     applySessionDetail(session);
     restoreChatDraft();
+    state.chat.intakeRunning = Object.values(state.chat.channelRuns || {}).some(run => run.sessionId === session.id);
+    window.HarbourChatIntake?.refresh?.();
     void refreshSessionList();
     toast(summary.channel === "web" ? `已切到「${session.title}」` : `正在查看 ${sourceWhere(summary)} 的实时镜像`);
   } catch (e) {
@@ -5336,7 +5390,7 @@ function normalizeClipboardFile(file, index, stamp) {
   }
 }
 
-/** 从 ClipboardEvent 中提取文件；纯文字返回空数组，因此仍走浏览器原生粘贴。 */
+/** 从粘贴或拖拽的 DataTransfer 提取文件；纯文字仍走浏览器原生行为。 */
 function chatClipboardFiles(clipboardData, now = new Date()) {
   if (!clipboardData) return [];
   let files = [...(clipboardData.files || [])];
@@ -5356,9 +5410,8 @@ async function handleChatPaste(event) {
   const files = chatClipboardFiles(event.clipboardData);
   if (!files.length) return;
   event.preventDefault();
-  if (state.chat.readOnlyMirror) {
-    return toast("这是外部渠道的只读镜像；请切回 WEB 会话后粘贴附件。", true);
-  }
+  const blocked = chatAttachmentBlockedReason();
+  if (blocked) return toast(blocked, true);
   const composer = event.currentTarget;
   composer?.classList.add("is-paste-uploading");
   toast(`正在从剪贴板添加 ${files.length} 个附件…`);
@@ -5368,6 +5421,74 @@ async function handleChatPaste(event) {
   } finally {
     composer?.classList.remove("is-paste-uploading");
     $("#chatInput")?.focus();
+  }
+}
+
+function chatAttachmentBlockedReason() {
+  if (state.chat.readOnlyMirror) return "这是外部渠道的只读镜像；请切回 WEB 会话后添加附件。";
+  if (state.chat.inspection) return "正在只读浏览其它会话；请返回当前对话后添加附件。";
+  if (state.chat.switchingSession || state.chat.switchingMode || state.chat.inputSending || state.chat.inputRequest) return "会话正在切换或发送，请稍后添加附件。";
+  return "";
+}
+
+/** Browser image drags can contain only a URL, not File bytes. Fetch in the client
+ * (subject to CORS), then use the same upload/validation path as paste and pick. */
+async function handleChatImageDrop(image) {
+  const blocked = chatAttachmentBlockedReason();
+  if (blocked) return toast(blocked, true);
+  const source = new URL(image.src, location.href);
+  if (!/^https?:$/.test(source.protocol) && !/^data:image\//i.test(source.href)
+      && !(source.protocol === "blob:" && source.origin === location.origin)) throw new Error("此图片来源不支持拖入，请拖入图片文件。");
+  const local = source.origin === location.origin;
+  if (local && /^https?:$/.test(source.protocol) && !source.pathname.startsWith("/uploads/")) throw new Error("请拖入图片本身，而不是网页链接。");
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
+  const maxBytes = 25 * 1024 * 1024;
+  let readingImage = true;
+  state.chat.pendingUploads++;
+  renderChatAttachments();
+  try {
+    const response = await fetch(local && source.pathname.startsWith("/uploads/") ? withToken(source.pathname + source.search) : source.href,
+      { credentials: local ? "same-origin" : "omit", signal: controller.signal, referrerPolicy: "no-referrer", redirect: local ? "error" : "follow" });
+    if (!response.ok) throw new Error(`图片读取失败（HTTP ${response.status}）`);
+    const mime = (response.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+    if (!/^image\//i.test(mime)) throw new Error("拖入的内容不是图片，请拖入原始图片文件。");
+    if (Number(response.headers.get("content-length")) > maxBytes) throw new Error("图片超过 25MB，请缩小后再拖入。");
+    if (!response.body) throw new Error("图片内容为空，请拖入原始图片文件。");
+    const chunks = [], reader = response.body.getReader();
+    let size = 0;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > maxBytes) { controller.abort(); throw new Error("图片超过 25MB，请缩小后再拖入。"); }
+        chunks.push(value);
+      }
+    } finally { reader.releaseLock(); }
+    if (!size) throw new Error("图片内容为空，请拖入原始图片文件。");
+    clearTimeout(timeout);
+    const extension = clipboardFileExtension({ type: mime });
+    let basename = "";
+    if (/^https?:$/.test(source.protocol)) {
+      try { basename = decodeURIComponent(source.pathname.split("/").pop() || ""); } catch { /* use a neutral name */ }
+    }
+    const name = (basename || image.name || "dragged-image").replace(/[\\/:*?"<>|\u0000-\u001f]/g, "-").slice(0, 160);
+    const file = new File(chunks, /\.[a-z0-9]{2,5}$/i.test(name) ? name : `${name}.${extension}`, { type: mime });
+    // Transfer the pending slot to the shared uploader without an async gap or double count.
+    state.chat.pendingUploads = Math.max(0, state.chat.pendingUploads - 1);
+    readingImage = false;
+    const result = await handleFilesPicked([file]);
+    if (result.added) toast("图片已添加到输入框");
+  } catch (error) {
+    if (error.name === "AbortError") throw new Error("图片读取超时，请重试或拖入已下载的图片文件。");
+    if (error instanceof TypeError) throw new Error("无法直接读取此图片（网络或跨域限制），请先保存图片后拖入。");
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+    controller.abort();
+    if (readingImage) state.chat.pendingUploads = Math.max(0, state.chat.pendingUploads - 1);
+    renderChatAttachments();
   }
 }
 
@@ -5419,6 +5540,8 @@ async function queueWebTranscription(attachment) {
 
 async function handleFilesPicked(files) {
   if (!files.length) return { added: 0, failed: 0 };
+  const blocked = chatAttachmentBlockedReason();
+  if (blocked) { toast(blocked, true); return { added: 0, failed: files.length }; }
   let added = 0;
   let failed = 0;
   state.chat.pendingUploads += files.length;
@@ -5489,94 +5612,96 @@ function createClientRunId() {
 }
 
 async function executeChat(inputMode) {
+  const chat = state.chat;
+  const current = () => state.chat === chat;
   const requestedMode = inputMode === 'queue' || inputMode === 'steer' ? inputMode : undefined;
   if (window.HarbourChatIntake?.get()?.modeSaving) return toast("消息处理方式正在保存，请稍后发送。", true);
-  if (state.chat.inspection) return toast("正在只读浏览其它会话；请返回任务，或待本轮结束后点“在此对话”。", true);
-  if (state.chat.modelSaving || state.chat.coworkSaving || state.chat.switchingMode || state.chat.switchingSession) return toast("会话配置正在保存，请稍后发送。", true);
-  if (state.chat.mode === "cowork" && state.chat.sessionsEnabled === false) return toast("Cowork 需要开启会话记忆，以保存执行目标。", true);
-  if (state.chat.readOnlyMirror) return toast("这是外部渠道的只读镜像；请回到原应用回复，或新开 WEB 会话。", true);
-  if (state.chat.pendingUploads > 0) return toast("附件还在上传，请等它加入输入框后再发送。", true);
+  if (chat.inspection) return toast("正在只读浏览其它会话；请返回任务，或待本轮结束后点“在此对话”。", true);
+  if (chat.modelSaving || chat.coworkSaving || chat.switchingMode || chat.switchingSession) return toast("会话配置正在保存，请稍后发送。", true);
+  if (chat.mode === "cowork" && chat.sessionsEnabled === false) return toast("Cowork 需要开启会话记忆，以保存执行目标。", true);
+  if (chat.readOnlyMirror) return toast("这是外部渠道的只读镜像；请回到原应用回复，或新开 WEB 会话。", true);
+  if (chat.pendingUploads > 0) return toast("附件还在上传，请等它加入输入框后再发送。", true);
   const agent = $("#chatAgent")?.value || DEFAULT_PERSONA;
   const skill = $("#chatSkill")?.value || "";
-  const model = state.chat.model || "";
-  const reasoningEffort = state.chat.reasoningEffort || "";
-  const permissionMode = state.chat.permissionMode || "";
-  const submittedChat = { mode: state.chat.mode, agent, sessionsEnabled: state.chat.sessionsEnabled, sessionId: state.chat.sessionId, sessionKey: currentSessionKey(), selectedSessionKey: state.chat.selectedSessionKey, cowork: state.chat.cowork ? { ...state.chat.cowork } : null };
+  const model = chat.model || "";
+  const reasoningEffort = chat.reasoningEffort || "";
+  const permissionMode = chat.permissionMode || "";
+  const submittedChat = { mode: chat.mode, agent, sessionsEnabled: chat.sessionsEnabled, sessionId: chat.sessionId, sessionKey: currentSessionKey(), selectedSessionKey: chat.selectedSessionKey, cowork: chat.cowork ? { ...chat.cowork } : null };
   const originDeviceId = state.cowork.origin?.id || "";
   const inputEl = $("#chatInput");
   let startingGoal = null;
-  if (state.chat.goalArmed && !isOpenChatGoal()) {
+  if (chat.goalArmed && !isOpenChatGoal()) {
     try { startingGoal = readChatGoalConfig(); } catch (error) { return toast(error.message, true); }
   }
   const raw = inputEl.value.trim() || startingGoal?.objective || "";
-  const attachments = state.chat.attachments.slice();
+  const attachments = chat.attachments.slice();
   const transcribing = attachments.filter((a) => a.kind === "audio" && a._sttStatus === "transcribing");
   if (transcribing.length) return toast("语音还在转写；完成后可先检查或修改文字再发送", true);
   const failedSpeech = attachments.filter((a) => a.kind === "audio" && a._sttStatus === "failed");
   if (failedSpeech.length && !raw) return toast("语音转写失败；请重试或补充文字后再发送", true);
   if (!raw && !attachments.length) return toast("请先输入消息或添加附件", true);
-  if (state.chat.running && !state.chat.sessionId) return toast("当前任务正在启动，请稍后补充。", true);
+  if (chat.running && !chat.sessionId) return toast("当前任务正在启动，请稍后补充。", true);
   const goalCommand = globalThis.HarbourChatIntake?.goalCommand(raw);
   if (goalCommand) {
     if (goalCommand.action === 'show') { inputEl.value = ''; toggleChatGoal(); return; }
     if (goalCommand.action !== 'start') { inputEl.value = ''; await changeChatGoal(goalCommand.action); return; }
-    if (state.chat.running || state.chat.intakeRunning) return toast('请先停止当前运行，再创建新目标；补充任务直接发送即可。', true);
+    if (chat.running || chat.intakeRunning) return toast('请先停止当前运行，再创建新目标；补充任务直接发送即可。', true);
     if (isOpenChatGoal()) return toast('当前已有目标，请先完成或取消它。', true);
     startingGoal = { objective: goalCommand.objective, autoContinue: true };
   }
-  if ((state.chat.running || state.chat.intakeRunning || state.chat.inputRequest?.sessionId === state.chat.sessionId || /^\/(收集|发完|collect|send|steer|queue|pending|收件箱|stop|停止)(\s|$)/i.test(raw)) && state.chat.sessionId) {
-    const id = state.chat.sessionId;
-    if (state.chat.inputSending) return;
+  if ((chat.running || chat.intakeRunning || Object.values(chat.channelRuns || {}).some(run => run.sessionId === chat.sessionId) || chat.inputRequest?.sessionId === chat.sessionId || /^\/(收集|发完|collect|send|steer|queue|pending|收件箱|stop|停止)(\s|$)/i.test(raw)) && chat.sessionId) {
+    const id = chat.sessionId;
+    if (chat.inputSending) return;
     const attachmentKey = JSON.stringify(attachments);
-    const request = state.chat.inputRequest?.text === raw && state.chat.inputRequest.sessionId === id && state.chat.inputRequest.attachmentKey === attachmentKey
-      ? state.chat.inputRequest : { id: createClientRunId(), text: raw, sessionId: id, attachmentKey, mode: requestedMode || globalThis.HarbourChatIntake?.get()?.mode || 'steer' };
-    state.chat.inputRequest = request;
-    state.chat.inputSending = true;
+    const request = chat.inputRequest?.text === raw && chat.inputRequest.sessionId === id && chat.inputRequest.attachmentKey === attachmentKey
+      ? chat.inputRequest : { id: createClientRunId(), text: raw, sessionId: id, attachmentKey, mode: requestedMode || globalThis.HarbourChatIntake?.get()?.mode || 'steer' };
+    chat.inputRequest = request;
+    chat.inputSending = true;
     try {
       const receipt = await api(`/api/conversations/${encodeURIComponent(id)}/inputs`, { method: 'POST', body: JSON.stringify({
         input: raw, attachments, mode: request.mode, clientMessageId: request.id }) });
-      if (state.chat.sessionId !== id) return;
-      state.chat.inputRequest = null; if (inputEl.value.trim() === raw) inputEl.value = '';
-      state.chat.attachments = state.chat.attachments.filter(a => !attachments.includes(a)); renderChatAttachments();
-      state.chat.goalReloadSessionId = id;
+      if (!current() || chat.sessionId !== id) return;
+      chat.inputRequest = null; if (inputEl.value.trim() === raw) inputEl.value = '';
+      chat.attachments = chat.attachments.filter(a => !attachments.includes(a)); renderChatAttachments();
+      chat.goalReloadSessionId = id;
       toast(receipt.reply || (receipt.state === 'withdrawn' ? '这条消息已撤回，未再次发送。' : receipt.isolated ? `仅这条${receipt.mode === 'queue' ? '排队' : '引导当前'}；会话默认不变` : receipt.mode === 'queue' ? '已加入待处理队列' : '已提交引导，等待当前任务接收'));
     } catch (error) { toast(`未确认投递：${error.message}。原文已保留，再次发送会使用同一编号核对。`, true); }
-    finally { state.chat.inputSending = false; }
+    finally { chat.inputSending = false; }
     return;
   }
   const plainInput = goalCommand?.action === 'start' ? goalCommand.objective
     : globalThis.HarbourChatIntake?.oneShotText(raw, attachments.length > 0) ?? raw;
   const input = skill ? `[skill:${skill}]\n${plainInput}` : plainInput;
-  state.chat.landing = false;
-  ++state.chat.detailRequestSeq; // 开始执行后，先前的详情快照不能再覆盖本地 pending。
-  state.chat.agent = agent;
-  state.chat.skill = skill;
-  const checkpointWasInHistory = !!(state.chat.checkpoint?.id && state.chat.messages.some((message) =>
-    message.runRecord?.checkpointId === state.chat.checkpoint.id
+  chat.landing = false;
+  ++chat.detailRequestSeq; // 开始执行后，先前的详情快照不能再覆盖本地 pending。
+  chat.agent = agent;
+  chat.skill = skill;
+  const checkpointWasInHistory = !!(chat.checkpoint?.id && chat.messages.some((message) =>
+    message.runRecord?.checkpointId === chat.checkpoint.id
   ));
   const userMessage = { role: "user", content: raw, attachments, at: new Date().toISOString() };
-  state.chat.messages.push(userMessage);
-  const checkpointBeforeRun = state.chat.checkpoint;
+  chat.messages.push(userMessage);
+  const checkpointBeforeRun = chat.checkpoint;
   const clientRunId = createClientRunId();
   // 把「这条回复是谁说的」钉在消息上：气泡名字/头像都用它，而不是用当前选择器 ——
   // 否则中途换 agent，之前所有旧回复会被重新贴上新角色的名字和头像。
   const pending = { role: "assistant", content: "", pending: true, activity: "思考中…", agent, at: new Date().toISOString(), runStartedAt: Date.now() };
-  state.chat.messages.push(pending);
+  chat.messages.push(pending);
   inputEl.value = "";
-  state.chat.attachments = [];
+  chat.attachments = [];
   // 新一轮：清空 trace 缓冲 + 子 agent 深度表，置运行态。
-  state.chat.trace = [];
-  state.chat.subagents = {};
-  state.chat.activeRunId = clientRunId;
-  state.chat.stopping = false;
+  chat.trace = [];
+  chat.subagents = {};
+  chat.activeRunId = clientRunId;
+  chat.stopping = false;
   // 【不清 plan】计划是本会话已持久化的产物：跟着会话走，直到出现新计划或用户手动收起。
   // 若本轮又派了 orchestrator，plan:submitted 会自然覆盖它——不预先清空，避免「当场消失、
   // 刷新又冒出来」的不一致（对抗复查 L3）。
-  state.chat.running = true;
-  state.chat.goalArmed = false;
+  chat.running = true;
+  chat.goalArmed = false;
   if (startingGoal) {
     // 先给本地即时反馈；后端返回后会替换为真正 goal id/status，失败则重新载入会话快照。
-    state.chat.goal = { ...startingGoal, id: "pending", revision: 0, status: "active", usage: { roundsStarted: 0, roundsCompleted: 0, totalTokens: 0 } };
+    chat.goal = { ...startingGoal, id: "pending", revision: 0, status: "active", usage: { roundsStarted: 0, roundsCompleted: 0, totalTokens: 0 } };
   }
   syncChatControlLocks();
   renderChatCheckpoint();
@@ -5588,9 +5713,9 @@ async function executeChat(inputMode) {
   // Session-backed runs acknowledge immediately, then read the same run's status.
   // The control-plane STOP is separate from this local observation signal.
   const abort = new AbortController();
-  state.chat.abort = abort;
+  chat.abort = abort;
   setChatSendMode(true);
-  state.chat.durationTicker = visualPoll(() => updatePendingDuration(pending), 500);
+  chat.durationTicker = visualPoll(() => updatePendingDuration(pending), 500);
   let aborted = false;
   let completed = false;
   let reloadPersisted = false;
@@ -5603,25 +5728,31 @@ async function executeChat(inputMode) {
       });
       submittedChat.sessionId = session.id;
       submittedChat.selectedSessionKey = session.key;
-      state.chat.sessionId = session.id;
-      state.chat.selectedSessionKey = session.key;
-      pinChatWindow();
+      chat.sessionId = session.id;
+      chat.selectedSessionKey = session.key;
+      if (current()) pinChatWindow();
+      if (chat.backgroundRun) {
+        chat.backgroundRun.sessionId = session.id;
+        chat.backgroundRun.sessionKey = session.key;
+        void refreshSessionList();
+      }
       if (submittedChat.mode === "cowork") {
         await api(`/api/conversations/${encodeURIComponent(session.id)}`, { method: "PATCH", body: JSON.stringify({ cowork: submittedChat.cowork }) });
       }
     }
     const runContext = chatRunContext(submittedChat, originDeviceId);
-    if (state.chat.stopping) throw Object.assign(new Error("已停止"), { name: "AbortError" });
+    if (chat.stopping) throw Object.assign(new Error("已停止"), { name: "AbortError" });
     const sttPrepared = attachments
       .filter((a) => a.kind === "audio" && a._sttStatus === "done" && a._sttText)
       .map((a) => a.url);
     const res = await submitRecoverableChatRun({ runId: clientRunId, agent, input, ...runContext, ...(startingGoal ? { goal: startingGoal } : {}), ...(model ? { model } : {}), ...(reasoningEffort ? { reasoningEffort } : {}), ...(permissionMode ? { permissionMode } : {}), ...(attachments.length ? { attachments } : {}), ...(sttPrepared.length ? { sttPrepared } : {}) }, abort.signal, activity => {
       pending.activity = activity;
-      updatePendingActivity();
+      if (current()) updatePendingActivity();
+      else if (chat.backgroundRun) { chat.backgroundRun.activity = activity; updateChannelRunDom(chat.backgroundRun); }
     }, async (runId, sessionId) => {
       // STOP can race POST admission. A previous 404 is not proof of cancellation;
       // once the exact original run appears, deliver the still-pending stop intent.
-      if (state.chat.stopping && state.chat.activeRunId === runId) {
+      if (chat.stopping && chat.activeRunId === runId) {
         try { await api(`/api/runs/${encodeURIComponent(runId)}/abort`, { method: 'POST', body: JSON.stringify({ sessionId }), signal: AbortSignal.timeout(15_000) }); }
         catch (error) { if (error.status !== 404) throw error; } // settled between lookup and STOP
       }
@@ -5636,23 +5767,22 @@ async function executeChat(inputMode) {
     doneMsgCount = res.session?.messageCount ?? null;
     // 会话压缩提示：本轮触发了 compaction 就在流里插一条提示，并刷新下拉计数。
     if (res.session) {
-      state.chat.displayedReply = { id: submittedChat.sessionId, key: submittedChat.sessionKey,
+      chat.displayedReply = { id: submittedChat.sessionId, key: submittedChat.sessionKey,
         replyRevision: res.session.replyRevision, readReplyRevision: res.session.readReplyRevision };
-      window.HarbourChatUnread?.observe(state.chat.displayedReply);
+      window.HarbourChatUnread?.observe(chat.displayedReply);
       if (res.session.resumedFromCheckpoint) {
         // 后端历史会把原任务 + 本次续跑指令合并保存；本地也对齐，避免刷新前后气泡文字不同。
         if (checkpointBeforeRun?.originalInput && !checkpointWasInHistory) {
           userMessage.content = `${checkpointBeforeRun.originalInput}\n\n[中断后续跑指令] ${raw || "继续"}`;
         }
-        toast("已从 checkpoint 的首个未完成步骤恢复");
+        if (current()) toast("已从 checkpoint 的首个未完成步骤恢复");
       }
-      state.chat.checkpoint = res.session.checkpoint || null;
-      state.chat.goal = res.session.goal || null;
-      if (res.session.cowork && submittedChat.mode === "cowork") state.chat.cowork = coworkBindingForSession({ channel: "web", cowork: res.session.cowork });
-      renderChatCheckpoint();
-      renderChatGoal();
+      chat.checkpoint = res.session.checkpoint || null;
+      chat.goal = res.session.goal || null;
+      if (res.session.cowork && submittedChat.mode === "cowork") chat.cowork = coworkBindingForSession({ channel: "web", cowork: res.session.cowork });
+      if (current()) { renderChatCheckpoint(); renderChatGoal(); }
       if (res.session.compactedThisRun) {
-        state.chat.messages.push({
+        chat.messages.push({
           role: "notice",
           content: `🗜 上下文已压缩：早前对话被收拢成摘要以节省 token（本会话累计压缩 ${res.session.compactions} 次）。Harbour 仍记得要点。`,
         });
@@ -5671,7 +5801,7 @@ async function executeChat(inputMode) {
         : "⏹ 已停止 · 本轮输入、Trace 与 checkpoint 已保存。发送「继续」会从最后一个已完成工具步骤之后恢复。";
       pending.pending = false;
       const resumingSameTask = checkpointBeforeRun?.status === "interrupted" && /^(?:请)?(?:继续|接着|恢复|从断点继续|resume(?:\s|$)|continue(?:\s|$))/i.test(raw.trim());
-      state.chat.checkpoint = e?.data?.session?.checkpoint || {
+      chat.checkpoint = e?.data?.session?.checkpoint || {
         ...(checkpointBeforeRun || {}),
         status: "interrupted",
         originalInput: resumingSameTask ? checkpointBeforeRun.originalInput : input,
@@ -5679,46 +5809,49 @@ async function executeChat(inputMode) {
         replayable: checkpointBeforeRun?.replayable || 0,
         pending: checkpointBeforeRun?.pending || 0,
       };
-      if (e?.data?.session?.goal) state.chat.goal = e.data.session.goal;
-      renderChatCheckpoint();
-      renderChatGoal();
+      if (e?.data?.session?.goal) chat.goal = e.data.session.goal;
+      if (current()) { renderChatCheckpoint(); renderChatGoal(); }
       setTimeout(() => syncActiveCheckpoint(0, submittedChat.sessionId), 220);
     } else {
       reloadPersisted = true;
       pending.content = `⚠ ${e.message}`;
       pending.pending = false;
-      toast(e.message, true);
+      toast(current() ? e.message : `会话 ${submittedChat.sessionId || agent}：${e.message}`, true);
     }
   } finally {
-    stopVisualTimer(state.chat.durationTicker);
-    state.chat.durationTicker = null;
+    stopVisualTimer(chat.durationTicker);
+    chat.durationTicker = null;
     const endedAt = pending.runEndedAt || Date.now();
     pending.durationMs = Number.isFinite(serverDurationMs) ? serverDurationMs : Math.max(0, endedAt - pending.runStartedAt);
     delete pending.runStartedAt;
     delete pending.runEndedAt;
-    state.chat.abort = null;
-    state.chat.activeRunId = "";
-    state.chat.stopping = false;
-    state.runningAgent = null;
-    state.runningSurface = null;
-    state.chat.running = false;
-    // Another client may delete just before this request reaches the server.
-    // Let the request settle, then leave the now-invalid session instead of
-    // keeping a composer pointed at a deleted id.
-    if (state.chat.deletedSessionIds?.has(state.chat.sessionId)) applyDeletedChatSession(state.chat.sessionId);
-    syncChatControlLocks();
-    setChatSendMode(false);
-    renderChatCheckpoint();
-    renderChatGoal();
-    // 把本轮运行轨迹快照挂到这条回复上 → 渲染成默认折叠的「运行轨迹」details（可展开回看）。
-    pending.trace = state.chat.trace.slice();
-    renderChatMessages();
-    enrichNewsReports();   // 本轮回复若是 news 短状态，按 reportId 取回全文富渲染
+    chat.abort = null;
+    chat.activeRunId = "";
+    chat.stopping = false;
+    if (current()) { state.runningAgent = null; state.runningSurface = null; }
+    chat.running = false;
+    // Finish only the original run. Navigation must never clear another task's
+    // STOP handle, trace, draft, GOAL, or selected session.
+    pending.trace = chat.trace.slice();
+    if (chat.backgroundRun && chat.channelRuns[clientRunId] === chat.backgroundRun) {
+      delete chat.channelRuns[clientRunId];
+    }
+    if (current()) {
+      if (chat.deletedSessionIds?.has(chat.sessionId)) applyDeletedChatSession(chat.sessionId);
+      syncChatControlLocks();
+      setChatSendMode(false);
+      renderChatCheckpoint();
+      renderChatGoal();
+      renderChatMessages();
+      enrichNewsReports();
+    } else {
+      renderSessionList();
+    }
     // 成功轮由前端补展示态；停止/失败轮已由后端按 runId 原子落 input + trace + 耗时，
     // 不能再用“最后一条 assistant”去 annotate，否则多 tab 时可能挂错轮。
-    if (completed && !aborted && !reloadPersisted) persistChatAnnotations(pending.trace, doneMsgCount, submittedChat);
-    if ((reloadPersisted || state.chat.goalReloadSessionId === submittedChat.sessionId) && submittedChat.sessionId) {
-      state.chat.goalReloadSessionId = null;
+    if (completed && !aborted && !reloadPersisted) persistChatAnnotations(pending.trace, doneMsgCount, { ...submittedChat, plan: chat.plan });
+    if ((reloadPersisted || !current() || chat.goalReloadSessionId === submittedChat.sessionId) && submittedChat.sessionId) {
+      chat.goalReloadSessionId = null;
       await loadConversationMessages(submittedChat.sessionId);
     }
   }
@@ -5769,55 +5902,63 @@ async function submitRecoverableChatRun(body, signal, onWaiting, onRunning) {
 
 async function requestChatStop() {
   if (state.chat.inspection) return toast("请先返回原任务，再停止；不会停止当前浏览的其它会话。", true);
-  if ((!state.chat.running && !state.chat.intakeRunning) || state.chat.stopping) return;
-  if (!state.chat.running && state.chat.sessionId) {
-    try { await api(`/api/conversations/${encodeURIComponent(state.chat.sessionId)}/inputs`, { method: 'PATCH', body: '{"action":"stop"}' }); toast('已请求停止，待处理消息保留。'); }
-    catch (error) { toast(error.message, true); }
-    return;
-  }
-  state.chat.stopping = true;
-  const pending = state.chat.messages[state.chat.messages.length - 1];
-  if (pending?.pending && pending.runStartedAt) {
+  if (state.chat.running) return stopLocalChatRun(state.chat);
+  const run = Object.values(state.chat.channelRuns || {}).find(run => run.sessionId === state.chat.sessionId && run.canStop);
+  if (run) return stopChannelRun(run.id, run.sessionId);
+  if (!state.chat.intakeRunning || !state.chat.sessionId) return;
+  const id = state.chat.sessionId;
+  try { await api(`/api/conversations/${encodeURIComponent(id)}/inputs`, { method: 'PATCH', body: '{"action":"stop"}' }); toast('已请求停止，待处理消息保留。'); }
+  catch (error) { toast(error.message, true); }
+}
+
+/** Exact captured run, including STOP before POST admission and navigation while
+ * the STOP request is in flight. A failed acknowledgement is never cancellation. */
+async function stopLocalChatRun(chat) {
+  if (!chat.running || chat.stopping) return;
+  const current = () => state.chat === chat;
+  const runId = chat.activeRunId;
+  const pending = chat.messages.findLast(message => message.pending && !message.externalEphemeral);
+  const show = () => {
+    if (chat.backgroundRun) {
+      chat.backgroundRun.stopping = chat.stopping;
+      chat.backgroundRun.activity = pending?.activity || '';
+      if (chat.backgroundRun.sessionId === viewedChatSessionId()) renderSelectedChannelRuns();
+    }
+    if (!current()) return;
+    updatePendingActivity(); updatePendingDuration(pending); updatePendingTrace();
+    const btn = $('#chatStop');
+    if (btn) { btn.textContent = chat.stopping ? '正在停止…' : '停止'; btn.disabled = chat.stopping; }
+    setChatSendMode(chat.running);
+  };
+  chat.stopping = true;
+  if (pending?.runStartedAt) {
     pending.runEndedAt = Date.now();
     pending.activity = "正在停止并保存 Trace…";
-    updatePendingActivity();
-    updatePendingDuration(pending);
   }
-  stopVisualTimer(state.chat.durationTicker);
-  state.chat.durationTicker = null;
-  state.chat.trace.push({ cls: "fallback", tag: "STOP", text: "已请求停止；正在取消模型、子 Agent 与工具，并持久化中断轮次。", agent: state.runningAgent, depth: 0 });
-  updatePendingTrace();
-  const btn = $("#chatStop");
-  if (btn) { btn.textContent = "正在停止…"; btn.disabled = true; }
-
-  const runId = state.chat.activeRunId;
-  if (!runId) {
-    state.chat.abort?.abort(new Error("user stop"));
-    return;
-  }
+  stopVisualTimer(chat.durationTicker);
+  chat.durationTicker = null;
+  chat.trace.push({ cls: "fallback", tag: "STOP", text: "已请求停止；正在取消模型、子 Agent 与工具，并持久化中断轮次。", agent: chat.agent, depth: 0 });
+  show();
+  if (!runId) { chat.abort?.abort(new Error("user stop")); return; }
   try {
-    await api(`/api/runs/${encodeURIComponent(runId)}/abort`, { method: "POST", body: JSON.stringify({ sessionId: state.chat.sessionId }), signal: AbortSignal.timeout(15_000) });
+    await api(`/api/runs/${encodeURIComponent(runId)}/abort`, { method: "POST", body: JSON.stringify({ sessionId: chat.sessionId }), signal: AbortSignal.timeout(15_000) });
   } catch (error) {
-    // A 404 may be either before admission or after settlement. Keep the original
-    // session/run observation and stop intent; never infer that disconnect stops it.
+    if (!chat.running) return; // HTTP completion won the race.
     if (error?.status === 404) {
-      if (state.chat.sessionId) {
+      if (chat.sessionId) {
         if (pending?.pending) pending.activity = '正在核对原任务并停止…';
-        updatePendingActivity();
+        show();
       } else window.setTimeout(() => {
-        if (state.chat.running && state.chat.activeRunId === runId) state.chat.abort?.abort(new Error("user stop"));
+        if (chat.running && chat.activeRunId === runId) chat.abort?.abort(new Error("user stop"));
       }, 800);
     } else {
-      // A failed control request is not proof the backend stopped. Keep its handle
-      // so the user can retry STOP; never convert a local disconnect into success.
-      state.chat.stopping = false;
+      chat.stopping = false;
       if (pending?.pending) {
         delete pending.runEndedAt;
         pending.activity = '停止尚未确认 · 请重试停止';
-        state.chat.durationTicker = visualPoll(() => updatePendingDuration(pending), 500);
+        if (current()) chat.durationTicker = visualPoll(() => updatePendingDuration(pending), 500);
       }
-      if (btn) { btn.textContent = '停止'; btn.disabled = false; }
-      updatePendingActivity();
+      show();
       toast('停止请求未送达，任务可能仍在后端执行，请重试停止。', true);
     }
   }
@@ -5846,7 +5987,7 @@ function persistChatAnnotations(trace, expectMsgCount, submitted = state.chat) {
   if (!id) return;
   const payload = {};
   if (Array.isArray(trace) && trace.length) payload.trace = trace;
-  if (state.chat.plan) payload.plan = state.chat.plan;
+  if (submitted.plan) payload.plan = submitted.plan;
   if (typeof expectMsgCount === "number") payload.expectMsgCount = expectMsgCount; // 防 trace 挂错轮次
   if (!("trace" in payload) && !("plan" in payload)) return;
   api(`/api/conversations/annotate`, { method: "POST", body: JSON.stringify({ key: submitted.selectedSessionKey || submitted.sessionKey, id, ...payload }) }).catch(() => {});
@@ -8599,6 +8740,7 @@ async function stopChannelRun(runId, sessionId) {
   const run = state.chat.channelRuns[runId];
   // Never borrow the local Web abort handle or fall back to the selected agent/session.
   if (!run?.canStop || run.sessionId !== sessionId || run.sessionId !== viewedChatSessionId() || run.stopPending || run.stopping) return;
+  if (run.localChat?.running) return stopLocalChatRun(run.localChat);
   run.stopPending = true;
   renderSelectedChannelRuns();
   try {
@@ -8741,14 +8883,30 @@ function handleChannelActivity(obj) {
     if (Array.isArray(obj.attachments)) run.attachments = obj.attachments;
     run.task = obj.task || run.task;
     state.chat.channelRuns[runId] = run;
+    if (run.sessionId === state.chat.sessionId) {
+      state.chat.intakeRunning = true;
+      syncChatControlLocks(); setChatSendMode(state.chat.running);
+    }
     if (run.sessionId === viewedChatSessionId()) renderSelectedChannelRuns();
     return;
   }
 
   const run = state.chat.channelRuns[runId];
+  // A detached local observer still owns the final receipt. Keep its correlation
+  // through terminal WS / final trace ordering, just like the foreground run.
+  if (run?.localChat?.running) {
+    run.activity = '正在同步已保存结果…';
+    updateChannelRunDom(run);
+    return;
+  }
   const selected = !!run && run.sessionId === viewedChatSessionId();
   delete state.chat.channelRuns[runId];
   if (selected && run?.sessionId) {
+    if (run.sessionId === state.chat.sessionId && !state.chat.running) {
+      state.chat.intakeRunning = Object.values(state.chat.channelRuns || {}).some(item => item.sessionId === run.sessionId);
+      syncChatControlLocks(); setChatSendMode(false);
+      window.HarbourChatIntake?.refresh?.();
+    }
     if (state.chat.inspection) void inspectChatSession(run.sessionId, true);
     else if (!state.chat.running) void loadConversationMessages(run.sessionId);
     else renderSelectedChannelRuns();
@@ -8762,6 +8920,7 @@ function pushTraceEvent(obj) {
   const channelRun = obj.runId ? state.chat.channelRuns[String(obj.runId)] : null;
   if (channelRun) {
     if (obj.msg === "plan:submitted" && obj.plan) {
+      if (channelRun.localChat) channelRun.localChat.plan = obj.plan;
       if (channelRun.sessionId === state.chat.sessionId && !state.chat.running) {
         state.chat.plan = obj.plan;
         state.chat.planDone = {};
@@ -10676,6 +10835,9 @@ function reconcileActivitySnapshot(snapshot) {
   // 不在集合里的 incoming/running 卡必须删掉，否则它的 500ms UI ticker 会永远增长。
   for (const [runId, run] of Object.entries(state.chat.channelRuns || {})) {
     if (activeRunIds.has(runId)) continue;
+    // A snapshot can precede POST admission, or arrive before its final HTTP
+    // receipt. The exact local observer reconciles it; don't discard its STOP.
+    if (run?.localChat?.running) continue;
     if (run?.sessionId === viewedChatSessionId()) staleSelectedSessions.add(run.sessionId);
     delete state.chat.channelRuns[runId];
   }

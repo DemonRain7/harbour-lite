@@ -72,6 +72,9 @@ export function describeSource(source?: RunSource): string {
     case "cron":
       location = `定时任务（job：${id ?? "未知"}）`;
       break;
+    case "minecraft":
+      location = "Minecraft 车万女仆文本接口";
+      break;
     default:
       location = `${source.channel}${id ? `（${id}）` : ""}`;
       break;
@@ -100,6 +103,8 @@ function describeActor(actor?: ActorIdentity): string {
   if (actor.role === "owner" && actor.platform === "cron") return "主人授权的定时任务（可信委派；cron）";
   if (actor.role === "owner") return `主人本人（已验证；${actor.platform}）`;
   if (actor.role === "system") return `Harbour 自动任务（${actor.platform}）`;
+  // 游戏入口只验证了游戏专用密钥，分不出具体是哪位玩家；不能套「已验证某某」的说法。
+  if (actor.platform === "minecraft") return "Minecraft 玩家（经游戏专用密钥接入；入口分辨不出具体是谁，未验证为主人）";
   const name = (actor.displayName?.trim() || "未命名用户")
     .replace(/[\r\n\t「」\[\]]+/g, " ")
     .slice(0, 80);

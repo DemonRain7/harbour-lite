@@ -1,6 +1,6 @@
 /* Message delivery UX. No model selection, prompt injection or workflow logic here. */
 (function () {
-  let dispose, current;
+  let dispose, current, refresh;
   const labels = { collecting: '收集中', waiting: '等待处理', sending: '正在投递', accepted: '已送达当前运行', running: '处理中', paused: '已暂停', unknown: '待核对', completed: '已处理' };
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const icons = {
@@ -372,6 +372,13 @@
       } catch { /* Old/offline backend must not erase drafts or claim delivery. */ }
       finally { loading = false; if (!stopped && control.isConnected) { clearTimeout(timer); timer = setTimeout(sync, snapshot.busy ? 750 : 1800); } }
     }
+    refresh = () => {
+      if (stopped) return;
+      if (binding !== session()) {
+        current = undefined; clearStatus(); setMenu(false); binding = ''; stamp = ''; snapshot = {};
+      }
+      clearTimeout(timer); void sync();
+    };
     current = { mode, busy: false }; void sync();
     dispose = () => { if (stopped) return; stopped = true; clearTimeout(timer); setPopover(false); popover.remove(); setMenu(false); menu.remove();
       modeDetails.removeEventListener('toggle', toggleMenu);
@@ -380,10 +387,10 @@
       document.removeEventListener('pointerdown', dismissPopover); document.removeEventListener('keydown', dismissPopover);
       window.removeEventListener('resize', schedulePosition); document.removeEventListener('scroll', schedulePosition, true);
       window.visualViewport?.removeEventListener('resize', schedulePosition); window.visualViewport?.removeEventListener('scroll', schedulePosition);
-      document.removeEventListener('pointerdown', closeMenu); document.removeEventListener('focusin', closeMenu); document.removeEventListener('keydown', closeMenu); current = undefined; };
+      document.removeEventListener('pointerdown', closeMenu); document.removeEventListener('focusin', closeMenu); document.removeEventListener('keydown', closeMenu); current = undefined; refresh = undefined; };
     return dispose;
   }
-  window.HarbourChatIntake = { mount, get: () => current,
+  window.HarbourChatIntake = { mount, get: () => current, refresh: () => refresh?.(),
     queuedDraft,
     // First-message display helper only. Authority and all active-run routing stay server-side.
     oneShotText(text, hasAttachments = false) {

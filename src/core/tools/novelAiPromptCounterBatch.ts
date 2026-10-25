@@ -2,6 +2,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { spawnOpenCliHelper, OpenCliCommandTimeoutError } from "./openCliProcess";
 import { NovelAiPreparationBatchReceiptError } from "./novelAiPreparationProgress";
+import { novelAiCounterPreparationReasons, novelAiCounterPreparationSteps } from "./novelAiPromptBudgetPage";
 
 export interface NovelAiCounterBatchInput {
   entryPath: string;
@@ -27,6 +28,9 @@ export interface NovelAiCounterBatchReceipt {
 // routing and native hover. Frozen text/proof scripts stay on stdin, never argv.
 const HELPER = String.raw`
 let phase='input';
+let failure;
+const preparationSteps=${JSON.stringify(novelAiCounterPreparationSteps)};
+const preparationReasons=${JSON.stringify(novelAiCounterPreparationReasons)};
 const timings={};
 const measure=async(name,fn)=>{phase=name;const t=Date.now();try{return await fn()}finally{timings[name]=Date.now()-t}};
 const output=async(value,code)=>{await new Promise((resolve,reject)=>process.stdout.write(JSON.stringify(value)+'\n',error=>error?reject(error):resolve()));process.exit(code)};
@@ -58,7 +62,10 @@ try {
   };
   const hover=async(selector)=>{hovering=true;try{return await page.hover(selector)}finally{hovering=false}};
   const prepared=await measure('prepare',()=>page.evaluate(input.prepareScript));
-  if(prepared?.prepared!==true||prepared?.verification?.verified!==true)throw Error('invalid frozen preparation receipt');
+  if(prepared?.prepared!==true||prepared?.verification?.verified!==true){
+    if(preparationSteps.includes(prepared?.failure?.step)&&preparationReasons.includes(prepared?.failure?.reason))failure={step:prepared.failure.step,reason:prepared.failure.reason};
+    throw Error('invalid frozen preparation receipt');
+  }
   await measure('leave',()=>hover('[data-harbour-richtext-target="'+input.marker+'"]'));
   const cleared=await measure('clear',()=>page.evaluate(input.clearScript));
   if(cleared?.cleared!==true)throw Error('previous counter tooltip not confirmed cleared');
@@ -68,8 +75,8 @@ try {
   await output({version:1,prepared,cleared:true,counter,timings},0);
 } catch {
   // Third-party evaluation/transport errors can quote the submitted script.
-  // Return only the fixed stage, never arbitrary errors or private prompt text.
-  await output({version:1,error:{phase,code:'counter-audit-failed'},timings},1);
+  // Return only fixed stage/reason enums, never arbitrary errors or prompt text.
+  await output({version:1,error:{phase,code:'counter-audit-failed',...(failure?{failure}:{})},timings},1);
 }`;
 
 /** Call only after bridge readiness, inside the existing preparation deadline.
@@ -125,6 +132,11 @@ export async function runNovelAiPromptCounterBatch(input: NovelAiCounterBatchInp
         const error = new NovelAiPreparationBatchReceiptError();
         if (["input", "tabs", "prepare", "leave", "clear", "hover", "read"].includes(receipt?.error?.phase)) {
           error.message += ` phase=${receipt.error.phase}`;
+        }
+        const failure = receipt?.error?.failure;
+        if (receipt?.error?.phase === "prepare" && novelAiCounterPreparationSteps.includes(failure?.step) &&
+            novelAiCounterPreparationReasons.includes(failure?.reason)) {
+          error.message += `, step=${failure.step}, reason=${failure.reason}`;
         }
         finish(error); return;
       }

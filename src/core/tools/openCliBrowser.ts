@@ -14,7 +14,7 @@ import { supportsNovelAiPreciseReferences } from "../novelAiModelCapabilities";
 import { assessNovelAiPromptBudget, novelAiPromptBudgetOverflowReport, parseNovelAiPromptTokenCounter } from "../novelAiPromptBudget";
 import { novelAiPromptBudgetFailureKey } from "../novelAiPromptBudgetEvidence";
 import { novelAiAuthenticationFailureKey, novelAiAuthenticationIssue } from "../novelAiAuthentication";
-import { novelAiPromptAuditScript, novelAiPromptBudgetProofScript, novelAiPromptCounterClearScript, novelAiPromptCounterReadScript, novelAiPromptCounterTargetScript } from "./novelAiPromptBudgetPage";
+import { novelAiPromptAuditScript, novelAiPromptBudgetProofScript, novelAiPromptCounterClearScript, novelAiPromptCounterPreparationScript, novelAiPromptCounterReadScript, novelAiPromptCounterTargetScript } from "./novelAiPromptBudgetPage";
 import { assertNovelAiModelSelectionUsable, markNovelAiModelSelectionFailed, novelAiModelSelectionScript } from "./novelAiModelSelectionPage";
 import { assertNovelAiAvailableBalance } from "../workflows/novelAiAccountReservations";
 import {
@@ -1658,14 +1658,9 @@ async function fillScopedRichText(
   const { scopeText, tabText, text } = options;
   const nth = options.nth ?? 0;
   const marker = randomUUID();
-  const currentSfwCounterLayout = ctx.execution?.novelAiContentRating === "sfw";
-  const auditPrepare = `(async () => {
-    const prepared = await ${scopedRichTextPrepareScript(scopeText, tabText ?? "", nth, marker)};
-    const verification = ${scopedRichTextVerifyScript(scopeText, tabText ?? "", nth, marker, text, true)};
-    if (!verification.verified) throw new Error('Frozen prompt changed before token audit; not submitted');
-    ${novelAiPromptCounterTargetScript(marker, currentSfwCounterLayout)};
-    return {...prepared, verification};
-  })()`;
+  const auditPrepare = novelAiPromptCounterPreparationScript(
+    scopedRichTextPrepareScript(scopeText, tabText ?? "", nth, marker),
+    scopedRichTextVerifyScript(scopeText, tabText ?? "", nth, marker, text, true), marker);
   if (options.batchCounter && options.verifyOnly && options.readTokens && tab) {
     await ensureOpenCliBrowserBridge(cfg, ctx.logger, ctx.signal, ctx.runState);
     const { prepared, counter } = await preparationCommand(ctx, () => runNovelAiPromptCounterBatch({
@@ -1721,7 +1716,7 @@ async function fillScopedRichText(
   }
   let tokens: ReturnType<typeof parseNovelAiPromptTokenCounter> | undefined;
   if (options.readTokens) {
-    if (!options.verifyOnly) await runOpenCliBrowser(cfg, session, withTab(["eval", novelAiPromptCounterTargetScript(marker, currentSfwCounterLayout)], tab), ctx);
+    if (!options.verifyOnly) await runOpenCliBrowser(cfg, session, withTab(["eval", novelAiPromptCounterTargetScript(marker)], tab), ctx);
     // First leave the previous meter, then hover this field's unique meter.
     await runOpenCliBrowser(cfg, session, withTab(["hover", selector], tab), ctx);
     await runOpenCliBrowser(cfg, session, withTab(["eval", novelAiPromptCounterClearScript()], tab), ctx);

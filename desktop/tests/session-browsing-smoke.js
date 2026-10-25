@@ -426,7 +426,9 @@ async function runCase(testCase) {
       await click(win, "[data-hero-visible]"); await sleep(450);
       await click(win, ".chat-hero-picker > summary");
     }
-    await click(win, '[data-session-switch="B"]');
+    // Explicit notification inspection remains read-only; sidebar navigation is
+    // now independently covered by chat-sessions-smoke's same-page concurrency.
+    await evaluate(win, "inspectChatSession('B')");
     await waitFor(win, "state.chat.inspection?.session?.id==='B'", "B view");
     let current = await view(win);
     assert.equal(current.session, "A"); assert.equal(current.viewed, "B");
@@ -453,8 +455,8 @@ async function runCase(testCase) {
     await click(win, "[data-inspection-return]");
     current = await view(win); assert.equal(current.inspection, false); assert.match(current.stream, /LOCAL TRACE/); assert.equal(current.draft, "A UNSENT DRAFT");
 
-    // A live QQ view gets only its own stream and remains separate from the local run.
-    await click(win, '[data-session-switch="Q"]');
+    // A live QQ notification view gets only its own stream and stays read-only.
+    await evaluate(win, "inspectChatSession('Q')");
     await waitFor(win, "state.chat.inspection?.session?.id==='Q'", "QQ view");
     const qq = { __harbour: "channel-activity", phase: "running", runId: "qq-run", agent: agent.name, sessionId: "Q", sessionKey: "qq:fixture", input: "QQ LIVE QUESTION", startedAt: Date.now(), source: { platform: "qq" } };
     fixture.active.set(qq.runId, qq); fixture.emit(qq);
@@ -532,7 +534,7 @@ async function runCase(testCase) {
     assert.equal(await evaluate(win, "document.querySelector('#chatSend').disabled"), false, "running task still permits sending supplements");
     await click(win, "#chatStop");
     await waitFor(win, "state.chat.stopping", "stopping");
-    await click(win, '[data-session-switch="B"]');
+    await evaluate(win, "inspectChatSession('B')");
     await waitFor(win, "state.chat.inspection?.session?.id==='B'", "view during stop");
     fixture.finish("cancelled");
     await waitFor(win, "!state.chat.running", "cancelled background");

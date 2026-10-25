@@ -25,7 +25,8 @@ import { recordSuccessfulToolFileChanges } from "../fileChanges";
 import { deepSeekCacheSessionId } from "./deepseekCache";
 import { defaultClaudeSdkHome, pruneClaudeSdkTelemetry } from "./claudeSdkHome";
 import { claudeSdkContextOptions } from "./claudeSdkContext";
-import { claudeSdkEffortEnv } from "./claudeSdkEffort";
+import { claudeSdkEffortEnv, nativeClaudeEffort } from "./claudeSdkEffort";
+import { isNativeAnthropicEndpoint } from "../anthropicModels";
 import { classifySdkToolFailure, decodeSdkToolResult, sdkToolInputCorrection } from "./sdkToolResult";
 import type {
   createSdkMcpServer,
@@ -716,7 +717,11 @@ export class ClaudeAgentSdkBackend implements Backend {
     // 未指定则回退到 opts.thinking（.env 的 CLAUDE_AGENT_THINKING）默认。
     // 注：Kimi 会员端点默认自带思考，omit 该变量≈仍思考；档位「off」在 SDK 路径为「尽量少思考」
     //     的近似（真正 thinking:{type:"disabled"} 需 SDK 支持，暂未接线）。
-    if (thinkingBudget !== undefined) {
+    // Native Claude uses adaptive effort; compatibility endpoints retain token budgets.
+    delete env.MAX_THINKING_TOKENS;
+    if (isNativeAnthropicEndpoint(this.opts.baseURL)) {
+      if (thinkingBudget !== undefined) env.CLAUDE_CODE_EFFORT_LEVEL = nativeClaudeEffort(thinkingBudget);
+    } else if (thinkingBudget !== undefined) {
       if (thinkingBudget > 0) env.MAX_THINKING_TOKENS = String(thinkingBudget);
     } else if (this.opts.thinking) {
       env.MAX_THINKING_TOKENS = "2048";
@@ -751,7 +756,9 @@ function nativeSdkFingerprint(
     endpoint: connection.baseURL, apiKey: connection.apiKey, authToken: connection.authToken,
     configHome: env.CLAUDE_CONFIG_DIR ?? defaultClaudeSdkHome(),
     model, fallbackModel: connection.fallbackModel,
-    thinkingTokens: env.MAX_THINKING_TOKENS, contextPolicy: req.contextPolicy,
+    thinkingTokens: env.MAX_THINKING_TOKENS,
+    effortLevel: env.MAX_THINKING_TOKENS === undefined ? env.CLAUDE_CODE_EFFORT_LEVEL : undefined,
+    contextPolicy: req.contextPolicy,
     system: toSystemPrompt(req.messages), mode: req.permissionMode ?? "dontAsk",
     permissions: req.toolContext?.agent.governance?.permissions,
     tools: req.tools?.map((tool) => ({ name: tool.name, description: tool.description,

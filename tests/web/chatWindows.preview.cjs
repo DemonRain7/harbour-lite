@@ -10,7 +10,10 @@ const root = path.resolve(__dirname, '../..');
   try {
     const env = { ...process.env, HARBOUR_CHAT_TEST_ROOT: scratch }; delete env.ELECTRON_RUN_AS_NODE;
     await new Promise((resolve, reject) => {
-      const script = process.argv.includes('--browsing') ? 'session-browsing-smoke.js' : 'chat-windows-smoke.js';
+      const script = process.argv.includes('--exit-guard') ? 'exit-guard-lifecycle-smoke.js'
+        : process.argv.includes('--refresh') ? 'dashboard-refresh-smoke.js'
+        : process.argv.includes('--browsing') ? 'session-browsing-smoke.js'
+        : process.argv.includes('--sessions') ? 'chat-sessions-smoke.js' : 'chat-windows-smoke.js';
       const child = spawn(require('../../desktop/node_modules/electron'), [path.join(root, 'desktop/tests', script)],
         { cwd: root, env, windowsHide: true, stdio: 'inherit' });
       child.once('error', reject); child.once('close', code => code === 0 ? resolve() : reject(new Error(`UI fixture exited ${code}`)));

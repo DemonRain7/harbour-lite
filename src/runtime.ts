@@ -8,6 +8,7 @@ import { existsSync } from "node:fs";
 import { Router, DEFAULT_STRATEGY } from "./core/router";
 import { ContextManager } from "./core/contextManager";
 import { SessionStore, isOpenSessionGoal, type SessionGoal } from "./core/sessionStore";
+import { sessionImageIndex } from "./core/sessionImages";
 import { DelegationTaskStore } from "./core/delegationTaskStore";
 import { delegationTaskIndex } from "./core/delegationTasks";
 import { bindDelegatedSession, mainNativeSession, nativeResumeEnabled } from "./core/nativeSessionRouting";
@@ -991,6 +992,9 @@ export async function createRuntime(
             }
           }
           if (activityRunId) execution = { ...(execution ?? {}), runId: activityRunId };
+          const imageIndex = !inheritedExecution && loopAgent.tools.includes("view_image")
+            ? sessionImageIndex(session, source?.actor) : "";
+          if (imageIndex) loopInput += `\n\n${imageIndex}`;
           if (!inheritedExecution && source?.actor?.role === "owner") {
             const delegationTasks = {
               store: new DelegationTaskStore(path.resolve(env.SESSION_DIR, "..", "delegationTasks")),
@@ -1014,6 +1018,7 @@ export async function createRuntime(
             const savedTasks = execution.delegationTasks
               ? await delegationTaskIndex(execution.delegationTasks, loopAgent.subagents ?? [], loopAgent.workflows ?? []) : "";
             if (savedTasks) execution.nativeSession.incrementalInput += `\n\n${savedTasks}`;
+            if (imageIndex) execution.nativeSession.incrementalInput += `\n\n${imageIndex}`;
           }
           const evidenceBaseline = executionEvidenceBaseline(checkpoint);
           if (!inheritedExecution && ref.actor) {
