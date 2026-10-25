@@ -2,6 +2,7 @@ import type { Logger } from "pino";
 import { contextWindowForModel } from "./modelInfo";
 import type { ModelSlot, SlotModel } from "./modelSlots";
 import { inferModelCapabilities } from "./modelCapabilities";
+import { ANTHROPIC_API_HOST } from "./anthropicModels";
 
 export interface CatalogRefreshResult {
   ok: boolean;
@@ -21,6 +22,7 @@ function catalogUrl(slot: ModelSlot): string | null {
   let u: URL;
   try { u = new URL(slot.baseURL); } catch { return null; }
   const host = u.hostname.toLowerCase();
+  if (host === ANTHROPIC_API_HOST) return u.protocol === "https:" ? `${u.origin}/v1/models?limit=1000` : null;
   if (host === "api.deepseek.com") return `${u.origin}/v1/models`;
   if (host === "api.moonshot.cn") return `${u.origin}/v1/models`;
   if (host === "openrouter.ai") return `${u.origin}/api/v1/models`;
@@ -48,12 +50,16 @@ export async function refreshModelCatalogForSlot(
   }
 
   try {
-    const headers: Record<string, string> = { Authorization: `Bearer ${key}` };
-    if (slot.keyKind === "api") headers["x-api-key"] = key;
+    // 官方 Anthropic 只认 x-api-key + anthropic-version；额外的 Bearer 头会被当成 OAuth 拒绝。
+    const headers: Record<string, string> = new URL(url).hostname === ANTHROPIC_API_HOST
+      ? { "x-api-key": key, "anthropic-version": "2023-06-01" }
+      : { Authorization: `Bearer ${key}`, ...(slot.keyKind === "api" ? { "x-api-key": key } : {}) };
     const res = await fetch(url, { headers, signal: AbortSignal.timeout(30_000) });
     if (!res.ok) throw new Error(`模型目录返回 HTTP ${res.status}`);
-    const json = await res.json() as { data?: Array<{ id?: unknown }> };
+    const json = await res.json() as { data?: Array<{ id?: unknown; display_name?: unknown; max_input_tokens?: unknown }> };
     const ids = [...new Set((json.data ?? []).map((m) => String(m.id ?? "").trim()).filter(Boolean))].sort();
+    // Anthropic Models API 自带展示名与上下文窗口；其它 Provider 没有就按型号推断。
+    const listed = new Map((json.data ?? []).map((m) => [String(m.id ?? "").trim(), m]));
     if (!ids.length) throw new Error("模型目录返回空列表");
 
     const old = new Map(slot.models.map((m) => [m.id, m]));
@@ -62,13 +68,17 @@ export async function refreshModelCatalogForSlot(
     // Provider 当前返回的模型排在前面；保留用户之前的 enabled/label 选择。
     for (const id of ids) {
       const prev = old.get(id);
+      const row = listed.get(id);
+      const label = prev?.label || (typeof row?.display_name === "string" ? row.display_name.trim() : "");
+      const listedWindow = Number(row?.max_input_tokens);
       next.push({
         id,
-        ...(prev?.label ? { label: prev.label } : {}),
+        ...(label ? { label } : {}),
         enabled: prev?.enabled !== false,
         available: true,
         source: prev?.source ?? "discovered",
-        contextWindow: prev?.contextWindow ?? contextWindowForModel(id),
+        contextWindow: prev?.contextWindow
+          ?? (Number.isFinite(listedWindow) && listedWindow > 0 ? Math.floor(listedWindow) : contextWindowForModel(id)),
         capabilities: prev?.capabilities ?? inferModelCapabilities(id),
       });
     }

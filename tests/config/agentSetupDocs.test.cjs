@@ -17,6 +17,19 @@ test('README exposes a one-line copyable Agent setup prompt', () => {
   assert.ok(readme.indexOf('## 让你的 Agent 帮你装好') < readme.indexOf('## 启动'));
 });
 
+test('README has one working player destination instead of MP4 blob links and duplicate film blocks', () => {
+  assert.doesNotMatch(readme, /30\s*秒短版|尚未.*推送|\]\(docs\/media\/[^)]+\.mp4\)/);
+  assert.match(readme, /https:\/\/demonrain7\.github\.io\/harbour-lite\//);
+  const html = read('docs/index.html');
+  assert.match(html, /<video[^>]+controls[^>]+playsinline[^>]+preload="metadata"/);
+  assert.doesNotMatch(html, /<video[^>]+autoplay/);
+  assert.match(html, /src="media\/harbour-story\.mp4" type="video\/mp4"/);
+  assert.ok(fs.existsSync(path.join(root, 'docs/media/harbour-story.mp4')));
+  assert.ok(fs.existsSync(path.join(root, 'docs/.nojekyll')));
+  const prompt = readme.match(/```text\r?\n([^\n]+)\r?\n```/)[1].trim();
+  assert.equal(html.match(/<pre id="install-prompt">([^]*?)<\/pre>/)[1], prompt);
+});
+
 test('handoff references shipped files and existing commands', () => {
   for (const file of ['AGENTS.md', 'README.md', '.env.example', '.npmrc', 'scripts/desktop-launch.js',
     'desktop/startup.config.example.json', 'agents/main-assistant/CLAUDE.md', 'demo/VIDEO-NOTES.md']) {

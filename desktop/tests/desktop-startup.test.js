@@ -161,7 +161,7 @@ test("launcher recognizes IPv6 loopback and keeps external hosts remote", () => 
   assert.equal(mainIsLoopback("https://harbour.example.test"), false);
 });
 
-test("launcher honors the same legacy and portable config locations as Electron", () => {
+test("launcher isolates public configuration and honors portable overrides", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "harbour-desktop-config-"));
   try {
     const appData = path.join(root, "roaming");
@@ -170,7 +170,10 @@ test("launcher honors the same legacy and portable config locations as Electron"
     fs.mkdirSync(portable);
     fs.writeFileSync(path.join(appData, "Harbour", "config.json"), JSON.stringify({ url: "https://legacy.example.test", spawn: false }));
     const env = { APPDATA: appData, HARBOUR_DATA_HOME: path.join(root, "local") };
-    assert.deepEqual(launcherRuntime(env), { url: "https://legacy.example.test", spawnLocal: false });
+    assert.deepEqual(launcherRuntime(env), { url: "http://localhost:7799", spawnLocal: true });
+    fs.mkdirSync(path.join(appData, "HarbourPublic"), { recursive: true });
+    fs.writeFileSync(path.join(appData, "HarbourPublic", "config.json"), JSON.stringify({ url: "https://public.example.test", spawn: false }));
+    assert.deepEqual(launcherRuntime(env), { url: "https://public.example.test", spawnLocal: false });
     fs.writeFileSync(path.join(portable, "config.json"), JSON.stringify({ url: "https://portable.example.test", spawn: false }));
     assert.deepEqual(launcherRuntime({ ...env, PORTABLE_EXECUTABLE_DIR: portable }),
       { url: "https://portable.example.test", spawnLocal: false });
@@ -313,7 +316,7 @@ test("Dashboard F5 and Ctrl/Cmd+R reload through the unsaved-content guard witho
     startupSplash: null, mainWindow: null, remoteBridge: null,
     cfg: { token: "", url: "http://localhost:7788", petEnabled: false },
     initCompanionRuntime() {}, startRemoteCompanionBridge() {},
-    BrowserWindow: Window, removeWindowMenu() {}, conversationLink: { flush() {} },
+    BrowserWindow: Window, removeWindowMenu() {}, conversationLink: { flush() {} }, openDashboardLink: () => ({ action: 'deny' }),
     closeGuard: { register() {}, run: async (win, reason, action) => { guards.push({ win, reason }); if (approved) await action(); return approved; } },
     loadDashboard: async win => loads.push(win),
     refreshDashboard: async win => loads.push(win),
@@ -348,7 +351,7 @@ test("Dashboard refresh reloads the current entry instead of clearing its forwar
   contents.reloadIgnoringCache = () => { reloads.push(currentUrl); contents.emit('did-finish-load'); };
   const win = { isDestroyed: () => false, webContents: contents };
   const refresh = vm.runInNewContext(`(${mainFunction("refreshDashboard")})`, {
-    URL, cfg: { url: "http://localhost:7788/" }, loadDashboard: async target => { loads.push(target); return true; },
+    URL, setTimeout, clearTimeout, cfg: { url: "http://localhost:7788/" }, loadDashboard: async target => { loads.push(target); return true; },
   });
   assert.equal(await refresh(win), true);
   assert.deepEqual(reloads, [currentUrl]);
@@ -376,6 +379,44 @@ test("Dashboard refresh reloads the current entry instead of clearing its forwar
   assert.equal(contents.eventNames().length, 0);
   assert.equal(await refresh(null), false);
   assert.equal(await refresh({ isDestroyed: () => true }), false);
+});
+
+test("interrupted Dashboard reloads settle without replay and release listeners for another F5", async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const contents = new EventEmitter();
+  const url = 'http://localhost:7788/#chat?session=fixture&agent=main-elaina';
+  let loads = 0, reloads = 0;
+  contents.getURL = () => url;
+  contents.reloadIgnoringCache = () => reloads++;
+  const win = { isDestroyed: () => false, webContents: contents };
+  const refresh = vm.runInNewContext(`(${mainFunction('refreshDashboard')})`, {
+    URL, setTimeout, clearTimeout, cfg: { url: 'http://localhost:7788/' },
+    loadDashboard: async () => { loads++; return true; },
+  });
+  for (const interrupt of ['did-stop-loading', 'render-process-gone', 'destroyed', 'timeout']) {
+    const attempt = refresh(win);
+    if (interrupt === 'timeout') t.mock.timers.tick(30_000);
+    else contents.emit(interrupt);
+    assert.equal(await attempt, false, interrupt);
+    assert.equal(contents.eventNames().length, 0, `${interrupt} releases every listener`);
+    assert.equal(loads, 0, 'interruption never retries or replaces the current route');
+    const retry = refresh(win);
+    contents.emit('did-finish-load');
+    assert.equal(await retry, true, `explicit retry works after ${interrupt}`);
+    assert.equal(contents.eventNames().length, 0);
+  }
+  const aborted = refresh(win);
+  contents.emit('did-fail-load', {}, -3, 'aborted', url, true);
+  contents.emit('did-stop-loading');
+  assert.equal(await aborted, false);
+  assert.equal(loads, 0);
+  assert.equal(reloads, 9);
+  assert.equal(contents.eventNames().length, 0);
+  // A late completion after an interrupted attempt cannot initiate recovery.
+  contents.emit('did-finish-load');
+  contents.emit('did-fail-load', {}, -102, 'late failure', url, true);
+  t.mock.timers.tick(30_000);
+  assert.equal(loads, 0);
 });
 
 test("music identity survives an unavailable Cowork executor without claiming execution tools", () => {

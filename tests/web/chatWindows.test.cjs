@@ -28,11 +28,11 @@ test('new window remains a blank composer; opening never creates a session or ca
   assert.equal(f.chat.landing, true); assert.equal(f.chat.sessionId, null); assert.equal(f.calls.length, 0);
 });
 
-test('busy New and explicit window actions do not replace the original run or copy its draft', async () => {
+test('only the explicit window action opens a window, without replacing the run or copying its draft', async () => {
   const f = fixture();
   Object.assign(f.chat, { running: true, activeRunId: 'run-A', sessionId: 'session-A', attachments: [{ name: 'private.png' }], messages: [{ content: 'unsent private text' }] });
   const before = JSON.stringify(f.chat);
-  await f.ctx.newChatSession();
+  f.ctx.openChatWindow();
   f.ctx.openChatWindow('session-A');
   assert.equal(f.opened.length, 2);
   assert.match(f.opened[0][0], /#chat\?new=1/);

@@ -134,7 +134,14 @@ function createCloseGuard({ app, ipcMain, dialog, cleanup, timeoutMs = 8_000, lo
     return perform(reason, async () => {
       if (!await requestLeave(entry, reason) || win.isDestroyed()) return false;
       allowUnload(entry);
-      try { await operation(); return true; }
+      try {
+        const completed = await operation();
+        if (completed === false) {
+          entry.allowUnload = false;
+          clearTimeout(entry.approvalTimer);
+        }
+        return completed !== false;
+      }
       catch (error) {
         entry.allowUnload = false;
         clearTimeout(entry.approvalTimer);

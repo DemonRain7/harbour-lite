@@ -20,6 +20,7 @@ import {
   type TurnFileChange,
 } from "../types";
 import { normalizeFileChanges } from "./fileChanges";
+import { normalizeSessionImages, sessionImageReferences, type SessionImageReference } from "./sessionImages";
 import { normalizeCalendarCards, type CalendarCard } from "../calendar/cards";
 import type { Router } from "./router";
 import { buildChatMessages } from "./promptAssembly";
@@ -163,6 +164,8 @@ export interface ChatSession {
   messages: Message[];
   /** 被压缩消息的最近少量服务器事实卡；与自由文本摘要分离，避免摘要遗漏执行事实。 */
   compactedRunRecords?: SessionRunRecord[];
+  /** Verified owner upload provenance retained across compaction; no pixels, paths or new upload authority. */
+  compactedImages?: SessionImageReference[];
   /**
    * 仅供同 checkpoint 的迟到结算刷新中断事实；不进入模型历史或 sessionDetail API。
    * 每次恢复/替换都会先刷新并冻结旧 attempt，因此正常情况下至多一项。
@@ -959,6 +962,18 @@ export class SessionStore {
     const expiredPaths = new Set<string>();
     for (const session of this.sessions.values()) {
       let sessionChanged = false;
+      if (session.compactedImages?.length) {
+        const expired = session.compactedImages.filter(row => Date.parse(row.receivedAt) < cutoffMs);
+        if (expired.length) {
+          for (const row of expired) {
+            const stored = attachmentStoragePath(row.attachment, root);
+            if (stored) expiredPaths.add(stored);
+          }
+          session.compactedImages = session.compactedImages.filter(row => Date.parse(row.receivedAt) >= cutoffMs);
+          result.attachmentsExpired += expired.length;
+          sessionChanged = true;
+        }
+      }
       for (let index = 0; index < session.messages.length; index += 1) {
         const message = session.messages[index]!;
         const occurredAt = attachmentMessageTime(session, index);
@@ -1360,6 +1375,7 @@ export class SessionStore {
 
   /** 应用一次压缩结果：替换摘要、丢掉最旧 dropCount 条。 */
   private applyCompaction(s: ChatSession, summary: string, dropCount: number): void {
+    s.compactedImages = sessionImageReferences(s, dropCount);
     s.compactedRunRecords = recentExecutionRecords(s.messages.slice(0, dropCount), s.compactedRunRecords);
     s.summary = summary;
     s.messages = s.messages.slice(dropCount);
@@ -1573,6 +1589,7 @@ function normalize(s: ChatSession, defaultAgent: string): ChatSession {
       typeof s.nativeContext.observedAt === "string" && Number.isFinite(Date.parse(s.nativeContext.observedAt))
       ? { nativeContext: { ...s.nativeContext } } : {}),
     messages,
+    ...(Array.isArray(s.compactedImages) ? { compactedImages: normalizeSessionImages(s.compactedImages) } : {}),
     ...(Array.isArray(s.compactedRunRecords) ? {
       compactedRunRecords: recentExecutionRecords([], s.compactedRunRecords.flatMap((raw) => {
         const record = normalizeRunRecord(raw);
@@ -1734,6 +1751,10 @@ function uploadUrlPath(rawUrl: string, root: string): string | undefined {
 function collectReferencedUploadPaths(sessions: Iterable<ChatSession>, root: string): Set<string> {
   const refs = new Set<string>();
   for (const session of sessions) {
+    for (const row of session.compactedImages ?? []) {
+      const stored = attachmentStoragePath(row.attachment, root);
+      if (stored) refs.add(pathKey(stored));
+    }
     for (const message of session.messages) {
       for (const attachment of message.attachments ?? []) {
         const stored = attachmentStoragePath(attachment, root);

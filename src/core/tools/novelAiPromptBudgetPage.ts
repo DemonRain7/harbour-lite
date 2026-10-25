@@ -3,23 +3,48 @@
 const visible = `const visible = el => { const s=getComputedStyle(el), r=el.getBoundingClientRect();
   return s.display!=="none" && s.visibility!=="hidden" && s.opacity!=="0" && r.width>1 && r.height>1; };`;
 
-export function novelAiPromptCounterTargetScript(marker: string, allowSfwCurrentLayout = false): string {
-  // The opt-in SFW experiment observed this replacement styled-component on
-  // 2026-10-18. Legacy/NSFW behavior stays unchanged until separately reviewed.
-  // Both versions still require one scoped meter and the site's fresh tooltip.
-  const meterSelector = allowSfwCurrentLayout ? ".sc-427b8d4-1,.sc-bf0df139-1" : ".sc-427b8d4-1";
+export const novelAiCounterPreparationSteps = ["editor-target", "frozen-prompt", "token-meter"] as const;
+export const novelAiCounterPreparationReasons = ["page-step-failed", "frozen-prompt-mismatch", "prompt-editor-unavailable",
+  "token-meter-missing", "token-meter-ambiguous"] as const;
+
+export function novelAiPromptCounterTargetScript(marker: string): string {
+  // Website layout compatibility is shared infrastructure, not a content/style
+  // experiment. Both observed versions must identify one meter in THIS field.
+  const meterSelector = ".sc-427b8d4-1,.sc-bf0df139-1";
   return `(() => {
     ${visible}
+    const fail=code=>{const error=new Error('NovelAI token meter unavailable for the verified prompt; not submitted');error.harbourCounterReason=code;throw error;};
     const editor=document.querySelector('[data-harbour-richtext-target="'+${JSON.stringify(marker)}+'"]');
     const root=editor?.closest('[data-prompt-input="true"]');
-    // Stable styled-component ID observed on NovelAI's token meter. A layout
-    // change must fail closed instead of accidentally reading another meter.
-    const bars=root ? Array.from(root.querySelectorAll(${JSON.stringify(meterSelector)})).filter(visible) : [];
-    if(!editor || !visible(editor) || bars.length!==1 || !bars[0].parentElement)
-      throw new Error('NovelAI token meter unavailable for the verified prompt; not submitted');
+    if(!editor || !visible(editor) || !root) fail('prompt-editor-unavailable');
+    const bars=Array.from(root.querySelectorAll(${JSON.stringify(meterSelector)}))
+      .filter(el=>visible(el)&&el.closest('[data-prompt-input="true"]')===root);
+    if(!bars.length) fail('token-meter-missing');
+    if(bars.length!==1 || !bars[0].parentElement) fail('token-meter-ambiguous');
     document.querySelectorAll('[data-harbour-token-target]').forEach(el=>el.removeAttribute('data-harbour-token-target'));
     bars[0].parentElement.setAttribute('data-harbour-token-target',${JSON.stringify(marker)});
     return {targeted:true};
+  })()`;
+}
+
+/** Return only fixed diagnostic enums on a page failure. Browser exceptions can
+ * quote the complete evaluation source, including the frozen private prompt. */
+export function novelAiPromptCounterPreparationScript(prepareScript: string, verifyScript: string, marker: string): string {
+  return `(async () => {
+    let step='editor-target';
+    try {
+      const prepared=await ${prepareScript};
+      step='frozen-prompt';
+      const verification=${verifyScript};
+      if(verification?.verified!==true) return {prepared:false,failure:{step,reason:'frozen-prompt-mismatch'}};
+      step='token-meter';
+      ${novelAiPromptCounterTargetScript(marker)};
+      return {...prepared,verification};
+    } catch(error) {
+      const reason=${JSON.stringify(novelAiCounterPreparationReasons)}.includes(error?.harbourCounterReason)
+        ? error.harbourCounterReason : 'page-step-failed';
+      return {prepared:false,failure:{step,reason}};
+    }
   })()`;
 }
 

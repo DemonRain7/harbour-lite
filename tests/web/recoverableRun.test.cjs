@@ -47,12 +47,12 @@ test('legacy synchronous response still works without polling', async () => {
 });
 
 test('Main Chat STOP failure preserves the handle and offers a retry instead of claiming stopped', async () => {
-  const stopSource = app.match(/^async function requestChatStop\([^\n]*\) \{[\s\S]*?^}/m)[0];
+  const stopSource = ['requestChatStop', 'stopLocalChatRun'].map(name => app.match(new RegExp(`^async function ${name}\\([^\\n]*\\) \\{[\\s\\S]*?^}`, 'm'))[0]).join('\n');
   const calls = [], notices = [];
   const chat = { running: true, activeRunId: body.runId, sessionId: body.session.id, messages: [{ pending: true, runStartedAt: 1 }], trace: [],
     abort: { abort() { assert.fail('failed STOP must not disconnect the observation loop'); } } };
   const context = vm.createContext({ state: { chat }, AbortSignal, Date, $: () => null, window: {},
-    stopVisualTimer() {}, visualPoll: () => 123, updatePendingDuration() {}, updatePendingTrace() {}, updatePendingActivity() {},
+    stopVisualTimer() {}, visualPoll: () => 123, updatePendingDuration() {}, updatePendingTrace() {}, updatePendingActivity() {}, setChatSendMode() {},
     toast: text => notices.push(text), api: async (url, options) => { calls.push({ url, ...options }); throw new TypeError('network gone'); } });
   vm.runInContext(stopSource, context);
   await context.requestChatStop();

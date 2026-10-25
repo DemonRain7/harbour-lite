@@ -766,22 +766,47 @@ async function refreshDashboard(win) {
       // Reload the current entry, retaining its route and the forward branch.
       return new Promise(resolve => {
         const contents = win.webContents;
+        let settled = false;
+        let timer;
         const cleanup = () => {
+          clearTimeout(timer);
           contents.removeListener("did-finish-load", loaded);
           contents.removeListener("did-fail-load", failed);
+          contents.removeListener("did-stop-loading", stopped);
+          contents.removeListener("render-process-gone", stopped);
           contents.removeListener("destroyed", destroyed);
         };
-        const loaded = () => { cleanup(); resolve(true); };
-        const destroyed = () => { cleanup(); resolve(false); };
+        const finish = (result) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          resolve(result);
+        };
+        const loaded = () => finish(true);
+        const stopped = () => finish(false);
+        const destroyed = () => finish(false);
+        const recover = () => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          resolve(loadDashboard(win)); // Preserve the existing offline/retry page.
+        };
         const failed = (_event, code, _description, _url, isMainFrame) => {
-          if (!isMainFrame || code === -3) return; // Ignore subframes and cancelled navigations.
-          cleanup(); resolve(loadDashboard(win)); // Preserve the existing offline/retry page.
+          if (!isMainFrame || code === -3) return; // Cancellation settles at did-stop-loading, not a second navigation.
+          recover();
         };
         contents.once("did-finish-load", loaded);
         contents.on("did-fail-load", failed);
+        // Chromium can stop a cancelled reload without either finish-load or fail-load.
+        // Leaving its Promise pending locks closeGuard, swallowing every subsequent F5.
+        contents.once("did-stop-loading", stopped);
+        contents.once("render-process-gone", stopped);
         contents.once("destroyed", destroyed);
+        // Bound only the approved navigation, never the user's unsaved-edit decision.
+        // No automatic retry or force-close: the next key press runs preflight again.
+        timer = setTimeout(stopped, 30_000);
         try { contents.reloadIgnoringCache(); }
-        catch { cleanup(); resolve(loadDashboard(win)); }
+        catch { recover(); }
       });
     }
   } catch { /* Offline/file pages recover through the configured Dashboard URL. */ }

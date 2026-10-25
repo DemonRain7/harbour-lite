@@ -431,6 +431,13 @@ body[data-chat-landing="true"][data-theme-cat="anime"][data-panel="chat"] .conte
   border-color: color-mix(in srgb, var(--accent) 72%, var(--border));
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent);
 }
+.chat-drop-hint { display: none; pointer-events: none; }
+.chat-compose.is-drag-over .chat-drop-hint {
+  position: absolute; inset: 5px; z-index: 40; display: flex; align-items: center; justify-content: center; gap: 9px;
+  border: 1.5px dashed var(--accent); border-radius: 12px; color: var(--accent);
+  background: color-mix(in srgb, var(--panel) 96%, var(--accent)); font: 600 13px/1.5 var(--font-ui);
+}
+.chat-drop-hint svg { width: 21px; height: 21px; flex: none; }
 .chat-compose-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; }
 .chat-compose-actions { display: flex; gap: 8px; align-items: center; }
 .chat-compose { flex-shrink: 0; }
